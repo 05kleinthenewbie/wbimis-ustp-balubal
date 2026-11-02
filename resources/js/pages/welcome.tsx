@@ -68,12 +68,13 @@ const roles = [
         icon: Users,
         role: 'Faculty',
         description:
-            'Submit service requests, book facilities, and track your ICT-related concerns in real time.',
+            'Submit service requests, book facilities, report laboratory incidents, and keep track of any liabilities assigned to you.',
         features: [
             'Submit Requests',
             'Book Facilities',
+            'Report Laboratory Incidents',
             'Track Status',
-            'View Updates',
+            'View My Liabilities',
         ],
         href: facultyLogin().url,
         registerHref: register().url,
@@ -84,12 +85,12 @@ const roles = [
         icon: Wifi,
         role: 'Students',
         description:
-            'Register with your student ID and COR, then request email accounts, access Office 365 services, and report laboratory incidents after approval.',
+            'Register with your student ID and COR, then submit limited service requests, report laboratory incidents, and review any assigned liabilities after approval.',
         features: [
-            'Email Requests',
-            'Office 365 Access',
+            'Limited Service Requests',
             'Track Requests',
             'Report Laboratory Incidents',
+            'View My Liabilities',
         ],
         href: studentLogin().url,
         registerHref: register({ query: { role: 'student' } }).url,
@@ -100,8 +101,13 @@ const roles = [
         icon: Shield,
         role: 'ICT Administrators',
         description:
-            'Manage requests, process job orders, monitor inventory, and oversee all ICT operations.',
+            'Oversee all ICT operations while still using faculty services such as submitting requests, booking facilities, reporting incidents, and tracking liabilities.',
         features: [
+            'Submit Requests',
+            'Book Facilities',
+            'Report Laboratory Incidents',
+            'Track Status',
+            'View My Liabilities',
             'Manage Requests',
             'Process Job Orders',
             'Monitor Inventory',
@@ -150,7 +156,17 @@ export default function Welcome() {
 
     useEffect(() => {
         const onScroll = () => {
+            const contactSection = document.getElementById('contact');
             const modulesSection = document.getElementById('modules');
+
+            if (
+                contactSection &&
+                contactSection.getBoundingClientRect().top <= 80
+            ) {
+                setIsScrolled(false);
+
+                return;
+            }
 
             if (modulesSection) {
                 // When top of modules section reaches the bottom of the header (approx 80px)
@@ -271,6 +287,7 @@ export default function Welcome() {
                             className="hidden items-center gap-1 md:flex"
                         >
                             {[
+                                { label: 'About', href: '#about' },
                                 { label: 'Modules', href: '#modules' },
                                 {
                                     label: 'How It Works',
@@ -492,6 +509,204 @@ export default function Welcome() {
                     </div>
                 </section>
 
+                {/* About */}
+                <section id="about" className="scroll-mt-24 bg-ustp-gray/40">
+                    <div className="mx-auto max-w-7xl px-6 py-20">
+                        <div className="mb-12 text-center">
+                            <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-ustp-gold/10 px-3 py-1 text-[11px] font-bold tracking-[0.18em] text-ustp-gold-dark uppercase">
+                                About the System
+                            </span>
+                            <h2 className="font-serif text-2xl font-bold text-ustp-navy sm:text-3xl">
+                                One platform for USTP Balubal ICT operations
+                            </h2>
+                            <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-ustp-gold" />
+                            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-ustp-navy/60">
+                                WBIMIS is the centralized ICT management
+                                platform of the University of Science and
+                                Technology of Southern Philippines — Balubal
+                                Campus.
+                            </p>
+                        </div>
+
+                        <div className="grid items-stretch gap-8 lg:grid-cols-3">
+                            <div className="flex flex-col gap-8 lg:col-span-2">
+                                <div className="rounded-2xl border border-ustp-gray-medium bg-white p-8 shadow-sm">
+                                    <h3 className="font-serif text-lg font-bold text-ustp-navy">
+                                        Why it exists
+                                    </h3>
+                                    <div className="mt-4 space-y-4 text-sm leading-relaxed text-ustp-navy/70 sm:text-base">
+                                        <p>
+                                            Before WBIMIS, ICT transactions were
+                                            recorded in logbooks, paper forms,
+                                            and separate spreadsheets. Records
+                                            were hard to trace, status updates
+                                            depended on follow-ups, and asset
+                                            accountability was difficult to
+                                            establish.
+                                        </p>
+                                        <p>
+                                            WBIMIS brings service requests, job
+                                            orders, inventory, facility
+                                            bookings, and laboratory incidents
+                                            into one role-based workspace. Each
+                                            record stays linked to the people,
+                                            assets, and approvals involved,
+                                            giving the ICT office a single
+                                            source of truth from submission to
+                                            resolution.
+                                        </p>
+                                    </div>
+
+                                    <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                                        {[
+                                            {
+                                                icon: FileText,
+                                                title: 'Single source of truth',
+                                                text: 'Requests, assets, bookings, and incidents share one system of record.',
+                                            },
+                                            {
+                                                icon: Wifi,
+                                                title: 'Real-time visibility',
+                                                text: 'Status changes and notifications appear as ICT staff act on each record.',
+                                            },
+                                            {
+                                                icon: Shield,
+                                                title: 'Accountability',
+                                                text: 'Incidents, liabilities, and audit logs keep every action traceable.',
+                                            },
+                                            {
+                                                icon: Users,
+                                                title: 'Role-based access',
+                                                text: 'Faculty, students, and administrators see only the tools they need.',
+                                            },
+                                        ].map((pillar) => {
+                                            const Icon = pillar.icon;
+
+                                            return (
+                                                <div
+                                                    key={pillar.title}
+                                                    className="rounded-xl border border-ustp-gray-medium bg-ustp-gray/30 p-5"
+                                                >
+                                                    <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10 text-ustp-gold">
+                                                        <Icon className="size-4" />
+                                                    </div>
+                                                    <p className="mt-3 text-sm font-bold text-ustp-navy">
+                                                        {pillar.title}
+                                                    </p>
+                                                    <p className="mt-1 text-xs leading-relaxed text-ustp-navy/60">
+                                                        {pillar.text}
+                                                    </p>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                <div className="rounded-2xl border border-ustp-gray-medium bg-white p-8 shadow-sm">
+                                    <h3 className="font-serif text-lg font-bold text-ustp-navy">
+                                        Who uses it
+                                    </h3>
+                                    <p className="mt-2 text-sm text-ustp-navy/60">
+                                        Access is tailored to each campus role.
+                                    </p>
+                                    <div className="mt-6 grid gap-4 sm:grid-cols-3">
+                                        {[
+                                            {
+                                                role: 'Faculty & Staff',
+                                                text: 'Submit service requests, book facilities, report incidents, and track liabilities.',
+                                            },
+                                            {
+                                                role: 'Students',
+                                                text: 'File limited service requests, report incidents, and monitor assigned liabilities.',
+                                            },
+                                            {
+                                                role: 'ICT Administrators',
+                                                text: 'Approve requests, dispatch job orders, manage inventory, and resolve incidents.',
+                                            },
+                                        ].map((item) => (
+                                            <div
+                                                key={item.role}
+                                                className="rounded-xl border border-ustp-gray-medium bg-ustp-gray/30 p-4"
+                                            >
+                                                <p className="text-sm font-bold text-ustp-navy">
+                                                    {item.role}
+                                                </p>
+                                                <p className="mt-1 text-xs leading-relaxed text-ustp-navy/60">
+                                                    {item.text}
+                                                </p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex h-full flex-col rounded-2xl border border-ustp-gray-medium bg-white p-8 shadow-sm">
+                                <h3 className="font-serif text-lg font-bold text-ustp-navy">
+                                    What it covers
+                                </h3>
+                                <p className="mt-2 text-sm text-ustp-navy/60">
+                                    End-to-end modules for daily ICT operations.
+                                </p>
+                                <div className="mt-6 space-y-6">
+                                    {[
+                                        {
+                                            title: 'Service Operations',
+                                            items: [
+                                                'Service request submission and approval',
+                                                'Job order assignment and SLA monitoring',
+                                                'Email notifications and status updates',
+                                            ],
+                                        },
+                                        {
+                                            title: 'Assets & Facilities',
+                                            items: [
+                                                'ICT inventory and QR asset tagging',
+                                                'Defect, repair, and disposal lifecycle',
+                                                'Facility booking with conflict checks',
+                                            ],
+                                        },
+                                        {
+                                            title: 'Accountability',
+                                            items: [
+                                                'Laboratory incident reporting',
+                                                'Liability assignment and settlement',
+                                                'Activity and audit trail',
+                                            ],
+                                        },
+                                    ].map((group) => (
+                                        <div key={group.title}>
+                                            <p className="text-[11px] font-bold tracking-[0.18em] text-ustp-gold-dark uppercase">
+                                                {group.title}
+                                            </p>
+                                            <ul className="mt-3 space-y-2.5">
+                                                {group.items.map((item) => (
+                                                    <li
+                                                        key={item}
+                                                        className="flex items-start gap-2.5 text-sm text-ustp-navy/70"
+                                                    >
+                                                        <CheckCircle className="mt-0.5 size-4 shrink-0 text-ustp-gold" />
+                                                        {item}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    ))}
+                                </div>
+                                <div className="mt-auto pt-6">
+                                    <div className="flex items-start gap-3 rounded-xl bg-ustp-gold/10 p-4 text-xs leading-relaxed text-ustp-navy/70">
+                                        <Shield className="mt-0.5 size-4 shrink-0 text-ustp-gold-dark" />
+                                        <span>
+                                            Available only to verified USTP
+                                            Balubal faculty, staff, and
+                                            students.
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
                 {/* System Modules */}
                 <section id="modules" className="scroll-mt-24 bg-white">
                     <div className="mx-auto max-w-7xl px-6 py-20">
@@ -695,24 +910,31 @@ export default function Welcome() {
                                                 </li>
                                             ))}
                                         </ul>
-                                        <p className="mt-4 text-xs leading-relaxed text-ustp-navy/60">
-                                            {item.registrationNote}
-                                        </p>
-                                        <Link
-                                            href={item.href}
-                                            className="mt-6 inline-flex items-center gap-1.5 border-t border-ustp-gray-medium pt-4 text-sm font-bold text-ustp-navy transition-colors hover:text-ustp-gold-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-ustp-gold"
-                                        >
-                                            Sign in
-                                        </Link>
-                                        {!auth.user && item.registerHref && (
+                                        <div className="mt-auto">
+                                            <p className="mt-4 min-h-10 text-xs leading-relaxed text-ustp-navy/60">
+                                                {item.registrationNote}
+                                            </p>
                                             <Link
-                                                href={item.registerHref}
-                                                className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-ustp-navy transition-colors hover:text-ustp-gold-dark"
+                                                href={item.href}
+                                                className="mt-6 inline-flex items-center gap-1.5 border-t border-ustp-gray-medium pt-4 text-sm font-bold text-ustp-navy transition-colors hover:text-ustp-gold-dark focus:outline-none focus-visible:ring-2 focus-visible:ring-ustp-gold"
                                             >
-                                                Create an account{' '}
-                                                <ArrowRight className="size-4" />
+                                                Sign in
                                             </Link>
-                                        )}
+                                            <div className="mt-3 min-h-5">
+                                                {!auth.user &&
+                                                    item.registerHref && (
+                                                        <Link
+                                                            href={
+                                                                item.registerHref
+                                                            }
+                                                            className="inline-flex items-center gap-1.5 text-sm font-bold text-ustp-navy transition-colors hover:text-ustp-gold-dark"
+                                                        >
+                                                            Create an account{' '}
+                                                            <ArrowRight className="size-4" />
+                                                        </Link>
+                                                    )}
+                                            </div>
+                                        </div>
                                     </div>
                                 );
                             })}
@@ -803,21 +1025,13 @@ export default function Welcome() {
                                 </div>
                                 <div>
                                     <h3 className="font-serif text-base font-bold text-white">
-                                        USTP Balubal Campus
-                                    </h3>
-                                    <p className="text-xs font-medium text-ustp-gold">
                                         Web-Based ICT Management and Information
                                         System (WBIMIS)
+                                    </h3>
+                                    <p className="text-xs font-medium text-ustp-gold">
+                                        USTP Balubal Campus
                                     </p>
                                 </div>
-                            </div>
-
-                            <div className="flex items-center gap-3 text-xs text-white/60">
-                                <span>Cagayan de Oro City, Philippines</span>
-                                <span>&bull;</span>
-                                <span className="font-semibold text-emerald-400">
-                                    ● Systems Active
-                                </span>
                             </div>
                         </div>
 
@@ -1189,7 +1403,6 @@ export default function Welcome() {
                             </p>
                             <p>
                                 Web-Based ICT Management and Information System
-                                &bull; BSIT Capstone Project
                             </p>
                         </div>
                     </div>
