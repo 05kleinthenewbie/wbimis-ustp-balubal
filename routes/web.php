@@ -26,6 +26,8 @@ Route::inertia('/', 'welcome')->name('home');
 
 Route::inertia('/terms', 'terms')->name('terms');
 Route::inertia('/privacy-policy', 'privacy-policy')->name('privacy');
+Route::inertia('/data-privacy', 'data-privacy')->name('data-privacy');
+Route::inertia('/acceptable-use', 'acceptable-use')->name('acceptable-use');
 
 Route::middleware('guest')->group(function () {
     Route::get('/faculty/login', fn () => Inertia::render('auth/faculty-login', [

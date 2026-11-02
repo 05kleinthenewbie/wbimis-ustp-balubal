@@ -27,12 +27,11 @@ class DashboardController extends Controller
 
         $period = $request->query('period');
 
-        if (! in_array($period, ['week', 'month', 'year'], true)) {
-            $period = 'year';
+        if (! in_array($period, ['month', 'year'], true)) {
+            $period = 'month';
         }
 
         $periodRange = match ($period) {
-            'week' => [now()->subDays(6)->startOfDay(), now()->endOfDay()],
             'month' => [now()->subDays(29)->startOfDay(), now()->endOfDay()],
             default => [now()->subDays(364)->startOfDay(), now()->endOfDay()],
         };
@@ -285,16 +284,7 @@ class DashboardController extends Controller
             ? "strftime('%Y-%m', created_at)"
             : 'DATE_FORMAT(created_at, "%Y-%m")';
 
-        if ($period === 'week') {
-            $start = now()->subDays(6)->startOfDay();
-            $expression = $dayExpression;
-            $buckets = [];
-
-            for ($i = 6; $i >= 0; $i--) {
-                $day = now()->subDays($i);
-                $buckets[] = ['label' => $day->format('D'), 'keys' => [$day->format('Y-m-d')]];
-            }
-        } elseif ($period === 'month') {
+        if ($period === 'month') {
             $start = now()->subDays(29)->startOfDay();
             $expression = $dayExpression;
             $buckets = [];

@@ -8,12 +8,10 @@ import {
     ChevronLeft,
     ChevronRight,
     ClipboardList,
-    Facebook,
     FileText,
+    Globe,
     Inbox,
     Mail,
-    MapPin,
-    Phone,
     Shield,
     Users,
     Wifi,
@@ -149,23 +147,18 @@ export default function Welcome() {
     const [currentPage, setCurrentPage] = useState(0);
     const [itemsPerView, setItemsPerView] = useState(1);
     const [isScrolled, setIsScrolled] = useState(false);
-    const [scrollingDown, setScrollingDown] = useState(false);
 
     useEffect(() => {
-        let previous = window.scrollY;
-
         const onScroll = () => {
-            const current = window.scrollY;
+            const modulesSection = document.getElementById('modules');
 
-            setIsScrolled(current > 150);
-
-            if (current > previous && current > 150) {
-                setScrollingDown(true);
+            if (modulesSection) {
+                // When top of modules section reaches the bottom of the header (approx 80px)
+                const rect = modulesSection.getBoundingClientRect();
+                setIsScrolled(rect.top <= 80);
             } else {
-                setScrollingDown(false);
+                setIsScrolled(window.scrollY > 400);
             }
-
-            previous = current;
         };
 
         window.addEventListener('scroll', onScroll, { passive: true });
@@ -221,17 +214,14 @@ export default function Welcome() {
         <>
             <Head title="USTP Balubal ICT Portal" />
 
-            <div
-                id="top"
-                className="min-h-screen scroll-smooth bg-white pt-24 sm:pt-20"
-            >
+            <div id="top" className="min-h-screen scroll-smooth bg-white">
                 {/* Header */}
                 <header
                     className={`fixed inset-x-0 top-0 z-40 border-b transition-all duration-300 ease-in-out motion-reduce:transition-none ${
                         isScrolled
-                            ? 'border-black/5 bg-white/90 shadow-lg backdrop-blur-md'
-                            : 'border-ustp-gray-medium bg-white'
-                    } ${scrollingDown ? '-translate-y-1 motion-reduce:translate-y-0' : 'translate-y-0'}`}
+                            ? 'border-black/5 bg-white/95 shadow-md backdrop-blur-md'
+                            : 'border-white/10 bg-ustp-navy-dark/95 backdrop-blur-md'
+                    }`}
                 >
                     <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
                         <a
@@ -246,13 +236,31 @@ export default function Welcome() {
                                 />
                             </div>
                             <div>
-                                <p className="font-serif text-base leading-tight font-bold text-ustp-navy sm:text-lg">
+                                <p
+                                    className={`font-serif text-base leading-tight font-bold transition-colors sm:text-lg ${
+                                        isScrolled
+                                            ? 'text-ustp-navy'
+                                            : 'text-white'
+                                    }`}
+                                >
                                     University of Science and Technology
                                 </p>
-                                <p className="font-serif text-xs font-bold text-ustp-navy sm:text-sm">
+                                <p
+                                    className={`font-serif text-xs font-bold transition-colors sm:text-sm ${
+                                        isScrolled
+                                            ? 'text-ustp-navy'
+                                            : 'text-white'
+                                    }`}
+                                >
                                     of Southern Philippines
                                 </p>
-                                <p className="hidden text-[11px] tracking-[0.12em] text-ustp-navy/60 uppercase sm:block">
+                                <p
+                                    className={`hidden text-[11px] tracking-[0.12em] uppercase transition-colors sm:block ${
+                                        isScrolled
+                                            ? 'text-ustp-navy/60'
+                                            : 'text-white/60'
+                                    }`}
+                                >
                                     Balubal Campus, Cagayan de Oro City
                                 </p>
                             </div>
@@ -269,11 +277,16 @@ export default function Welcome() {
                                     href: '#how-it-works',
                                 },
                                 { label: 'Roles', href: '#roles' },
+                                { label: 'Contact', href: '#contact' },
                             ].map((link) => (
                                 <a
                                     key={link.href}
                                     href={link.href}
-                                    className="rounded-lg px-3 py-2 text-sm font-medium text-ustp-navy/70 transition-colors hover:bg-ustp-gray/70 hover:text-ustp-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-ustp-gold"
+                                    className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ustp-gold ${
+                                        isScrolled
+                                            ? 'text-ustp-navy/70 hover:bg-ustp-gray/70 hover:text-ustp-navy'
+                                            : 'text-white/80 hover:bg-white/10 hover:text-white'
+                                    }`}
                                 >
                                     {link.label}
                                 </a>
@@ -284,19 +297,21 @@ export default function Welcome() {
                             {auth.user ? (
                                 <Link
                                     href={dashboardUrl}
-                                    className="rounded-lg bg-ustp-navy px-5 py-2.5 text-sm font-medium text-white shadow-md transition-all hover:bg-ustp-navy-dark hover:shadow-lg"
+                                    className="rounded-lg bg-ustp-gold px-5 py-2.5 text-sm font-bold text-ustp-navy shadow-md transition-all hover:bg-ustp-gold-dark hover:text-white"
                                 >
                                     Dashboard
                                 </Link>
                             ) : (
-                                <Button
-                                    asChild
-                                    variant="primary"
-                                    size="md"
-                                    className="rounded-xl px-5"
+                                <Link
+                                    href={login()}
+                                    className={`rounded-xl px-5 py-2 text-sm font-semibold transition-all ${
+                                        isScrolled
+                                            ? 'bg-ustp-navy text-white shadow-sm hover:bg-ustp-navy-dark'
+                                            : 'bg-ustp-gold font-bold text-ustp-navy shadow-md hover:bg-ustp-gold-dark hover:text-white'
+                                    }`}
                                 >
-                                    <Link href={login()}>Sign in</Link>
-                                </Button>
+                                    Sign in
+                                </Link>
                             )}
                         </div>
                     </div>
@@ -349,15 +364,12 @@ export default function Welcome() {
                                 <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-ustp-gold/30 bg-ustp-gold/10 px-4 py-1.5">
                                     <span className="size-1.5 rounded-full bg-ustp-gold" />
                                     <span className="text-xs font-medium tracking-wider text-ustp-gold uppercase">
-                                        Web-Based ICT Management and Information
-                                        System
+                                        USTP Balubal ICT Portal
                                     </span>
                                 </div>
                                 <h1 className="font-serif text-3xl leading-tight font-bold text-white sm:text-5xl lg:text-[3.4rem]">
-                                    USTP Balubal{' '}
-                                    <span className="text-ustp-gold">
-                                        ICT Portal
-                                    </span>
+                                    Web-Based ICT Management and Information
+                                    System
                                 </h1>
                                 <p className="mt-6 max-w-lg text-base leading-relaxed text-white/70 sm:mt-7 sm:text-lg">
                                     A centralized platform for managing ICT
@@ -773,125 +785,411 @@ export default function Welcome() {
                     </div>
                 </section>
 
-                {/* Footer */}
-                <footer className="bg-ustp-navy text-white">
-                    <div className="mx-auto max-w-7xl px-6 py-12">
-                        <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-3">
-                            <div>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex size-10 items-center justify-center rounded-lg bg-white p-1">
-                                        <img
-                                            src={ustpLogo}
-                                            alt="USTP Logo"
-                                            className="size-full object-contain"
-                                        />
-                                    </div>
-                                    <div>
-                                        <p className="font-serif text-sm font-bold text-white">
-                                            USTP Balubal
-                                        </p>
-                                        <p className="text-[10px] tracking-wider text-white/50 uppercase">
-                                            ICT Portal
-                                        </p>
-                                    </div>
+                {/* Clean Multi-Column Footer Architecture for USTP Balubal WBIMIS */}
+                <footer
+                    id="contact"
+                    className="border-t border-ustp-gold/20 bg-ustp-navy text-white"
+                >
+                    <div className="mx-auto max-w-7xl px-6 py-16 lg:px-8 lg:py-20">
+                        {/* Top System Identity Strip */}
+                        <div className="mb-14 flex flex-col items-start justify-between gap-6 border-b border-white/10 pb-10 sm:flex-row sm:items-center">
+                            <div className="flex items-center gap-3.5">
+                                <div className="flex size-11 items-center justify-center rounded-xl bg-white p-1.5 shadow-sm">
+                                    <img
+                                        src={ustpLogo}
+                                        alt="USTP Logo"
+                                        className="size-full object-contain"
+                                    />
                                 </div>
-                                <p className="mt-4 text-sm leading-relaxed text-white/50">
-                                    Web-Based ICT Management and Information
-                                    System for USTP Balubal Campus, Cagayan de
-                                    Oro City.
-                                </p>
-                                <div className="mt-4 flex gap-3">
-                                    <a
-                                        href="https://www.facebook.com/USTPBalubal"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        aria-label="USTP Balubal on Facebook"
-                                        className="flex size-9 items-center justify-center rounded-lg border border-white/10 text-white/50 transition-all hover:border-ustp-gold hover:text-ustp-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-ustp-gold"
-                                    >
-                                        <Facebook className="size-4" />
-                                    </a>
-                                    <a
-                                        href="mailto:balubal@ustp.edu.ph"
-                                        aria-label="Email USTP Balubal"
-                                        className="flex size-9 items-center justify-center rounded-lg border border-white/10 text-white/50 transition-all hover:border-ustp-gold hover:text-ustp-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-ustp-gold"
-                                    >
-                                        <Mail className="size-4" />
-                                    </a>
+                                <div>
+                                    <h3 className="font-serif text-base font-bold text-white">
+                                        USTP Balubal Campus
+                                    </h3>
+                                    <p className="text-xs font-medium text-ustp-gold">
+                                        Web-Based ICT Management and Information
+                                        System (WBIMIS)
+                                    </p>
                                 </div>
                             </div>
 
+                            <div className="flex items-center gap-3 text-xs text-white/60">
+                                <span>Cagayan de Oro City, Philippines</span>
+                                <span>&bull;</span>
+                                <span className="font-semibold text-emerald-400">
+                                    ● Systems Active
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* 6-Column Structured Grid */}
+                        <div className="grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-6 lg:gap-8">
+                            {/* Column 1: Services */}
                             <div>
-                                <h4 className="mb-4 text-sm font-bold tracking-wider text-ustp-gold uppercase">
-                                    System Modules
+                                <h4 className="text-xs font-bold tracking-wider text-ustp-gold uppercase">
+                                    Services
                                 </h4>
-                                <ul className="space-y-2.5">
-                                    {[
-                                        'Service Requests',
-                                        'Job Orders',
-                                        'Inventory',
-                                        'Facility Booking',
-                                        'Laboratory Incident Reports',
-                                        'Notifications',
-                                    ].map((link) => (
-                                        <li key={link}>
-                                            <a
-                                                href="#modules"
-                                                className="text-sm text-white/50 transition-colors hover:text-ustp-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-ustp-gold"
-                                            >
-                                                {link}
-                                            </a>
-                                        </li>
-                                    ))}
+                                <ul className="mt-4 space-y-3 text-sm text-white/70">
+                                    <li>
+                                        <a
+                                            href="#modules"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Service Requests
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#modules"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Job Order Dispatch
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#modules"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            SLA Monitoring
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#modules"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Facility Booking
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#modules"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Email & MS 365
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#modules"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Lab Incidents
+                                        </a>
+                                    </li>
                                 </ul>
                             </div>
 
+                            {/* Column 2: System Features */}
                             <div>
-                                <h4 className="mb-4 text-sm font-bold tracking-wider text-ustp-gold uppercase">
-                                    Contact
+                                <h4 className="text-xs font-bold tracking-wider text-ustp-gold uppercase">
+                                    Features
                                 </h4>
-                                <ul className="space-y-2.5 text-sm text-white/50">
-                                    <li className="flex items-start gap-2">
-                                        <MapPin className="mt-0.5 size-4 shrink-0 text-ustp-gold/60" />
-                                        <span>
-                                            Balubal, Cagayan de Oro City,
-                                            Philippines
-                                        </span>
+                                <ul className="mt-4 space-y-3 text-sm text-white/70">
+                                    <li>
+                                        <a
+                                            href="#modules"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Equipment Inventory
+                                        </a>
                                     </li>
-                                    <li className="flex items-center gap-2">
-                                        <Phone className="size-4 shrink-0 text-ustp-gold/60" />
-                                        <span>+63 88 856 1234</span>
+                                    <li>
+                                        <a
+                                            href="#modules"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Defect Lifecycle
+                                        </a>
                                     </li>
-                                    <li className="flex items-center gap-2">
-                                        <Mail className="size-4 shrink-0 text-ustp-gold/60" />
+                                    <li>
+                                        <a
+                                            href="#modules"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            QR Asset Tagging
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#modules"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Schedule Overlaps
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#modules"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Liability Settlement
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#modules"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Brevo Email Alerts
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            {/* Column 3: Portals */}
+                            <div>
+                                <h4 className="text-xs font-bold tracking-wider text-ustp-gold uppercase">
+                                    Portals
+                                </h4>
+                                <ul className="mt-4 space-y-3 text-sm text-white/70">
+                                    <li>
+                                        <Link
+                                            href={facultyLogin().url}
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Faculty & Staff
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href={studentLogin().url}
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Student Portal
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href={adminLogin().url}
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            ICT Administrator
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href={register()}
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Faculty Registration
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href={
+                                                register({
+                                                    query: { role: 'student' },
+                                                }).url
+                                            }
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Student Registration
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href={login()}
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Portal Selection
+                                        </Link>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            {/* Column 4: Resources */}
+                            <div>
+                                <h4 className="text-xs font-bold tracking-wider text-ustp-gold uppercase">
+                                    Resources
+                                </h4>
+                                <ul className="mt-4 space-y-3 text-sm text-white/70">
+                                    <li>
+                                        <a
+                                            href="#how-it-works"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Registration Flow
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#how-it-works"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            COR Verification
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#how-it-works"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Email OTP Setup
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#roles"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Role Privileges
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#modules"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Service Catalog
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="#modules"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Form FM-USTP-ICT-001
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            {/* Column 5: Campus Office */}
+                            <div>
+                                <h4 className="text-xs font-bold tracking-wider text-ustp-gold uppercase">
+                                    Campus Office
+                                </h4>
+                                <ul className="mt-4 space-y-3 text-sm text-white/70">
+                                    <li>
+                                        <span>Balubal Campus</span>
+                                    </li>
+                                    <li>
+                                        <span>Cagayan de Oro City</span>
+                                    </li>
+                                    <li>
+                                        <span>Misamis Oriental, 9000</span>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="tel:+63888561234"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            +63 88 856 1234
+                                        </a>
+                                    </li>
+                                    <li>
                                         <a
                                             href="mailto:balubal@ustp.edu.ph"
-                                            className="transition-colors hover:text-ustp-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-ustp-gold"
+                                            className="transition-colors hover:text-ustp-gold"
                                         >
                                             balubal@ustp.edu.ph
                                         </a>
                                     </li>
                                 </ul>
-                                <div className="mt-6 flex gap-3">
-                                    <a
-                                        href="mailto:balubal@ustp.edu.ph?subject=ICT%20Portal%20Feedback"
-                                        className="rounded-lg border border-ustp-gold/40 px-4 py-2 text-xs font-bold tracking-wider text-ustp-gold uppercase transition-all hover:bg-ustp-gold hover:text-ustp-navy focus:outline-none focus-visible:ring-2 focus-visible:ring-ustp-gold"
-                                    >
-                                        Feedback
-                                    </a>
-                                </div>
+                            </div>
+
+                            {/* Column 6: Legal & Socials */}
+                            <div>
+                                <h4 className="text-xs font-bold tracking-wider text-ustp-gold uppercase">
+                                    Legal
+                                </h4>
+                                <ul className="mt-4 space-y-3 text-sm text-white/70">
+                                    <li>
+                                        <Link
+                                            href="/terms"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Terms of Service
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href="/privacy-policy"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Privacy Policy
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href="/data-privacy"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Data Privacy (RA 10173)
+                                        </Link>
+                                    </li>
+                                    <li>
+                                        <Link
+                                            href="/acceptable-use"
+                                            className="transition-colors hover:text-ustp-gold"
+                                        >
+                                            Acceptable Use Policy
+                                        </Link>
+                                    </li>
+                                </ul>
+
+                                <h4 className="mt-8 text-xs font-bold tracking-wider text-ustp-gold uppercase">
+                                    Socials
+                                </h4>
+                                <ul className="mt-3 space-y-2.5 text-sm text-white/70">
+                                    <li>
+                                        <a
+                                            href="https://www.facebook.com/USTPBalubal"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="group flex items-center gap-2.5 transition-colors hover:text-ustp-gold"
+                                        >
+                                            <span className="flex size-6 items-center justify-center rounded-md bg-white/10 transition-colors group-hover:bg-ustp-gold/20">
+                                                <svg
+                                                    className="size-3.5 fill-current"
+                                                    viewBox="0 0 24 24"
+                                                    aria-hidden="true"
+                                                >
+                                                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                                                </svg>
+                                            </span>
+                                            <span>Facebook</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="mailto:balubal@ustp.edu.ph"
+                                            className="group flex items-center gap-2.5 transition-colors hover:text-ustp-gold"
+                                        >
+                                            <span className="flex size-6 items-center justify-center rounded-md bg-white/10 transition-colors group-hover:bg-ustp-gold/20">
+                                                <Mail className="size-3.5" />
+                                            </span>
+                                            <span>Campus Email</span>
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a
+                                            href="https://www.ustp.edu.ph"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="group flex items-center gap-2.5 transition-colors hover:text-ustp-gold"
+                                        >
+                                            <span className="flex size-6 items-center justify-center rounded-md bg-white/10 transition-colors group-hover:bg-ustp-gold/20">
+                                                <Globe className="size-3.5" />
+                                            </span>
+                                            <span>USTP Website</span>
+                                        </a>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
-                    </div>
 
-                    <div className="border-t border-white/10">
-                        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 px-6 py-5 sm:flex-row">
-                            <p className="text-xs text-white/30">
-                                &copy; {new Date().getFullYear()} USTP Balubal
-                                ICT Portal. All rights reserved.
+                        {/* Bottom Bar */}
+                        <div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-white/10 pt-8 text-xs text-white/50 sm:flex-row">
+                            <p>
+                                &copy; {new Date().getFullYear()} University of
+                                Science and Technology of Southern Philippines —
+                                Balubal Campus.
                             </p>
-                            <p className="text-xs text-white/30">
-                                University of Science and Technology of Southern
-                                Philippines
+                            <p>
+                                Web-Based ICT Management and Information System
+                                &bull; BSIT Capstone Project
                             </p>
                         </div>
                     </div>

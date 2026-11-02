@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowUpRight,
+    BookOpen,
     Calendar,
     Clock,
     ClipboardList,
@@ -12,7 +13,7 @@ import {
     Wrench,
 } from 'lucide-react';
 
-type Period = 'week' | 'month' | 'year';
+type Period = 'month' | 'year';
 
 type RecentRequest = {
     id: number;
@@ -396,7 +397,13 @@ export default function Dashboard({
     recentBookings,
 }: Props) {
     const { auth } = usePage().props as any;
-    const userName = auth?.user?.name?.split(' ')[0] ?? 'User';
+    const user = auth?.user;
+    const userName = user?.name?.split(' ')[0] ?? 'User';
+    const userRole: string =
+        (user?.role?.name as string) ??
+        (isAdmin ? 'Administrator' : 'Faculty / Staff');
+    const position: string = (user?.position as string) ?? '';
+    const department: string = (user?.department as string) ?? '';
 
     const today = new Date().toLocaleDateString('en-US', {
         weekday: 'long',
@@ -405,7 +412,45 @@ export default function Dashboard({
         day: 'numeric',
     });
 
-    const activePeriod: Period = period ?? 'year';
+    const hour = new Date().getHours();
+    const greeting =
+        hour < 12
+            ? 'Good morning'
+            : hour < 17
+              ? 'Good afternoon'
+              : 'Good evening';
+
+    const activePeriod: Period = period ?? 'month';
+
+    // ── Quick actions (Faculty/Staff only) ──
+    const quickActions = !isAdmin
+        ? [
+              {
+                  label: 'New Service Request',
+                  href: '/requests/create',
+                  icon: FileText,
+                  color: 'bg-ustp-navy text-white hover:bg-ustp-navy/90',
+              },
+              {
+                  label: 'Book a Facility',
+                  href: '/bookings/create',
+                  icon: Calendar,
+                  color: 'bg-ustp-gold text-ustp-navy hover:bg-ustp-gold/90',
+              },
+              {
+                  label: 'Report an Incident',
+                  href: '/incidents/create',
+                  icon: AlertTriangle,
+                  color: 'bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50',
+              },
+              {
+                  label: 'View My Requests',
+                  href: '/requests',
+                  icon: BookOpen,
+                  color: 'bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50',
+              },
+          ]
+        : [];
 
     const adminCards =
         overview &&
@@ -420,8 +465,6 @@ export default function Dashboard({
                       sub: `${overview.serviceRequests.pending} pending`,
                       icon: FileText,
                       href: '/requests',
-                      color: 'text-ustp-navy',
-                      bg: 'bg-ustp-navy/5',
                   },
                   {
                       label: 'Job Orders',
@@ -429,8 +472,6 @@ export default function Dashboard({
                       sub: `${overview.jobOrders.inProgress} in progress · ${overview.jobOrders.unassigned} unassigned`,
                       icon: ClipboardList,
                       href: '/job-orders',
-                      color: 'text-amber-600',
-                      bg: 'bg-amber-50',
                   },
                   {
                       label: 'ICT Inventory',
@@ -438,8 +479,6 @@ export default function Dashboard({
                       sub: `${overview.inventory.defective} defective`,
                       icon: Package,
                       href: '/inventory',
-                      color: 'text-ustp-light-blue',
-                      bg: 'bg-ustp-light-blue/10',
                   },
                   {
                       label: 'Facility Bookings',
@@ -447,8 +486,6 @@ export default function Dashboard({
                       sub: `${overview.bookings.pending} pending`,
                       icon: Calendar,
                       href: '/bookings',
-                      color: 'text-emerald-600',
-                      bg: 'bg-emerald-50',
                   },
                   {
                       label: 'Lab Incidents',
@@ -456,8 +493,6 @@ export default function Dashboard({
                       sub: `${overview.incidents.unresolved} unresolved`,
                       icon: AlertTriangle,
                       href: '/incidents',
-                      color: 'text-rose-600',
-                      bg: 'bg-rose-50',
                   },
                   {
                       label: 'Pending Actions',
@@ -465,8 +500,6 @@ export default function Dashboard({
                       sub: 'Needs attention',
                       icon: Clock,
                       href: '/requests/approvals',
-                      color: 'text-orange-600',
-                      bg: 'bg-orange-50',
                   },
               ]
             : [];
@@ -479,8 +512,6 @@ export default function Dashboard({
                   sub: `${overview.serviceRequests.pending} pending`,
                   icon: FileText,
                   href: '/requests',
-                  color: 'text-ustp-navy',
-                  bg: 'bg-ustp-navy/5',
               },
               ...(overview.bookings
                   ? [
@@ -490,8 +521,6 @@ export default function Dashboard({
                             sub: `${overview.bookings.pending} pending`,
                             icon: Calendar,
                             href: '/bookings',
-                            color: 'text-emerald-600',
-                            bg: 'bg-emerald-50',
                         },
                     ]
                   : []),
@@ -503,8 +532,6 @@ export default function Dashboard({
                             sub: `${overview.incidents.unresolved} unresolved`,
                             icon: AlertTriangle,
                             href: '/incidents',
-                            color: 'text-rose-600',
-                            bg: 'bg-rose-50',
                         },
                     ]
                   : []),
@@ -516,8 +543,6 @@ export default function Dashboard({
                             sub: 'awaiting completion',
                             icon: Layers,
                             href: '/requests',
-                            color: 'text-ustp-light-blue',
-                            bg: 'bg-ustp-light-blue/10',
                         },
                     ]
                   : []),
@@ -529,8 +554,6 @@ export default function Dashboard({
                             sub: 'resolved successfully',
                             icon: ClipboardList,
                             href: '/requests',
-                            color: 'text-teal-600',
-                            bg: 'bg-teal-50',
                         },
                     ]
                   : []),
@@ -540,8 +563,6 @@ export default function Dashboard({
                   sub: 'Needs attention',
                   icon: Clock,
                   href: '/requests',
-                  color: 'text-orange-600',
-                  bg: 'bg-orange-50',
               },
           ]
         : [];
@@ -556,31 +577,26 @@ export default function Dashboard({
                     label: 'Booking approvals',
                     value: pendingActions.bookingApprovals ?? 0,
                     href: '/bookings/approvals',
-                    bar: 'bg-emerald-500',
                 },
                 {
                     label: 'Service request approvals',
                     value: pendingActions.requestApprovals,
                     href: '/requests/approvals',
-                    bar: 'bg-ustp-light-blue',
                 },
                 {
                     label: 'Job orders in progress',
                     value: pendingActions.jobOrdersInProgress ?? 0,
                     href: '/job-orders/progress',
-                    bar: 'bg-amber-500',
                 },
                 {
                     label: 'Overdue job orders (SLA)',
                     value: pendingActions.overdueJobOrders ?? 0,
                     href: '/job-orders/progress',
-                    bar: 'bg-red-500',
                 },
                 {
                     label: 'Unresolved incidents',
                     value: pendingActions.incidentsUnresolved ?? 0,
                     href: '/incidents',
-                    bar: 'bg-rose-500',
                 },
             ]
           : [
@@ -588,7 +604,6 @@ export default function Dashboard({
                     label: 'Requests awaiting approval',
                     value: pendingActions.requestApprovals,
                     href: '/requests',
-                    bar: 'bg-ustp-light-blue',
                 },
                 ...(pendingActions.bookingApprovals !== undefined
                     ? [
@@ -596,7 +611,6 @@ export default function Dashboard({
                               label: 'Bookings awaiting approval',
                               value: pendingActions.bookingApprovals,
                               href: '/bookings',
-                              bar: 'bg-emerald-500',
                           },
                       ]
                     : []),
@@ -606,7 +620,6 @@ export default function Dashboard({
                               label: 'Open incidents',
                               value: pendingActions.incidentsUnresolved,
                               href: '/incidents',
-                              bar: 'bg-rose-500',
                           },
                       ]
                     : []),
@@ -616,7 +629,6 @@ export default function Dashboard({
                               label: 'Rejected requests',
                               value: pendingActions.rejectedRequests,
                               href: '/requests',
-                              bar: 'bg-red-500',
                           },
                       ]
                     : []),
@@ -631,8 +643,6 @@ export default function Dashboard({
                   value: inventoryAlerts.expiringSoon,
                   href: '/inventory/expirations',
                   icon: Clock,
-                  color: 'text-amber-600',
-                  bg: 'bg-amber-50',
               },
               {
                   label: 'Expired',
@@ -640,8 +650,6 @@ export default function Dashboard({
                   value: inventoryAlerts.expired,
                   href: '/inventory/expirations',
                   icon: AlertTriangle,
-                  color: 'text-red-600',
-                  bg: 'bg-red-50',
               },
               {
                   label: 'Defective Equipment',
@@ -649,8 +657,6 @@ export default function Dashboard({
                   value: inventoryAlerts.defective,
                   href: '/inventory/defective',
                   icon: Wrench,
-                  color: 'text-rose-600',
-                  bg: 'bg-rose-50',
               },
               {
                   label: 'Under Repair',
@@ -658,8 +664,6 @@ export default function Dashboard({
                   value: inventoryAlerts.underRepair,
                   href: '/inventory/under-repair',
                   icon: Package,
-                  color: 'text-ustp-light-blue',
-                  bg: 'bg-ustp-light-blue/10',
               },
           ]
         : [];
@@ -669,89 +673,142 @@ export default function Dashboard({
             <Head title="Dashboard" />
             <div className="min-h-full flex-1 bg-slate-50 text-slate-800">
                 <div className="relative flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:p-8">
-                    {/* ── Welcome header ── */}
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                                Dashboard Overview
-                            </h1>
+                    {/* ── Greeting Banner ── */}
+                    <div className="relative overflow-hidden rounded-2xl bg-ustp-navy px-6 py-6 shadow-lg shadow-ustp-navy/20 sm:px-8 sm:py-7">
+                        {/* subtle dot pattern */}
+                        <div
+                            className="pointer-events-none absolute inset-0 opacity-[0.04]"
+                            style={{
+                                backgroundImage:
+                                    'radial-gradient(circle, #fcb315 1px, transparent 1px)',
+                                backgroundSize: '28px 28px',
+                            }}
+                        />
+                        {/* gold bottom accent */}
+                        <div className="absolute right-0 bottom-0 left-0 h-1 bg-ustp-gold" />
 
-                            <p className="mt-1.5 max-w-lg text-sm text-slate-500">
-                                {`Welcome back, ${userName}. Here\u2019s what needs your attention.`}
-                            </p>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-3">
-                            <div className="flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 shadow-sm">
-                                {(['week', 'month', 'year'] as const).map(
-                                    (value) => (
-                                        <button
-                                            key={value}
-                                            type="button"
-                                            onClick={() =>
-                                                router.get(
-                                                    '/dashboard',
-                                                    { period: value },
-                                                    {
-                                                        preserveScroll: true,
-                                                        preserveState: true,
-                                                    },
-                                                )
-                                            }
-                                            className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                                                activePeriod === value
-                                                    ? 'bg-ustp-navy text-white'
-                                                    : 'text-slate-500 hover:bg-slate-100'
-                                            }`}
-                                        >
-                                            {value === 'week'
-                                                ? 'This Week'
-                                                : value === 'month'
-                                                  ? 'This Month'
-                                                  : 'This Year'}
-                                        </button>
-                                    ),
-                                )}
+                        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <div className="mb-1 flex flex-wrap items-center gap-2">
+                                    <span className="inline-flex items-center rounded-full border border-ustp-gold/40 bg-ustp-gold/10 px-3 py-0.5 text-xs font-semibold tracking-wider text-ustp-gold uppercase">
+                                        {userRole}
+                                    </span>
+                                    {position && (
+                                        <span className="text-xs text-white/50">
+                                            {position}
+                                        </span>
+                                    )}
+                                    {department && (
+                                        <span className="text-xs text-white/50">
+                                            · {department}
+                                        </span>
+                                    )}
+                                </div>
+                                <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                                    {greeting},{' '}
+                                    <span className="text-ustp-gold">
+                                        {userName}!
+                                    </span>
+                                </h1>
+                                <p className="mt-1 text-sm text-white/60">
+                                    {today}
+                                </p>
                             </div>
 
-                            <div className="flex items-center gap-2 text-sm text-slate-500">
-                                <Clock className="size-4" />
-                                {today}
+                            {/* Period filter */}
+                            <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1">
+                                {(['month', 'year'] as const).map((value) => (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        onClick={() =>
+                                            router.get(
+                                                '/dashboard',
+                                                { period: value },
+                                                {
+                                                    preserveScroll: true,
+                                                    preserveState: true,
+                                                },
+                                            )
+                                        }
+                                        className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${
+                                            activePeriod === value
+                                                ? 'bg-ustp-gold text-ustp-navy'
+                                                : 'text-white/60 hover:bg-white/10 hover:text-white'
+                                        }`}
+                                    >
+                                        {value === 'month'
+                                            ? 'Monthly'
+                                            : 'Yearly'}
+                                    </button>
+                                ))}
                             </div>
                         </div>
                     </div>
+
+                    {/* ── Quick Actions (Faculty/Staff only) ── */}
+                    {quickActions.length > 0 && (
+                        <div>
+                            <h2 className="mb-3 text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                                Quick Actions
+                            </h2>
+                            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                                {quickActions.map((action) => (
+                                    <Link
+                                        key={action.label}
+                                        href={action.href}
+                                        className={`flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-semibold shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${action.color}`}
+                                    >
+                                        <action.icon className="size-4 shrink-0" />
+                                        <span className="leading-tight">
+                                            {action.label}
+                                        </span>
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* ── Stat cards ── */}
-                    <div
-                        className={`grid grid-cols-2 gap-4 ${cards.length >= 5 ? 'lg:grid-cols-3' : 'lg:max-w-2xl'}`}
-                    >
-                        {cards.map((card) => (
-                            <Link
-                                key={card.label}
-                                href={card.href}
-                                className="group overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:border-slate-300 hover:shadow-md"
+                    {cards.length > 0 && (
+                        <div>
+                            <h2 className="mb-3 text-xs font-semibold tracking-wider text-slate-400 uppercase">
+                                Overview
+                            </h2>
+                            <div
+                                className={`grid grid-cols-2 gap-4 ${cards.length >= 5 ? 'lg:grid-cols-3' : 'lg:max-w-2xl'}`}
                             >
-                                <div className="flex items-start justify-between gap-3">
-                                    <p className="text-sm font-medium text-slate-600">
-                                        {card.label}
-                                    </p>
-                                    <div
-                                        className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${card.bg}`}
+                                {cards.map((card) => (
+                                    <Link
+                                        key={card.label}
+                                        href={card.href}
+                                        className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
                                     >
-                                        <card.icon
-                                            className={`size-4 ${card.color}`}
-                                        />
-                                    </div>
-                                </div>
-                                <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-800">
-                                    {card.value}
-                                </p>
-                                <p className="mt-1.5 text-xs text-slate-400 group-hover:text-slate-500">
-                                    {card.sub}
-                                </p>
-                            </Link>
-                        ))}
-                    </div>
+                                        {/* subtle top accent bar */}
+                                        <div className="absolute inset-x-0 top-0 h-0.5 bg-ustp-gold" />
+                                        <div className="flex items-start justify-between gap-3">
+                                            <p className="text-sm font-medium text-slate-500">
+                                                {card.label}
+                                            </p>
+                                            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-ustp-navy/5">
+                                                <card.icon className="size-5 text-ustp-navy" />
+                                            </div>
+                                        </div>
+                                        <p className="mt-4 text-4xl font-bold tracking-tight text-slate-800">
+                                            {card.value}
+                                        </p>
+                                        <div className="mt-2 flex items-center gap-1.5">
+                                            <span className="size-1.5 rounded-full bg-ustp-gold" />
+                                            <p className="text-xs text-slate-400 group-hover:text-slate-500">
+                                                {card.sub}
+                                            </p>
+                                        </div>
+                                        <ArrowUpRight className="absolute right-4 bottom-4 size-4 text-slate-200 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-slate-400" />
+                                    </Link>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* ── Activity chart + Pending actions ── */}
                     {actionRows.length > 0 && (
@@ -819,7 +876,7 @@ export default function Dashboard({
                                             </div>
                                             <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                                                 <div
-                                                    className={`h-full rounded-full transition-all duration-700 ${row.bar}`}
+                                                    className="h-full rounded-full bg-ustp-navy transition-all duration-700"
                                                     style={{
                                                         width: `${(row.value / maxActionValue) * 100}%`,
                                                     }}
@@ -864,12 +921,8 @@ export default function Dashboard({
                                         href={row.href}
                                         className="group flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50/60 p-4 transition-all hover:border-slate-300 hover:bg-white hover:shadow-sm"
                                     >
-                                        <div
-                                            className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${row.bg}`}
-                                        >
-                                            <row.icon
-                                                className={`size-4 ${row.color}`}
-                                            />
+                                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-slate-100">
+                                            <row.icon className="size-4 text-slate-600" />
                                         </div>
                                         <div className="min-w-0">
                                             <p className="truncate text-xs font-semibold text-slate-700 group-hover:text-slate-900">

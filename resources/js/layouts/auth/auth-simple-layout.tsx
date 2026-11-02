@@ -19,9 +19,19 @@ export default function AuthSimpleLayout({
     const Icon = icon;
 
     return (
-        <div className="flex min-h-svh items-start justify-center bg-linear-to-br from-ustp-gray/70 via-background to-ustp-gray/30 px-2 py-3 sm:items-center sm:px-6 sm:py-12 dark:from-neutral-950 dark:to-neutral-900">
+        <div
+            className="relative flex min-h-svh items-start justify-center px-2 py-3 sm:items-center sm:px-6 sm:py-12"
+            style={{
+                backgroundImage: "url('/images/ustp-building.jpg')",
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+            }}
+        >
+            {/* Dark overlay for readability */}
+            <div className="pointer-events-none absolute inset-0 bg-ustp-navy/60 backdrop-blur-[2px]" />
             <div
-                className={`w-full min-w-0 overflow-hidden rounded-2xl border border-border bg-background shadow-xl shadow-ustp-navy/5 sm:rounded-3xl ${
+                className={`relative z-10 w-full min-w-0 overflow-hidden rounded-2xl border border-border bg-background shadow-xl shadow-ustp-navy/5 sm:rounded-3xl ${
                     wide ? 'max-w-2xl' : 'max-w-lg'
                 }`}
             >
