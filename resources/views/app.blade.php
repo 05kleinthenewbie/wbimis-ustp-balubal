@@ -40,7 +40,11 @@
                 $css = $manifest['resources/css/app.css']['file'] ?? null;
                 $appJs = $manifest['resources/js/app.tsx']['file'] ?? null;
                 $pageFile = $manifest["resources/js/pages/{$page['component']}.tsx"]['file'] ?? null;
-                $fontsCss = $manifest['_fonts-HDTwTRsm.css']['file'] ?? null;
+
+                $fontsManifest = public_path('build/fonts-manifest.json');
+                $fontsCss = is_file($fontsManifest)
+                    ? (json_decode(file_get_contents($fontsManifest), true)['style']['file'] ?? null)
+                    : null;
             @endphp
             @if($css)<link rel="stylesheet" href="{{ asset("build/{$css}") }}">@endif
             @if($fontsCss)<link rel="stylesheet" href="{{ asset("build/{$fontsCss}") }}">@endif

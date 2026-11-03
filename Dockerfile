@@ -21,7 +21,29 @@ RUN apt-get update \
         zip \
     && curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - \
     && apt-get install -y --no-install-recommends nodejs \
-    && a2enmod rewrite \
+    && a2enmod rewrite deflate filter expires headers \
+    && printf '%s\n' \
+        '<IfModule mod_deflate.c>' \
+        '    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml text/javascript application/javascript application/json application/xml image/svg+xml' \
+        '</IfModule>' \
+        '<IfModule mod_expires.c>' \
+        '    ExpiresActive On' \
+        '    ExpiresByType text/css "access plus 1 month"' \
+        '    ExpiresByType text/javascript "access plus 1 month"' \
+        '    ExpiresByType application/javascript "access plus 1 month"' \
+        '    ExpiresByType image/svg+xml "access plus 1 month"' \
+        '    ExpiresByType image/png "access plus 1 month"' \
+        '    ExpiresByType image/jpeg "access plus 1 month"' \
+        '    ExpiresByType font/woff2 "access plus 1 year"' \
+        '    ExpiresByType font/woff "access plus 1 year"' \
+        '</IfModule>' \
+        '<IfModule mod_headers.c>' \
+        '    <Directory /var/www/html/public/build>' \
+        '        Header set Cache-Control "public, max-age=31536000, immutable"' \
+        '    </Directory>' \
+        '</IfModule>' \
+        > /etc/apache2/conf-available/performance.conf \
+    && a2enconf performance \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
