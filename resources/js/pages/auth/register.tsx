@@ -421,14 +421,14 @@ export default function Register({ passwordRules }: Props) {
                                                     <SelectValue placeholder="Select educational level" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="college">
-                                                        College
-                                                    </SelectItem>
                                                     <SelectItem value="senior_high">
-                                                        Senior High School
+                                                        Senior High
+                                                    </SelectItem>
+                                                    <SelectItem value="college">
+                                                        Undergraduate
                                                     </SelectItem>
                                                     <SelectItem value="graduate">
-                                                        Graduate Studies
+                                                        Graduate
                                                     </SelectItem>
                                                 </SelectContent>
                                             </Select>
