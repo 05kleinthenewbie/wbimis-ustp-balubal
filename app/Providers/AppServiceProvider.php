@@ -5,13 +5,18 @@ namespace App\Providers;
 use App\Events\UserApproved;
 use App\Listeners\Auth\SendAccountApprovedEmailViaBrevo;
 use App\Listeners\Auth\SendWelcomeEmailViaBrevo;
+use App\Models\Notification;
+use App\Observers\NotificationObserver;
 use Carbon\CarbonImmutable;
+use GuzzleHttp\Client;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Minishlink\WebPush\WebPush;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -20,7 +25,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(WebPush::class, fn (): WebPush => new WebPush([
+            'VAPID' => [
+                'subject' => config('services.webpush.subject'),
+                'publicKey' => config('services.webpush.public_key'),
+                'privateKey' => config('services.webpush.private_key'),
+            ],
+        ], ['TTL' => 86400, 'urgency' => 'normal'], new Client([
+            'timeout' => 10,
+            'connect_timeout' => 5,
+            'allow_redirects' => false,
+        ])));
     }
 
     /**
@@ -29,6 +44,14 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        Notification::observe(NotificationObserver::class);
+        Event::listen(Logout::class, function (Logout $event): void {
+            $hash = request()->cookie('push_subscription');
+            if ($event->user !== null && is_string($hash)) {
+                DB::table('push_subscriptions')->where('user_id', $event->user->getAuthIdentifier())
+                    ->where('endpoint_hash', $hash)->delete();
+            }
+        });
 
         Event::listen(Registered::class, SendWelcomeEmailViaBrevo::class);
         Event::listen(UserApproved::class, SendAccountApprovedEmailViaBrevo::class);

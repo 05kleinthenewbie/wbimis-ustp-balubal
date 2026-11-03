@@ -211,17 +211,6 @@ export default function UsersIndex({
 
             <div className="min-h-full flex-1 bg-slate-50 text-slate-800">
                 <div className="relative flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:p-8">
-                    {/* Header */}
-                    <div className="relative">
-                        <h1 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                            User Management
-                        </h1>
-
-                        <p className="mt-1.5 max-w-xl text-sm text-slate-400">
-                            Review and approve new account registrations.
-                        </p>
-                    </div>
-
                     {status && (
                         <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                             {status}

@@ -117,19 +117,7 @@ export default function BookingsIndex({
 
             <div className="min-h-full flex-1 bg-slate-50 text-slate-800">
                 <div className="relative flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:p-8">
-                    {/* Header */}
-                    <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                                Facility Booking
-                            </h1>
-
-                            <p className="mt-1.5 max-w-xl text-sm text-slate-500">
-                                Reserve computer labs and AV rooms for your
-                                activities.
-                            </p>
-                        </div>
-
+                    <div className="flex justify-end">
                         <Button
                             asChild
                             className="h-10 bg-ustp-gold px-4 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white"

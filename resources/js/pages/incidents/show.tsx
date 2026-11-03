@@ -336,9 +336,9 @@ export default function IncidentsShow({
                                         </span>
                                     </div>
 
-                                    <h1 className="text-xl font-semibold tracking-tight text-slate-800 md:text-2xl">
+                                    <h2 className="text-xl font-semibold tracking-tight text-slate-800 md:text-2xl">
                                         {incident.incident_type}
-                                    </h1>
+                                    </h2>
 
                                     <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400">
                                         <span>

@@ -26,10 +26,11 @@ class ServiceRequestController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        $isAdmin = $user->role->role_name === 'ict_admin';
 
         $query = ServiceRequestModel::with(['user', 'requestServices.serviceType.category']);
 
-        if ($user->role->role_name !== 'ict_admin') {
+        if (! $isAdmin) {
             $query->where('user_id', $user->id);
         }
 
@@ -53,9 +54,9 @@ class ServiceRequestController extends Controller
                 ->oldest('date_requested');
         }
 
-        return Inertia::render('requests/index', [
+        return Inertia::render($isAdmin ? 'requests/index' : 'requests/my-requests', [
             'requests' => $query->paginate(25)->withQueryString(),
-            'isAdmin' => $user->role->role_name === 'ict_admin',
+            'isAdmin' => $isAdmin,
             'filters' => $request->only(['search', 'sort']),
         ]);
     }

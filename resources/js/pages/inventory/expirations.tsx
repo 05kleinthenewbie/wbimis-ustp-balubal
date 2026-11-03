@@ -176,10 +176,7 @@ export default function InventoryExpirations({
                 return false;
             }
 
-            if (
-                category !== 'all' &&
-                resolveCategory(item) !== category
-            ) {
+            if (category !== 'all' && resolveCategory(item) !== category) {
                 return false;
             }
 
@@ -213,14 +210,6 @@ export default function InventoryExpirations({
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                             <BackButton href="/inventory" />
-
-                            <h1 className="mt-3 text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                                Monitor Expiration
-                            </h1>
-
-                            <p className="mt-2 max-w-lg text-sm leading-relaxed text-slate-500">
-                                Track expiring and expired ICT items
-                            </p>
                         </div>
 
                         <Button
@@ -254,7 +243,9 @@ export default function InventoryExpirations({
 
                         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                             <div className="mb-3 flex items-center justify-between">
-                                <p className="text-xs text-slate-400">Expired</p>
+                                <p className="text-xs text-slate-400">
+                                    Expired
+                                </p>
                                 <div className="flex size-8 items-center justify-center rounded-lg bg-red-400/10 text-red-500">
                                     <AlertTriangle className="size-4" />
                                 </div>
@@ -347,7 +338,7 @@ export default function InventoryExpirations({
                                 {Object.entries(categoryGroups).map(
                                     ([group, options]) => (
                                         <SelectGroup key={group}>
-                                            <SelectLabel className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                            <SelectLabel className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                                                 {group}
                                             </SelectLabel>
                                             {options.map((c) => (
@@ -363,9 +354,7 @@ export default function InventoryExpirations({
 
                         <Select
                             value={expirationType}
-                            onValueChange={(value) =>
-                                setExpirationType(value)
-                            }
+                            onValueChange={(value) => setExpirationType(value)}
                         >
                             <SelectTrigger className={selectClass}>
                                 <SelectValue placeholder="All expiration types" />
@@ -404,9 +393,7 @@ export default function InventoryExpirations({
                                     const state = expiryState(
                                         item.expiration_date,
                                     );
-                                    const left = daysLeft(
-                                        item.expiration_date,
-                                    );
+                                    const left = daysLeft(item.expiration_date);
 
                                     return (
                                         <tr

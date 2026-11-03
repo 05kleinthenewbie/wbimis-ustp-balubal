@@ -9,6 +9,7 @@ use App\Http\Controllers\IncidentReportController;
 use App\Http\Controllers\InventoryItemController;
 use App\Http\Controllers\JobOrderController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\RegisterOtpController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ServiceRequestController;
@@ -54,6 +55,9 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('push-subscriptions/config', [PushSubscriptionController::class, 'show'])->name('push-subscriptions.show');
+    Route::post('push-subscriptions', [PushSubscriptionController::class, 'store'])->middleware('throttle:20,1')->name('push-subscriptions.store');
+    Route::delete('push-subscriptions', [PushSubscriptionController::class, 'destroy'])->middleware('throttle:20,1')->name('push-subscriptions.destroy');
     Route::get('/users/{user}/employment-document', [UserController::class, 'downloadEmploymentDocument'])->name('users.employment-document');
     Route::get('dashboard', DashboardController::class)->name('dashboard');
     Route::get('requests/approvals', [ServiceRequestController::class, 'approvals'])->name('requests.approvals');

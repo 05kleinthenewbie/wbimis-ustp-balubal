@@ -46,15 +46,6 @@ export default function MyLiabilities({ liabilities, filters }: Props) {
         <>
             <Head title="My Liabilities" />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-8">
-                <div>
-                    <h1 className="text-3xl font-semibold tracking-tight">
-                        My Liabilities
-                    </h1>
-                    <p className="mt-2 text-muted-foreground">
-                        Review and acknowledge laboratory incident liabilities
-                        assigned to you.
-                    </p>
-                </div>
                 <nav
                     aria-label="Filter liabilities"
                     className="flex flex-wrap gap-2"

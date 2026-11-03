@@ -53,15 +53,7 @@ export default function Notifications({
         <>
             <Head title="Notifications" />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-8">
-                <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-3xl font-semibold tracking-tight">
-                            Notifications
-                        </h1>
-                        <p className="mt-2 text-muted-foreground">
-                            Review updates and manage your notifications.
-                        </p>
-                    </div>
+                <div className="flex justify-end">
                     <Button
                         disabled={counts.unread === 0}
                         onClick={() =>

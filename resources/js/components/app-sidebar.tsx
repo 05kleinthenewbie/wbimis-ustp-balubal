@@ -4,6 +4,7 @@ import {
     Activity,
     UserCog,
     FileText,
+    FilePlus2,
     ClipboardList,
     Box,
     Calendar,
@@ -17,10 +18,14 @@ import {
     Users,
     Wrench,
     Bell,
+    Settings,
+    Shield,
+    Palette,
+    UserRound,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
-import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
+import { NavUser } from '@/components/nav-user';
 import {
     Sidebar,
     SidebarContent,
@@ -29,11 +34,14 @@ import {
     SidebarMenu,
     SidebarMenuButton,
     SidebarMenuItem,
-    SidebarSeparator,
 } from '@/components/ui/sidebar';
+import { edit as appearanceEdit } from '@/routes/appearance';
 import { index as incidentsIndex } from '@/routes/incidents';
 import { index as liabilitiesIndex } from '@/routes/liabilities';
 import { index as notificationsIndex } from '@/routes/notifications';
+import { edit as profileEdit } from '@/routes/profile';
+import { create as requestCreate } from '@/routes/requests';
+import { edit as securityEdit } from '@/routes/security';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {
@@ -140,7 +148,19 @@ export function AppSidebar() {
 
     const facultyStaffNavItems: NavItem[] = [
         { title: 'Dashboard', href: dashboardUrl, icon: LayoutGrid },
-        { title: 'My Service Requests', href: '/requests', icon: FileText },
+        {
+            title: 'Service Requests',
+            href: '/requests',
+            icon: FileText,
+            children: [
+                {
+                    title: 'New Request',
+                    href: requestCreate().url,
+                    icon: FilePlus2,
+                },
+                { title: 'My Requests', href: '/requests', icon: FileText },
+            ],
+        },
         {
             title: 'Facility Booking',
             href: '/bookings',
@@ -174,7 +194,19 @@ export function AppSidebar() {
 
     const studentNavItems: NavItem[] = [
         { title: 'Dashboard', href: dashboardUrl, icon: LayoutGrid },
-        { title: 'My Service Requests', href: '/requests', icon: FileText },
+        {
+            title: 'Service Requests',
+            href: '/requests',
+            icon: FileText,
+            children: [
+                {
+                    title: 'New Request',
+                    href: requestCreate().url,
+                    icon: FilePlus2,
+                },
+                { title: 'My Requests', href: '/requests', icon: FileText },
+            ],
+        },
         {
             title: 'Laboratory Incident Reports',
             href: incidentsIndex().url,
@@ -202,14 +234,56 @@ export function AppSidebar() {
         mainNavItems = adminNavItems;
     }
 
-    const footerNavItems: NavItem[] = [];
+    const communicationNavItems: NavItem[] = [
+        {
+            title: 'Notifications',
+            href: notificationsIndex().url,
+            icon: Bell,
+            badge: unreadCount,
+        },
+    ];
+
+    const accountNavItems: NavItem[] = [
+        {
+            title: 'Settings',
+            href: profileEdit().url,
+            icon: Settings,
+            children: [
+                {
+                    title: 'Account',
+                    href: profileEdit().url,
+                    icon: UserRound,
+                    children: [
+                        {
+                            title: 'Profile',
+                            href: profileEdit().url,
+                        },
+                    ],
+                },
+                {
+                    title: 'Security',
+                    href: securityEdit().url,
+                    icon: Shield,
+                },
+                {
+                    title: 'Appearance',
+                    href: appearanceEdit().url,
+                    icon: Palette,
+                },
+            ],
+        },
+    ];
 
     return (
-        <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader className="bg-ustp-navy">
+        <Sidebar collapsible="icon" variant="sidebar">
+            <SidebarHeader className="h-16 justify-center border-b border-ustp-gold/20 bg-ustp-navy px-3 py-0 group-data-[collapsible=icon]:h-12 group-data-[collapsible=icon]:px-1">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
+                        <SidebarMenuButton
+                            size="lg"
+                            asChild
+                            className="h-auto hover:bg-transparent"
+                        >
                             <Link href={dashboardUrl} prefetch>
                                 <AppLogo />
                             </Link>
@@ -218,26 +292,14 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarSeparator className="mx-3 my-1" />
-
-            <SidebarContent>
-                <NavMain
-                    items={[
-                        ...mainNavItems,
-                        {
-                            title: 'Notifications',
-                            href: notificationsIndex().url,
-                            icon: Bell,
-                            badge: unreadCount,
-                        },
-                    ]}
-                />
+            <SidebarContent className="py-2">
+                <NavMain items={mainNavItems} label="Main Menu" />
+                <NavMain items={communicationNavItems} label="Communication" />
+                <NavMain items={accountNavItems} label="Account" />
             </SidebarContent>
 
-            <SidebarSeparator className="mx-3 my-1" />
-
-            <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
+            <SidebarFooter className="mt-auto border-t border-slate-100 p-3 group-data-[collapsible=icon]:p-1">
+                <NavUser />
             </SidebarFooter>
         </Sidebar>
     );

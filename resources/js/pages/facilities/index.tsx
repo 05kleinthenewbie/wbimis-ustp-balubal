@@ -103,19 +103,7 @@ export default function FacilitiesIndex({
                         <BackButton href="/bookings" />
                     </div>
 
-                    {/* Header */}
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                                Facilities
-                            </h1>
-
-                            <p className="mt-1.5 max-w-xl text-sm text-slate-500">
-                                Manage bookable facilities for USTP Balubal
-                                Campus.
-                            </p>
-                        </div>
-
+                    <div className="flex justify-end">
                         <Button
                             asChild
                             className="h-10 bg-ustp-gold px-4 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white"

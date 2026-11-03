@@ -139,18 +139,6 @@ export default function RequestApprovals({ requests, stats }: Props) {
 
             <div className="min-h-full flex-1 bg-slate-50 text-slate-800">
                 <div className="relative flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:p-8">
-                    <div>
-                        <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                            <Clock3 className="size-7 text-ustp-gold" />
-                            Request Approvals
-                        </h1>
-
-                        <p className="mt-1.5 max-w-xl text-sm text-slate-500">
-                            Review pending ICT service requests, set a priority
-                            level, then approve or reject them.
-                        </p>
-                    </div>
-
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                         {[
                             {

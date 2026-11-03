@@ -704,12 +704,12 @@ export default function Dashboard({
                                         </span>
                                     )}
                                 </div>
-                                <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                                <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
                                     {greeting},{' '}
                                     <span className="text-ustp-gold">
                                         {userName}!
                                     </span>
-                                </h1>
+                                </h2>
                                 <p className="mt-1 text-sm text-white/60">
                                     {today}
                                 </p>

@@ -153,9 +153,9 @@ export default function BookingsShow({ booking, isAdmin, isOwner }: Props) {
                                             </span>
                                         </div>
 
-                                        <h1 className="text-xl font-semibold tracking-tight text-slate-800 md:text-2xl">
+                                        <h2 className="text-xl font-semibold tracking-tight text-slate-800 md:text-2xl">
                                             {booking.facility.facility_name}
-                                        </h1>
+                                        </h2>
 
                                         <p className="mt-1.5 text-xs text-slate-400">
                                             Requested by {booking.user.name}

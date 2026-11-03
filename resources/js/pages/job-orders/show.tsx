@@ -274,14 +274,14 @@ export default function JobOrdersShow({
                                             Job Order
                                         </span>
                                     </div>
-                                    <h1 className="text-xl font-semibold tracking-tight text-slate-800 md:text-2xl">
+                                    <h2 className="text-xl font-semibold tracking-tight text-slate-800 md:text-2xl">
                                         {jobOrder.service_request.request_services
                                             .map(
                                                 (s) =>
                                                     s.service_type.service_name,
                                             )
                                             .join(', ')}
-                                    </h1>
+                                    </h2>
                                     <p className="mt-1.5 text-xs text-slate-400">
                                         Requested by{' '}
                                         {jobOrder.service_request.user.name}

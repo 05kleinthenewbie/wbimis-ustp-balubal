@@ -39,11 +39,23 @@ type Props = {
     requests: ServiceRequestItem[] | { data: ServiceRequestItem[] };
 };
 
-const statusConfig: Record<string, { badge: string; icon: typeof CheckCircle2 }> = {
-    pending: { badge: 'border-amber-200 bg-amber-50 text-amber-700', icon: Clock3 },
-    approved: { badge: 'border-sky-200 bg-sky-50 text-sky-700', icon: CheckCircle2 },
+const statusConfig: Record<
+    string,
+    { badge: string; icon: typeof CheckCircle2 }
+> = {
+    pending: {
+        badge: 'border-amber-200 bg-amber-50 text-amber-700',
+        icon: Clock3,
+    },
+    approved: {
+        badge: 'border-sky-200 bg-sky-50 text-sky-700',
+        icon: CheckCircle2,
+    },
     rejected: { badge: 'border-red-200 bg-red-50 text-red-600', icon: XCircle },
-    completed: { badge: 'border-emerald-200 bg-emerald-50 text-emerald-700', icon: CheckCircle2 },
+    completed: {
+        badge: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+        icon: CheckCircle2,
+    },
 };
 
 const priorityBadge: Record<string, string> = {
@@ -63,10 +75,14 @@ export default function RequestsIndex({ requests }: Props) {
 
     const stats = {
         total: requestList.length,
-        pending: requestList.filter((r) => r.request_status === 'pending').length,
-        approved: requestList.filter((r) => r.request_status === 'approved').length,
-        rejected: requestList.filter((r) => r.request_status === 'rejected').length,
-        completed: requestList.filter((r) => r.request_status === 'completed').length,
+        pending: requestList.filter((r) => r.request_status === 'pending')
+            .length,
+        approved: requestList.filter((r) => r.request_status === 'approved')
+            .length,
+        rejected: requestList.filter((r) => r.request_status === 'rejected')
+            .length,
+        completed: requestList.filter((r) => r.request_status === 'completed')
+            .length,
     };
 
     const filteredRequests = requestList.filter((request) => {
@@ -86,10 +102,30 @@ export default function RequestsIndex({ requests }: Props) {
 
     const statusTabs = [
         { key: 'all', label: 'All', count: stats.total },
-        { key: 'pending', label: 'Pending', count: stats.pending, color: 'text-amber-600' },
-        { key: 'approved', label: 'Approved', count: stats.approved, color: 'text-sky-600' },
-        { key: 'completed', label: 'Completed', count: stats.completed, color: 'text-emerald-600' },
-        { key: 'rejected', label: 'Rejected', count: stats.rejected, color: 'text-red-600' },
+        {
+            key: 'pending',
+            label: 'Pending',
+            count: stats.pending,
+            color: 'text-amber-600',
+        },
+        {
+            key: 'approved',
+            label: 'Approved',
+            count: stats.approved,
+            color: 'text-sky-600',
+        },
+        {
+            key: 'completed',
+            label: 'Completed',
+            count: stats.completed,
+            color: 'text-emerald-600',
+        },
+        {
+            key: 'rejected',
+            label: 'Rejected',
+            count: stats.rejected,
+            color: 'text-red-600',
+        },
     ];
 
     const hasActiveFilter = statusFilter !== 'all' || search;
@@ -100,19 +136,7 @@ export default function RequestsIndex({ requests }: Props) {
 
             <div className="min-h-full flex-1 bg-slate-50 text-slate-800">
                 <div className="relative flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:p-8">
-                    {/* Header */}
-                    <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                                Service Requests
-                            </h1>
-
-                            <p className="mt-1.5 max-w-xl text-sm text-slate-500">
-                                Monitor and manage ICT service requests
-                                submitted by the campus community.
-                            </p>
-                        </div>
-
+                    <div className="flex justify-end">
                         <Button
                             asChild
                             className="h-10 bg-ustp-gold px-4 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white"
@@ -127,18 +151,46 @@ export default function RequestsIndex({ requests }: Props) {
                     {/* Stats Cards */}
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                         {[
-                            { label: 'Total Requests', value: stats.total, icon: FileText, color: 'text-ustp-navy', bg: 'bg-ustp-navy/5' },
-                            { label: 'Pending', value: stats.pending, icon: Clock3, color: 'text-amber-600', bg: 'bg-amber-50' },
-                            { label: 'Approved', value: stats.approved, icon: CheckCircle2, color: 'text-sky-600', bg: 'bg-sky-50' },
-                            { label: 'Completed', value: stats.completed, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+                            {
+                                label: 'Total Requests',
+                                value: stats.total,
+                                icon: FileText,
+                                color: 'text-ustp-navy',
+                                bg: 'bg-ustp-navy/5',
+                            },
+                            {
+                                label: 'Pending',
+                                value: stats.pending,
+                                icon: Clock3,
+                                color: 'text-amber-600',
+                                bg: 'bg-amber-50',
+                            },
+                            {
+                                label: 'Approved',
+                                value: stats.approved,
+                                icon: CheckCircle2,
+                                color: 'text-sky-600',
+                                bg: 'bg-sky-50',
+                            },
+                            {
+                                label: 'Completed',
+                                value: stats.completed,
+                                icon: CheckCircle2,
+                                color: 'text-emerald-600',
+                                bg: 'bg-emerald-50',
+                            },
                         ].map((card) => (
                             <div
                                 key={card.label}
                                 className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className={`flex size-10 items-center justify-center rounded-xl ${card.bg}`}>
-                                        <card.icon className={`size-5 ${card.color}`} />
+                                    <div
+                                        className={`flex size-10 items-center justify-center rounded-xl ${card.bg}`}
+                                    >
+                                        <card.icon
+                                            className={`size-5 ${card.color}`}
+                                        />
                                     </div>
                                     <div>
                                         <p className="text-2xl font-semibold text-slate-800">
@@ -166,11 +218,13 @@ export default function RequestsIndex({ requests }: Props) {
                                 }`}
                             >
                                 {tab.label}
-                                <span className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] ${
-                                    statusFilter === tab.key
-                                        ? 'bg-white/20 text-white'
-                                        : 'bg-slate-100 text-slate-500'
-                                }`}>
+                                <span
+                                    className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] ${
+                                        statusFilter === tab.key
+                                            ? 'bg-white/20 text-white'
+                                            : 'bg-slate-100 text-slate-500'
+                                    }`}
+                                >
                                     {tab.count}
                                 </span>
                             </button>
@@ -203,8 +257,9 @@ export default function RequestsIndex({ requests }: Props) {
                             {hasActiveFilter && (
                                 <button
                                     onClick={() => {
- setStatusFilter('all'); setSearch(''); 
-}}
+                                        setStatusFilter('all');
+                                        setSearch('');
+                                    }}
                                     className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700"
                                 >
                                     <X className="size-3" />
@@ -213,7 +268,8 @@ export default function RequestsIndex({ requests }: Props) {
                             )}
 
                             <div className="text-[11px] text-slate-400">
-                                {filteredRequests.length} request{filteredRequests.length !== 1 ? 's' : ''}
+                                {filteredRequests.length} request
+                                {filteredRequests.length !== 1 ? 's' : ''}
                             </div>
                         </div>
                     </div>
@@ -291,18 +347,29 @@ export default function RequestsIndex({ requests }: Props) {
                                                         <div className="min-w-0">
                                                             <div className="flex items-center gap-2">
                                                                 <span className="font-mono text-[10px] text-slate-400">
-                                                                    #{request.id}
+                                                                    #
+                                                                    {request.id}
                                                                 </span>
                                                             </div>
 
                                                             <p className="mt-0.5 truncate font-medium text-slate-800">
                                                                 {request.request_services
-                                                                    .map((s) => s.service_type.service_name)
-                                                                    .join(', ') || 'Service request'}
+                                                                    .map(
+                                                                        (s) =>
+                                                                            s
+                                                                                .service_type
+                                                                                .service_name,
+                                                                    )
+                                                                    .join(
+                                                                        ', ',
+                                                                    ) ||
+                                                                    'Service request'}
                                                             </p>
 
                                                             <p className="mt-1 max-w-80 truncate text-xs text-slate-400">
-                                                                {request.problem_description}
+                                                                {
+                                                                    request.problem_description
+                                                                }
                                                             </p>
                                                         </div>
                                                     </div>
@@ -316,11 +383,16 @@ export default function RequestsIndex({ requests }: Props) {
 
                                                 <td className="px-5 py-4">
                                                     <span className="text-xs text-slate-500">
-                                                        {new Date(request.date_requested).toLocaleDateString('en-US', {
-                                                            month: 'short',
-                                                            day: 'numeric',
-                                                            year: 'numeric',
-                                                        })}
+                                                        {new Date(
+                                                            request.date_requested,
+                                                        ).toLocaleDateString(
+                                                            'en-US',
+                                                            {
+                                                                month: 'short',
+                                                                day: 'numeric',
+                                                                year: 'numeric',
+                                                            },
+                                                        )}
                                                     </span>
                                                 </td>
 
@@ -328,7 +400,8 @@ export default function RequestsIndex({ requests }: Props) {
                                                     <span
                                                         className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium capitalize ${priorityBadge[request.priority_level ?? ''] ?? 'border-slate-200 bg-slate-50 text-slate-500'}`}
                                                     >
-                                                        {request.priority_level ?? 'Not set'}
+                                                        {request.priority_level ??
+                                                            'Not set'}
                                                     </span>
                                                 </td>
 
@@ -373,17 +446,24 @@ export default function RequestsIndex({ requests }: Props) {
                                                     <div className="min-w-0">
                                                         <p className="truncate font-medium text-slate-800">
                                                             {request.request_services
-                                                                .map((s) => s.service_type.service_name)
-                                                                .join(', ') || 'Service request'}
+                                                                .map(
+                                                                    (s) =>
+                                                                        s
+                                                                            .service_type
+                                                                            .service_name,
+                                                                )
+                                                                .join(', ') ||
+                                                                'Service request'}
                                                         </p>
                                                         <p className="mt-0.5 text-xs text-slate-400">
-                                                            #{request.id} · {request.user.name}
+                                                            #{request.id} ·{' '}
+                                                            {request.user.name}
                                                         </p>
                                                     </div>
                                                 </div>
 
                                                 <span
-                                                    className={`shrink-0 inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium capitalize ${statusConfig[request.request_status]?.badge ?? 'border-slate-200 bg-slate-50 text-slate-500'}`}
+                                                    className={`inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-medium capitalize ${statusConfig[request.request_status]?.badge ?? 'border-slate-200 bg-slate-50 text-slate-500'}`}
                                                 >
                                                     {request.request_status}
                                                 </span>
@@ -398,11 +478,22 @@ export default function RequestsIndex({ requests }: Props) {
                                                     <span
                                                         className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium capitalize ${priorityBadge[request.priority_level ?? ''] ?? 'border-slate-200 bg-slate-50 text-slate-500'}`}
                                                     >
-                                                        {request.priority_level ?? 'Not set'}
+                                                        {request.priority_level ??
+                                                            'Not set'}
                                                     </span>
-                                                    <span className="text-[10px] text-slate-300">·</span>
+                                                    <span className="text-[10px] text-slate-300">
+                                                        ·
+                                                    </span>
                                                     <span className="text-[10px] text-slate-400">
-                                                        {new Date(request.date_requested).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                        {new Date(
+                                                            request.date_requested,
+                                                        ).toLocaleDateString(
+                                                            'en-US',
+                                                            {
+                                                                month: 'short',
+                                                                day: 'numeric',
+                                                            },
+                                                        )}
                                                     </span>
                                                 </div>
 

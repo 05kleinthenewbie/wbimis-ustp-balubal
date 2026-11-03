@@ -240,18 +240,10 @@ export default function ReportsIndex({
                     <div className="relative flex items-start justify-between gap-4">
                         <div>
                             <div className="flex items-center gap-2">
-                                <h1 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                                    System Reports Overview
-                                </h1>
                                 <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
                                     Live Data
                                 </span>
                             </div>
-
-                            <p className="mt-1.5 max-w-xl text-sm text-slate-400">
-                                Summary of bookings, service requests, and job
-                                orders across the campus.
-                            </p>
                         </div>
 
                         <a
@@ -369,8 +361,7 @@ export default function ReportsIndex({
                                                 <td className="px-3 py-3 text-xs text-slate-500">
                                                     {facilityTypeLabel[
                                                         facility.facility_type
-                                                    ] ??
-                                                        facility.facility_type}
+                                                    ] ?? facility.facility_type}
                                                 </td>
                                                 <td className="px-3 py-3 text-center text-xs text-slate-500">
                                                     {facility.capacity ?? '—'}
@@ -382,13 +373,22 @@ export default function ReportsIndex({
                                                     {facility.by_status.pending}
                                                 </td>
                                                 <td className="px-3 py-3 text-center text-xs text-emerald-600">
-                                                    {facility.by_status.approved}
+                                                    {
+                                                        facility.by_status
+                                                            .approved
+                                                    }
                                                 </td>
                                                 <td className="px-3 py-3 text-center text-xs text-rose-500">
-                                                    {facility.by_status.rejected}
+                                                    {
+                                                        facility.by_status
+                                                            .rejected
+                                                    }
                                                 </td>
                                                 <td className="px-3 py-3 text-center text-xs text-slate-400">
-                                                    {facility.by_status.cancelled}
+                                                    {
+                                                        facility.by_status
+                                                            .cancelled
+                                                    }
                                                 </td>
                                                 <td className="px-3 py-3 text-center text-xs font-semibold text-slate-700">
                                                     {facility.approved_hours}h

@@ -60,6 +60,10 @@ services:
         sync: false
       - key: BREVO_SENDER_NAME
         value: WBIMIS USTP Balubal
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: SEED_DATABASE

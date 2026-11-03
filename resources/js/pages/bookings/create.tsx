@@ -47,11 +47,19 @@ function toTime(value: string): string {
     return value.slice(0, 5);
 }
 
-function overlaps(aStart: string, aEnd: string, bStart: string, bEnd: string): boolean {
+function overlaps(
+    aStart: string,
+    aEnd: string,
+    bStart: string,
+    bEnd: string,
+): boolean {
     return aStart < bEnd && bStart < aEnd;
 }
 
-export default function BookingsCreate({ facilities, upcomingBookings }: Props) {
+export default function BookingsCreate({
+    facilities,
+    upcomingBookings,
+}: Props) {
     const { data, setData, post, processing, errors } = useForm({
         facility_id: '',
         booking_date: '',
@@ -108,18 +116,6 @@ export default function BookingsCreate({ facilities, upcomingBookings }: Props) 
                             <BackButton href="/bookings" />
                         </div>
 
-                        {/* Heading */}
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                                Book a Facility
-                            </h1>
-
-                            <p className="mt-1.5 max-w-lg text-sm text-slate-500">
-                                Choose a facility, schedule, and purpose for your
-                                booking request.
-                            </p>
-                        </div>
-
                         <form onSubmit={handleSubmit}>
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                 {/* Form header */}
@@ -168,12 +164,24 @@ export default function BookingsCreate({ facilities, upcomingBookings }: Props) 
                                                 {facilities.map((facility) => (
                                                     <SelectItem
                                                         key={facility.id}
-                                                        value={String(facility.id)}
+                                                        value={String(
+                                                            facility.id,
+                                                        )}
                                                     >
                                                         <div className="flex items-center gap-2">
-                                                            <span>{facility.facility_name}</span>
+                                                            <span>
+                                                                {
+                                                                    facility.facility_name
+                                                                }
+                                                            </span>
                                                             <span className="text-[10px] text-slate-400">
-                                                                ({facilityTypeLabel[facility.facility_type] ?? facility.facility_type})
+                                                                (
+                                                                {facilityTypeLabel[
+                                                                    facility
+                                                                        .facility_type
+                                                                ] ??
+                                                                    facility.facility_type}
+                                                                )
                                                             </span>
                                                         </div>
                                                     </SelectItem>
@@ -197,10 +205,16 @@ export default function BookingsCreate({ facilities, upcomingBookings }: Props) 
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-medium text-slate-800">
-                                                        {selectedFacility.facility_name}
+                                                        {
+                                                            selectedFacility.facility_name
+                                                        }
                                                     </p>
                                                     <p className="text-xs text-slate-500">
-                                                        {facilityTypeLabel[selectedFacility.facility_type] ?? selectedFacility.facility_type}
+                                                        {facilityTypeLabel[
+                                                            selectedFacility
+                                                                .facility_type
+                                                        ] ??
+                                                            selectedFacility.facility_type}
                                                     </p>
                                                 </div>
                                             </div>
@@ -209,13 +223,18 @@ export default function BookingsCreate({ facilities, upcomingBookings }: Props) 
                                                 {selectedFacility.location && (
                                                     <div className="flex items-center gap-2 text-xs text-slate-500">
                                                         <MapPin className="size-3.5 text-ustp-gold" />
-                                                        {selectedFacility.location}
+                                                        {
+                                                            selectedFacility.location
+                                                        }
                                                     </div>
                                                 )}
                                                 {selectedFacility.capacity && (
                                                     <div className="flex items-center gap-2 text-xs text-slate-500">
                                                         <Users className="size-3.5 text-ustp-gold" />
-                                                        Capacity: {selectedFacility.capacity}
+                                                        Capacity:{' '}
+                                                        {
+                                                            selectedFacility.capacity
+                                                        }
                                                     </div>
                                                 )}
                                             </div>
@@ -246,7 +265,7 @@ export default function BookingsCreate({ facilities, upcomingBookings }: Props) 
                                                         e.target.value,
                                                     )
                                                 }
-                                                className="h-11 border-slate-300 bg-white pl-10 text-slate-800 placeholder:text-slate-400 scheme-light focus-visible:border-ustp-gold/40 focus-visible:ring-1 focus-visible:ring-ustp-gold/20"
+                                                className="h-11 border-slate-300 bg-white pl-10 text-slate-800 scheme-light placeholder:text-slate-400 focus-visible:border-ustp-gold/40 focus-visible:ring-1 focus-visible:ring-ustp-gold/20"
                                             />
                                         </div>
 
@@ -295,7 +314,7 @@ export default function BookingsCreate({ facilities, upcomingBookings }: Props) 
                                                             e.target.value,
                                                         )
                                                     }
-                                                    className="h-11 border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 scheme-light focus-visible:border-ustp-gold/40 focus-visible:ring-1 focus-visible:ring-ustp-gold/20"
+                                                    className="h-11 border-slate-300 bg-white text-slate-800 scheme-light placeholder:text-slate-400 focus-visible:border-ustp-gold/40 focus-visible:ring-1 focus-visible:ring-ustp-gold/20"
                                                 />
                                             </div>
 
@@ -319,7 +338,7 @@ export default function BookingsCreate({ facilities, upcomingBookings }: Props) 
                                                             e.target.value,
                                                         )
                                                     }
-                                                    className="h-11 border-slate-300 bg-white text-slate-800 placeholder:text-slate-400 scheme-light focus-visible:border-ustp-gold/40 focus-visible:ring-1 focus-visible:ring-ustp-gold/20"
+                                                    className="h-11 border-slate-300 bg-white text-slate-800 scheme-light placeholder:text-slate-400 focus-visible:border-ustp-gold/40 focus-visible:ring-1 focus-visible:ring-ustp-gold/20"
                                                 />
                                             </div>
                                         </div>
@@ -341,7 +360,9 @@ export default function BookingsCreate({ facilities, upcomingBookings }: Props) 
                                         </div>
 
                                         <BookingCalendar
-                                            key={data.booking_date || 'calendar'}
+                                            key={
+                                                data.booking_date || 'calendar'
+                                            }
                                             bookings={upcomingBookings}
                                             selectedDate={data.booking_date}
                                             onSelectDate={(date) =>
@@ -380,7 +401,12 @@ export default function BookingsCreate({ facilities, upcomingBookings }: Props) 
                                             value={data.purpose}
                                             onChange={(
                                                 e: React.ChangeEvent<HTMLTextAreaElement>,
-                                            ) => setData('purpose', e.target.value)}
+                                            ) =>
+                                                setData(
+                                                    'purpose',
+                                                    e.target.value,
+                                                )
+                                            }
                                             className="resize-none border-slate-300 bg-white text-slate-800 shadow-none placeholder:text-slate-400 focus-visible:border-ustp-gold/40 focus-visible:ring-1 focus-visible:ring-ustp-gold/20"
                                         />
                                     </div>
@@ -415,7 +441,9 @@ export default function BookingsCreate({ facilities, upcomingBookings }: Props) 
 
                                     <Button
                                         type="submit"
-                                        disabled={processing || selectedDayIsSunday}
+                                        disabled={
+                                            processing || selectedDayIsSunday
+                                        }
                                         className="bg-ustp-gold px-5 font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white"
                                     >
                                         {processing && <Spinner />}

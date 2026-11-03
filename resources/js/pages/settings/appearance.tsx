@@ -49,8 +49,6 @@ export default function Appearance() {
         <>
             <Head title="Appearance settings" />
 
-            <h1 className="sr-only">Appearance settings</h1>
-
             <div className="grid grid-cols-1 items-start gap-8">
                 {/* Left Main Appearance Card */}
                 <div className="space-y-8 rounded-2xl border border-slate-200/90 bg-white p-6 shadow-sm sm:p-8">
@@ -76,38 +74,44 @@ export default function Appearance() {
                         </label>
 
                         <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-slate-200 bg-slate-100/90 p-1.5">
-                            {themeOptions.map(({ value, label, icon: Icon }) => {
-                                const active = appearance === value;
+                            {themeOptions.map(
+                                ({ value, label, icon: Icon }) => {
+                                    const active = appearance === value;
 
-                                return (
-                                    <button
-                                        key={value}
-                                        type="button"
-                                        onClick={() => updateAppearance(value)}
-                                        className={cn(
-                                            'flex cursor-pointer items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm transition-all sm:px-4',
-                                            active
-                                                ? 'border border-slate-200/60 bg-white font-semibold text-slate-900 shadow-sm'
-                                                : 'font-medium text-slate-600 hover:bg-slate-200/50 hover:text-slate-900',
-                                        )}
-                                    >
-                                        <Icon
+                                    return (
+                                        <button
+                                            key={value}
+                                            type="button"
+                                            onClick={() =>
+                                                updateAppearance(value)
+                                            }
                                             className={cn(
-                                                'size-4',
-                                                !active &&
-                                                    'text-slate-400',
-                                                active && value === 'light' &&
-                                                    'text-amber-500',
-                                                active && value === 'dark' &&
-                                                    'text-slate-800',
-                                                active && value === 'system' &&
-                                                    'text-slate-600',
+                                                'flex cursor-pointer items-center justify-center gap-2 rounded-lg px-2 py-2.5 text-sm transition-all sm:px-4',
+                                                active
+                                                    ? 'border border-slate-200/60 bg-white font-semibold text-slate-900 shadow-sm'
+                                                    : 'font-medium text-slate-600 hover:bg-slate-200/50 hover:text-slate-900',
                                             )}
-                                        />
-                                        <span>{label}</span>
-                                    </button>
-                                );
-                            })}
+                                        >
+                                            <Icon
+                                                className={cn(
+                                                    'size-4',
+                                                    !active && 'text-slate-400',
+                                                    active &&
+                                                        value === 'light' &&
+                                                        'text-amber-500',
+                                                    active &&
+                                                        value === 'dark' &&
+                                                        'text-slate-800',
+                                                    active &&
+                                                        value === 'system' &&
+                                                        'text-slate-600',
+                                                )}
+                                            />
+                                            <span>{label}</span>
+                                        </button>
+                                    );
+                                },
+                            )}
                         </div>
                     </div>
 

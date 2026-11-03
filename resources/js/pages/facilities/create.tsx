@@ -1,11 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import {
-    Building2,
-    CalendarDays,
-    MapPin,
-    Plus,
-    Users,
-} from 'lucide-react';
+import { Building2, CalendarDays, MapPin, Plus, Users } from 'lucide-react';
 import { BackButton } from '@/components/back-button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,16 +39,6 @@ export default function FacilitiesCreate() {
                     <div className="mx-auto w-full max-w-2xl space-y-6">
                         <div className="flex justify-end">
                             <BackButton href="/facilities" />
-                        </div>
-
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                                Add Facility
-                            </h1>
-
-                            <p className="mt-1.5 max-w-lg text-sm text-slate-500">
-                                Register a new bookable facility for the campus.
-                            </p>
                         </div>
 
                         <form onSubmit={handleSubmit}>

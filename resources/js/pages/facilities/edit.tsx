@@ -1,11 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import {
-    Building2,
-    CalendarDays,
-    MapPin,
-    Save,
-    Users,
-} from 'lucide-react';
+import { Building2, CalendarDays, MapPin, Save, Users } from 'lucide-react';
 import { BackButton } from '@/components/back-button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -58,16 +52,6 @@ export default function FacilitiesEdit({ facility }: Props) {
                     <div className="mx-auto w-full max-w-2xl space-y-6">
                         <div className="flex justify-end">
                             <BackButton href="/facilities" />
-                        </div>
-
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                                Edit Facility
-                            </h1>
-
-                            <p className="mt-1.5 max-w-lg text-sm text-slate-500">
-                                Update the details for {facility.facility_name}.
-                            </p>
                         </div>
 
                         <form onSubmit={handleSubmit}>

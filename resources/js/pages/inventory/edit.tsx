@@ -129,10 +129,7 @@ function getCategoryFromName(name: string): string {
         return 'Printers';
     }
 
-    if (
-        lower.includes('thermal paste') ||
-        lower.includes('thermal compound')
-    ) {
+    if (lower.includes('thermal paste') || lower.includes('thermal compound')) {
         return 'Thermal Paste';
     }
 
@@ -187,16 +184,22 @@ const categoryColors: Record<string, string> = {
     'Network Devices': 'bg-cyan-400/15 text-cyan-400 border-cyan-400/20',
     'UPS Devices': 'bg-cyan-400/15 text-cyan-400 border-cyan-400/20',
     'Printer Ink': 'bg-emerald-400/15 text-emerald-400 border-emerald-400/20',
-    'Toner Cartridges': 'bg-emerald-400/15 text-emerald-400 border-emerald-400/20',
+    'Toner Cartridges':
+        'bg-emerald-400/15 text-emerald-400 border-emerald-400/20',
     'Thermal Paste': 'bg-emerald-400/15 text-emerald-400 border-emerald-400/20',
-    'Cleaning Supplies': 'bg-emerald-400/15 text-emerald-400 border-emerald-400/20',
+    'Cleaning Supplies':
+        'bg-emerald-400/15 text-emerald-400 border-emerald-400/20',
     Batteries: 'bg-emerald-400/15 text-emerald-400 border-emerald-400/20',
-    'Antivirus Licenses': 'bg-purple-400/15 text-purple-400 border-purple-400/20',
-    'Software Subscriptions': 'bg-purple-400/15 text-purple-400 border-purple-400/20',
-    'SSL/TLS Certificates': 'bg-purple-400/15 text-purple-400 border-purple-400/20',
+    'Antivirus Licenses':
+        'bg-purple-400/15 text-purple-400 border-purple-400/20',
+    'Software Subscriptions':
+        'bg-purple-400/15 text-purple-400 border-purple-400/20',
+    'SSL/TLS Certificates':
+        'bg-purple-400/15 text-purple-400 border-purple-400/20',
     Hardware: 'bg-ustp-gold/15 text-ustp-gold border-ustp-gold/20',
     'Network Equipment': 'bg-cyan-400/15 text-cyan-400 border-cyan-400/20',
-    'ICT Peripherals': 'bg-emerald-400/15 text-emerald-400 border-emerald-400/20',
+    'ICT Peripherals':
+        'bg-emerald-400/15 text-emerald-400 border-emerald-400/20',
 };
 
 function suggestExpirationType(category: string): string {
@@ -381,9 +384,9 @@ export default function InventoryEdit({
                             </div>
 
                             <div>
-                                <h1 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
+                                <h2 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
                                     {data.item_name || 'Edit Equipment'}
-                                </h1>
+                                </h2>
 
                                 <p className="mt-1 font-mono text-xs text-slate-400">
                                     Property No. {item.property_no}
@@ -545,7 +548,11 @@ export default function InventoryEdit({
                                                 </SelectTrigger>
                                                 <SelectContent className="border-slate-200 bg-white text-slate-800">
                                                     {legacySelected && (
-                                                        <SelectItem value={legacySelected}>
+                                                        <SelectItem
+                                                            value={
+                                                                legacySelected
+                                                            }
+                                                        >
                                                             {legacySelected}{' '}
                                                             (legacy)
                                                         </SelectItem>
@@ -557,7 +564,7 @@ export default function InventoryEdit({
                                                             <SelectGroup
                                                                 key={group}
                                                             >
-                                                                <SelectLabel className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                                                                <SelectLabel className="text-[11px] font-semibold tracking-wide text-slate-400 uppercase">
                                                                     {group}
                                                                 </SelectLabel>
                                                                 {options.map(
@@ -570,9 +577,7 @@ export default function InventoryEdit({
                                                                                 c
                                                                             }
                                                                         >
-                                                                            {
-                                                                                c
-                                                                            }
+                                                                            {c}
                                                                         </SelectItem>
                                                                     ),
                                                                 )}
@@ -820,9 +825,7 @@ export default function InventoryEdit({
                                                 <Input
                                                     id="expiration_date"
                                                     type="date"
-                                                    value={
-                                                        data.expiration_date
-                                                    }
+                                                    value={data.expiration_date}
                                                     onChange={(
                                                         e: React.ChangeEvent<HTMLInputElement>,
                                                     ) =>
@@ -866,8 +869,7 @@ export default function InventoryEdit({
                                                 <SelectContent className="border-slate-200 bg-white text-slate-800">
                                                     {data.expiration_type &&
                                                         !expirationTypes.includes(
-                                                            data
-                                                                .expiration_type,
+                                                            data.expiration_type,
                                                         ) && (
                                                             <SelectItem
                                                                 value={
@@ -880,14 +882,16 @@ export default function InventoryEdit({
                                                                 (legacy)
                                                             </SelectItem>
                                                         )}
-                                                    {expirationTypes.map((t) => (
-                                                        <SelectItem
-                                                            key={t}
-                                                            value={t}
-                                                        >
-                                                            {t}
-                                                        </SelectItem>
-                                                    ))}
+                                                    {expirationTypes.map(
+                                                        (t) => (
+                                                            <SelectItem
+                                                                key={t}
+                                                                value={t}
+                                                            >
+                                                                {t}
+                                                            </SelectItem>
+                                                        ),
+                                                    )}
                                                 </SelectContent>
                                             </Select>
                                             {errors.expiration_type && (

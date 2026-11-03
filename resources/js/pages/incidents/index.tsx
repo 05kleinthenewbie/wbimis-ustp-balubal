@@ -120,19 +120,7 @@ export default function IncidentsIndex({ incidents }: Props) {
 
             <div className="relative min-h-full flex-1 overflow-hidden bg-slate-50 px-4 py-6 text-slate-800 sm:px-6 lg:px-8">
                 <div className="relative mx-auto max-w-7xl space-y-6">
-                    {/* Header */}
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                                Laboratory Incident Reports
-                            </h1>
-
-                            <p className="mt-2 max-w-lg text-sm leading-relaxed text-slate-500">
-                                Report and track laboratory incidents across the
-                                campus.
-                            </p>
-                        </div>
-
+                    <div className="flex justify-end">
                         <Button
                             asChild
                             className="h-10 bg-ustp-gold px-4 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white"

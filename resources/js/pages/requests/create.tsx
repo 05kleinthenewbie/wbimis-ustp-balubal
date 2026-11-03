@@ -1,13 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import {
-    AlertCircle,
-    Check,
-    ClipboardPlus,
-    FileText,
-    Send,
-    Paperclip,
-    X,
-} from 'lucide-react';
+import { AlertCircle, Check, FileText, Send, Paperclip, X } from 'lucide-react';
 import { useState } from 'react';
 import { BackButton } from '@/components/back-button';
 import { Button } from '@/components/ui/button';
@@ -125,24 +117,6 @@ export default function RequestsCreate({ categories, isStudent }: Props) {
                 <div className="relative mx-auto max-w-4xl space-y-6">
                     <div className="flex justify-end">
                         <BackButton href="/requests" />
-                    </div>
-
-                    {/* Heading */}
-                    <div className="flex items-start gap-4">
-                        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-ustp-gold/10 text-ustp-gold">
-                            <ClipboardPlus className="size-5" />
-                        </div>
-
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                                New Service Request
-                            </h1>
-
-                            <p className="mt-2 max-w-lg text-sm leading-relaxed text-slate-500">
-                                Select the ICT services you need and provide the
-                                relevant details.
-                            </p>
-                        </div>
                     </div>
 
                     <form

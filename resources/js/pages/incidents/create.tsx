@@ -237,24 +237,6 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
                         <BackButton href="/incidents" />
                     </div>
 
-                    {/* Heading */}
-                    <div className="flex items-start gap-4">
-                        <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-ustp-gold/10 text-ustp-gold">
-                            <AlertTriangle className="size-5" />
-                        </div>
-
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                                Report a Laboratory Incident
-                            </h1>
-
-                            <p className="mt-2 max-w-lg text-sm leading-relaxed text-slate-500">
-                                Report damage, misuse, or safety concerns
-                                involving laboratory ICT equipment.
-                            </p>
-                        </div>
-                    </div>
-
                     <form
                         onSubmit={handleSubmit}
                         className="flex flex-col gap-6"

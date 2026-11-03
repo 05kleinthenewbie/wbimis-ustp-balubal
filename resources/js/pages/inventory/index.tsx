@@ -130,7 +130,9 @@ const conditionLabels: Record<string, string> = {
     under_repair: 'Under Repair',
 };
 
-function expiryState(dateStr: string | null): 'expired' | 'soon' | 'valid' | null {
+function expiryState(
+    dateStr: string | null,
+): 'expired' | 'soon' | 'valid' | null {
     if (!dateStr) {
         return null;
     }
@@ -191,10 +193,7 @@ function getCategoryFromName(name: string): string {
         return 'Printers';
     }
 
-    if (
-        lower.includes('thermal paste') ||
-        lower.includes('thermal compound')
-    ) {
+    if (lower.includes('thermal paste') || lower.includes('thermal compound')) {
         return 'Thermal Paste';
     }
 
@@ -514,18 +513,7 @@ export default function InventoryIndex({
 
             <div className="relative min-h-full flex-1 overflow-hidden bg-slate-50 px-4 py-6 text-slate-800 sm:px-6 lg:px-8">
                 <div className="relative mx-auto max-w-7xl space-y-6">
-                    {/* Header */}
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                                Inventory
-                            </h1>
-
-                            <p className="mt-2 max-w-lg text-sm leading-relaxed text-slate-500">
-                                ICT property records for USTP Balubal Campus.
-                            </p>
-                        </div>
-
+                    <div className="flex justify-end">
                         <div className="flex flex-wrap items-center gap-3">
                             <Button
                                 asChild
@@ -692,7 +680,8 @@ export default function InventoryIndex({
                                         </div>
                                         <p className="text-[11px] text-slate-500">
                                             Active items past their service life
-                                            — review for disposal or replacement.
+                                            — review for disposal or
+                                            replacement.
                                         </p>
                                     </div>
                                 </div>
@@ -1163,7 +1152,9 @@ export default function InventoryIndex({
                                                         <span
                                                             className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${statusConfig[item.status] ?? 'border-slate-200 bg-slate-50 text-slate-500'}`}
                                                         >
-                                                            {statusLabels[item.status] ?? item.status}
+                                                            {statusLabels[
+                                                                item.status
+                                                            ] ?? item.status}
                                                         </span>
                                                     </td>
 

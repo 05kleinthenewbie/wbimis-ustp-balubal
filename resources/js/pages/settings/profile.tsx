@@ -149,8 +149,6 @@ export default function Profile({
         <>
             <Head title="Profile settings" />
 
-            <h1 className="sr-only">Profile settings</h1>
-
             <div className="space-y-6">
                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <div className="h-20 bg-linear-to-r from-ustp-navy via-ustp-navy-light to-ustp-navy-dark" />

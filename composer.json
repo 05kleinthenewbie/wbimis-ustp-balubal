@@ -17,6 +17,7 @@
         "laravel/framework": "^13.17",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.14",
+        "minishlink/web-push": "^11.0",
         "paragonie/sodium_compat_ext_sodium": "^1.0",
         "php-open-source-saver/jwt-auth": "^2.9",
         "smalot/pdfparser": "^2.13.1"

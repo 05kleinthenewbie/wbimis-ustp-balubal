@@ -488,20 +488,6 @@ export default function AuditLogIndex({
 
             <div className="min-h-full flex-1 bg-slate-50 text-slate-800">
                 <div className="relative flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:p-8">
-                    {/* Header */}
-                    <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-                        <div>
-                            <h1 className="text-2xl font-semibold tracking-tight text-slate-800 md:text-3xl">
-                                Audit Log
-                            </h1>
-
-                            <p className="mt-1.5 max-w-xl text-sm text-slate-500">
-                                Track all administrative actions across the
-                                system.
-                            </p>
-                        </div>
-                    </div>
-
                     {/* Stats Cards */}
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                         {statCards.map((card) => (
@@ -704,8 +690,7 @@ export default function AuditLogIndex({
                                         onChange={(e) =>
                                             applyFilters({
                                                 date_from:
-                                                    e.target.value ||
-                                                    undefined,
+                                                    e.target.value || undefined,
                                                 search: search || undefined,
                                             })
                                         }
@@ -731,8 +716,7 @@ export default function AuditLogIndex({
                                         onChange={(e) =>
                                             applyFilters({
                                                 date_to:
-                                                    e.target.value ||
-                                                    undefined,
+                                                    e.target.value || undefined,
                                                 search: search || undefined,
                                             })
                                         }
@@ -914,18 +898,19 @@ export default function AuditLogIndex({
                                                     ] ?? defaultModuleColor;
                                                 const isExpanded =
                                                     expandedRows.has(log.id);
-                                                const changedFields = Array.from(
-                                                    new Set([
-                                                        ...Object.keys(
-                                                            log.old_values ??
-                                                                {},
-                                                        ),
-                                                        ...Object.keys(
-                                                            log.new_values ??
-                                                                {},
-                                                        ),
-                                                    ]),
-                                                );
+                                                const changedFields =
+                                                    Array.from(
+                                                        new Set([
+                                                            ...Object.keys(
+                                                                log.old_values ??
+                                                                    {},
+                                                            ),
+                                                            ...Object.keys(
+                                                                log.new_values ??
+                                                                    {},
+                                                            ),
+                                                        ]),
+                                                    );
                                                 const hasDetails =
                                                     !!log.details ||
                                                     changedFields.length > 0;
