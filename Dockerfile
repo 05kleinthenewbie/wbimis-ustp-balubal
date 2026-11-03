@@ -53,7 +53,7 @@ RUN npm ci
 COPY . .
 
 RUN cp .env.example .env \
-    && php artisan key:generate --force \
+    && export APP_KEY="base64:$(head -c 32 /dev/urandom | base64 | tr -d '\n')" \
     && composer dump-autoload --no-dev --optimize --no-interaction \
     && npm run build \
     && rm -f .env \
