@@ -29,13 +29,13 @@ test('authenticated users can visit the dashboard', function () {
     $response->assertInertia(fn (Assert $page) => $page
         ->component('dashboard')
         ->where('isAdmin', false)
-        ->where('period', 'year')
+        ->where('period', 'month')
         ->where('overview.serviceRequests.total', 0)
         ->where('overview.bookings.total', 0)
         ->where('overview.pendingActions.total', 0)
         ->missing('overview.jobOrders')
         ->missing('overview.inventory')
-        ->has('activitySeries.labels', 12)
+        ->has('activitySeries.labels', 6)
         ->where('inventoryAlerts', null));
 });
 
@@ -101,11 +101,11 @@ test('admin dashboard overview, pending actions, and alerts are exposed', functi
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('dashboard')
-            ->where('period', 'year')
-            ->has('activitySeries.labels', 12)
-            ->has('activitySeries.bookings', 12)
-            ->has('activitySeries.requests', 12)
-            ->has('activitySeries.jobOrders', 12)
+            ->where('period', 'month')
+            ->has('activitySeries.labels', 6)
+            ->has('activitySeries.bookings', 6)
+            ->has('activitySeries.requests', 6)
+            ->has('activitySeries.jobOrders', 6)
             ->where('overview.serviceRequests.pending', 1)
             ->where('overview.inventory.defective', 0)
             ->where('overview.pendingActions.total', 1)
@@ -156,14 +156,14 @@ test('admin dashboard period filter scopes totals and activity buckets', functio
         ->get(route('dashboard', ['period' => 'week']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('period', 'week')
-            ->where('overview.serviceRequests.total', 1)
-            ->has('activitySeries.labels', 7));
+            ->where('period', 'month')
+            ->where('overview.serviceRequests.total', 2)
+            ->has('activitySeries.labels', 6));
 
     $this->actingAs($admin)
         ->get(route('dashboard', ['period' => 'bogus']))
         ->assertOk()
-        ->assertInertia(fn (Assert $page) => $page->where('period', 'year'));
+        ->assertInertia(fn (Assert $page) => $page->where('period', 'month'));
 });
 
 test('faculty dashboard scopes overview, pending actions, and activity to their own data', function () {
@@ -229,7 +229,7 @@ test('faculty dashboard scopes overview, pending actions, and activity to their 
         ->assertInertia(fn (Assert $page) => $page
             ->component('dashboard')
             ->where('isAdmin', false)
-            ->where('period', 'year')
+            ->where('period', 'month')
             ->where('overview.serviceRequests.total', 3)
             ->where('overview.serviceRequests.pending', 1)
             ->where('overview.serviceRequests.approved', 1)
@@ -246,10 +246,10 @@ test('faculty dashboard scopes overview, pending actions, and activity to their 
             ->where('pendingActions.bookingApprovals', 1)
             ->where('pendingActions.incidentsUnresolved', 1)
             ->where('inventoryAlerts', null)
-            ->has('activitySeries.labels', 12)
-            ->has('activitySeries.requests', 12)
-            ->has('activitySeries.bookings', 12)
-            ->has('activitySeries.incidents', 12)
+            ->has('activitySeries.labels', 6)
+            ->has('activitySeries.requests', 6)
+            ->has('activitySeries.bookings', 6)
+            ->has('activitySeries.incidents', 6)
             ->missing('activitySeries.jobOrders'));
 });
 
@@ -299,7 +299,7 @@ test('student dashboard shows requests and own laboratory incidents without book
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('dashboard')
-            ->where('period', 'year')
+            ->where('period', 'month')
             ->where('overview.serviceRequests.total', 4)
             ->where('overview.serviceRequests.approved', 1)
             ->where('overview.serviceRequests.completed', 1)
@@ -322,7 +322,7 @@ test('student dashboard shows requests and own laboratory incidents without book
         ->get(route('dashboard', ['period' => 'week']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->where('period', 'week')
-            ->where('overview.serviceRequests.total', 3)
+            ->where('period', 'month')
+            ->where('overview.serviceRequests.total', 4)
             ->where('activitySeries', null));
 });

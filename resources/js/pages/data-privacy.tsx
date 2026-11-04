@@ -35,10 +35,10 @@ export default function DataPrivacy() {
                         Employee ID.
                     </li>
                     <li>
-                        <strong>Verification Documents:</strong> Certificate of
-                        Registration (COR) for students, or Certificate of
-                        Employment (COE) / University ID for faculty and staff
-                        members.
+                        <strong>Verification Documents:</strong> Student ID or
+                        Certificate of Registration (COR) for students, or
+                        Certificate of Employment (COE) / University ID for
+                        faculty and staff members.
                     </li>
                     <li>
                         <strong>Operational Records:</strong> Service requests,

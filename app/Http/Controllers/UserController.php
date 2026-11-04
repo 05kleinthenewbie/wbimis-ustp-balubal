@@ -46,7 +46,7 @@ class UserController extends Controller
                 ->where('status', 'pending')
                 ->latest()
                 ->get()
-                ->each->append(['cor_url', 'employment_document_url']),
+                ->each->append(['cor_url', 'employment_document_url', 'approval_block_reason']),
             'activeUsers' => User::with('role')
                 ->where('is_technician', false)
                 ->where('status', 'active')
@@ -71,10 +71,10 @@ class UserController extends Controller
     }
 
     /**
-     * Stream a student's Certificate of Registration to an ICT administrator
+     * Stream a student's ID or COR to an ICT administrator
      * so it can be reviewed before the account is approved.
      */
-    public function downloadCor(User $user): StreamedResponse
+    public function viewCor(User $user): StreamedResponse
     {
         $this->ensureAdmin();
 
@@ -83,9 +83,19 @@ class UserController extends Controller
             404,
         );
 
-        return Storage::disk('local')->download(
+        $mimeType = Storage::disk('local')->mimeType((string) $user->cor_path);
+        abort_unless(in_array($mimeType, ['application/pdf', 'image/jpeg', 'image/png'], true), 415);
+
+        return Storage::disk('local')->response(
             (string) $user->cor_path,
-            $user->cor_original_name ?: 'certificate-of-registration.pdf',
+            $user->cor_original_name ?: 'student-verification-document.pdf',
+            [
+                'Content-Type' => $mimeType,
+                'Cache-Control' => 'private, no-store',
+                'X-Content-Type-Options' => 'nosniff',
+                'X-Frame-Options' => 'SAMEORIGIN',
+            ],
+            'inline',
         );
     }
 
@@ -224,7 +234,7 @@ class UserController extends Controller
                     }
 
                     $verification->verify($user);
-                    AuditLog::record('Checked COR: '.$user->cor_verification_status, 'users', $user->id);
+                    AuditLog::record('Checked student ID / COR: '.$user->cor_verification_status, 'users', $user->id);
                 } else {
                     try {
                         $this->changeStatus($user, $validated['action'] === 'approve' ? 'active' : 'rejected');
@@ -241,7 +251,7 @@ class UserController extends Controller
 
         $action = ['verify' => 'checked', 'approve' => 'approved', 'reject' => 'rejected'][$validated['action']];
 
-        return back()->with('status', "{$processed} account(s) {$action}; {$skipped} skipped (no longer pending, not applicable, or missing COR). Verification does not activate accounts.");
+        return back()->with('status', "{$processed} account(s) {$action}; {$skipped} skipped (no longer pending, not applicable, missing student ID or COR, or mismatched details). Verification does not activate accounts.");
     }
 
     private function changeStatus(User $user, string $status): void
@@ -266,17 +276,9 @@ class UserController extends Controller
             return;
         }
 
-        if (
-            $status === 'active'
-            && $previousStatus === 'pending'
-            && $user->role?->role_name === 'student'
-            && (
-                blank($user->cor_path)
-                || ! Storage::disk('local')->exists((string) $user->cor_path)
-            )
-        ) {
+        if ($status === 'active' && ($reason = $user->approval_block_reason) !== null) {
             throw ValidationException::withMessages([
-                'status' => 'Review the student\'s Certificate of Registration (COR) before approving this account.',
+                'status' => $reason,
             ]);
         }
 

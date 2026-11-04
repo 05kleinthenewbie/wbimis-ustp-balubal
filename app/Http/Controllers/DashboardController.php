@@ -20,7 +20,7 @@ class DashboardController extends Controller
 {
     public function __invoke(Request $request): Response
     {
-        $user = $request->user()->load('role');
+        $user = $request->user()->loadMissing('role');
 
         $isAdmin = $user->role->role_name === 'ict_admin';
         $isStudent = $user->role->role_name === 'student';
@@ -36,52 +36,73 @@ class DashboardController extends Controller
             default => [now()->subDays(364)->startOfDay(), now()->endOfDay()],
         };
 
+        $requestCounts = $this->summarizeStatuses(
+            ServiceRequest::query()->when(! $isAdmin, fn ($query) => $query->where('user_id', $user->id)),
+            'request_status', ['pending', 'approved', 'completed', 'rejected'], $periodRange,
+        );
+        $incidentCounts = $this->summarizeStatuses(
+            IncidentReport::query()->when(! $isAdmin, fn ($query) => $query->where('reported_by', $user->id)),
+            'status', ['open', 'under_review'], $periodRange,
+        );
+        $bookingCounts = $isStudent ? [] : $this->summarizeStatuses(
+            Booking::query()->when(! $isAdmin, fn ($query) => $query->where('user_id', $user->id)),
+            'booking_status', ['pending'], $periodRange,
+        );
+
         if ($isAdmin) {
+            $jobOrderCounts = array_map('intval', (array) JobOrder::query()->toBase()
+                ->selectRaw('COALESCE(SUM(CASE WHEN created_at BETWEEN ? AND ? THEN 1 ELSE 0 END), 0) as period_total', $periodRange)
+                ->selectRaw("COALESCE(SUM(CASE WHEN status IN ('open', 'in_progress') THEN 1 ELSE 0 END), 0) as active")
+                ->selectRaw("COALESCE(SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END), 0) as in_progress")
+                ->selectRaw('COALESCE(SUM(CASE WHEN assigned_to IS NULL THEN 1 ELSE 0 END), 0) as unassigned')
+                ->selectRaw("COALESCE(SUM(CASE WHEN status IN ('open', 'in_progress') AND sla_deadline < ? THEN 1 ELSE 0 END), 0) as overdue", [now()])
+                ->first());
+            $inventoryCounts = array_map('intval', (array) InventoryItem::query()->toBase()
+                ->selectRaw('COUNT(*) as total')
+                ->selectRaw("COALESCE(SUM(CASE WHEN `condition` = 'working' THEN 1 ELSE 0 END), 0) as working")
+                ->selectRaw("COALESCE(SUM(CASE WHEN `condition` = 'defective' THEN 1 ELSE 0 END), 0) as defective")
+                ->selectRaw("COALESCE(SUM(CASE WHEN `condition` = 'under_repair' THEN 1 ELSE 0 END), 0) as under_repair")
+                ->selectRaw('COALESCE(SUM(CASE WHEN expiration_date BETWEEN ? AND ? THEN 1 ELSE 0 END), 0) as expiring', [now()->startOfDay(), now()->addDays(30)->endOfDay()])
+                ->selectRaw('COALESCE(SUM(CASE WHEN expiration_date < ? THEN 1 ELSE 0 END), 0) as expired', [now()->startOfDay()])
+                ->first());
+
             $stats = [
-                'pendingRequests' => ServiceRequest::where('request_status', 'pending')->count(),
-                'openJobOrders' => JobOrder::whereIn('status', ['open', 'in_progress'])->count(),
-                'pendingBookings' => Booking::where('booking_status', 'pending')->count(),
-                'openIncidents' => IncidentReport::whereIn('status', ['open', 'under_review'])->count(),
+                'pendingRequests' => $requestCounts['pending'],
+                'openJobOrders' => $jobOrderCounts['active'],
+                'pendingBookings' => $bookingCounts['pending'],
+                'openIncidents' => $incidentCounts['open'] + $incidentCounts['under_review'],
                 'technicians' => User::whereHas('role', fn ($query) => $query->where('role_name', 'ict_admin'))->count(),
-                'unassignedJobOrders' => JobOrder::whereNull('assigned_to')->count(),
-                'overdueJobOrders' => JobOrder::whereIn('status', ['open', 'in_progress'])
-                    ->whereNotNull('sla_deadline')
-                    ->where('sla_deadline', '<', now())
-                    ->count(),
-                'inventoryExpiryAlerts' => InventoryItem::whereNotNull('expiration_date')
-                    ->where(function ($query) {
-                        $query->where('expiration_date', '<', now()->startOfDay())
-                            ->orWhereBetween('expiration_date', [now()->startOfDay(), now()->addDays(30)->endOfDay()]);
-                    })
-                    ->count(),
+                'unassignedJobOrders' => $jobOrderCounts['unassigned'],
+                'overdueJobOrders' => $jobOrderCounts['overdue'],
+                'inventoryExpiryAlerts' => $inventoryCounts['expired'] + $inventoryCounts['expiring'],
             ];
 
             $inventorySummary = [
-                'working' => InventoryItem::where('condition', 'working')->count(),
-                'defective' => InventoryItem::where('condition', 'defective')->count(),
-                'under_repair' => InventoryItem::where('condition', 'under_repair')->count(),
+                'working' => $inventoryCounts['working'],
+                'defective' => $inventoryCounts['defective'],
+                'under_repair' => $inventoryCounts['under_repair'],
             ];
 
             $overview = [
                 'serviceRequests' => [
-                    'total' => ServiceRequest::whereBetween('created_at', $periodRange)->count(),
-                    'pending' => ServiceRequest::where('request_status', 'pending')->count(),
+                    'total' => $requestCounts['period_total'],
+                    'pending' => $requestCounts['pending'],
                 ],
                 'jobOrders' => [
-                    'total' => JobOrder::whereBetween('created_at', $periodRange)->count(),
-                    'inProgress' => JobOrder::where('status', 'in_progress')->count(),
+                    'total' => $jobOrderCounts['period_total'],
+                    'inProgress' => $jobOrderCounts['in_progress'],
                     'unassigned' => $stats['unassignedJobOrders'],
                 ],
                 'inventory' => [
-                    'total' => InventoryItem::count(),
+                    'total' => $inventoryCounts['total'],
                     'defective' => $inventorySummary['defective'],
                 ],
                 'bookings' => [
-                    'total' => Booking::whereBetween('created_at', $periodRange)->count(),
+                    'total' => $bookingCounts['period_total'],
                     'pending' => $stats['pendingBookings'],
                 ],
                 'incidents' => [
-                    'total' => IncidentReport::whereBetween('created_at', $periodRange)->count(),
+                    'total' => $incidentCounts['period_total'],
                     'unresolved' => $stats['openIncidents'],
                 ],
             ];
@@ -89,7 +110,7 @@ class DashboardController extends Controller
             $pendingActions = [
                 'bookingApprovals' => $stats['pendingBookings'],
                 'requestApprovals' => $stats['pendingRequests'],
-                'jobOrdersInProgress' => JobOrder::where('status', 'in_progress')->count(),
+                'jobOrdersInProgress' => $jobOrderCounts['in_progress'],
                 'overdueJobOrders' => $stats['overdueJobOrders'],
                 'incidentsUnresolved' => $stats['openIncidents'],
             ];
@@ -97,12 +118,8 @@ class DashboardController extends Controller
             $overview['pendingActions'] = ['total' => array_sum($pendingActions)];
 
             $inventoryAlerts = [
-                'expiringSoon' => InventoryItem::whereNotNull('expiration_date')
-                    ->whereBetween('expiration_date', [now()->startOfDay(), now()->addDays(30)->endOfDay()])
-                    ->count(),
-                'expired' => InventoryItem::whereNotNull('expiration_date')
-                    ->where('expiration_date', '<', now()->startOfDay())
-                    ->count(),
+                'expiringSoon' => $inventoryCounts['expiring'],
+                'expired' => $inventoryCounts['expired'],
                 'defective' => $inventorySummary['defective'],
                 'underRepair' => $inventorySummary['under_repair'],
             ];
@@ -113,7 +130,8 @@ class DashboardController extends Controller
                 'jobOrders' => JobOrder::query(),
             ]);
 
-            $recentRequests = ServiceRequest::with('user')
+            $recentRequests = ServiceRequest::with('user:id,name')
+                ->select(['id', 'user_id', 'priority_level', 'request_status', 'problem_description', 'date_requested'])
                 ->latest()
                 ->take(5)
                 ->get()
@@ -126,7 +144,8 @@ class DashboardController extends Controller
                     'date' => $r->date_requested?->toIso8601String(),
                 ]);
 
-            $recentJobOrders = JobOrder::with(['technician', 'serviceRequest'])
+            $recentJobOrders = JobOrder::with('technician:id,name')
+                ->select(['id', 'assigned_to', 'status', 'date_assigned'])
                 ->latest()
                 ->take(5)
                 ->get()
@@ -137,7 +156,8 @@ class DashboardController extends Controller
                     'date_assigned' => $jo->date_assigned?->toIso8601String(),
                 ]);
 
-            $recentIncidents = IncidentReport::with('reporter')
+            $recentIncidents = IncidentReport::with('reporter:id,name')
+                ->select(['id', 'reported_by', 'incident_type', 'status', 'incident_date'])
                 ->latest()
                 ->take(5)
                 ->get()
@@ -149,7 +169,8 @@ class DashboardController extends Controller
                     'date' => $i->incident_date?->toIso8601String(),
                 ]);
 
-            $recentBookings = Booking::with(['user', 'facility'])
+            $recentBookings = Booking::with(['user:id,name', 'facility:id,facility_name'])
+                ->select(['id', 'user_id', 'facility_id', 'booking_status', 'booking_date'])
                 ->latest()
                 ->take(5)
                 ->get()
@@ -162,22 +183,17 @@ class DashboardController extends Controller
                 ]);
         } else {
             $stats = [
-                'myRequests' => ServiceRequest::where('user_id', $user->id)->count(),
-                'pendingRequests' => ServiceRequest::where('user_id', $user->id)
-                    ->where('request_status', 'pending')->count(),
+                'myRequests' => $requestCounts['total'],
+                'pendingRequests' => $requestCounts['pending'],
             ];
 
-            $approvedRequests = ServiceRequest::where('user_id', $user->id)
-                ->where('request_status', 'approved')->count();
-            $completedRequests = ServiceRequest::where('user_id', $user->id)
-                ->where('request_status', 'completed')->count();
-            $rejectedRequests = ServiceRequest::where('user_id', $user->id)
-                ->where('request_status', 'rejected')->count();
+            $approvedRequests = $requestCounts['approved'];
+            $completedRequests = $requestCounts['completed'];
+            $rejectedRequests = $requestCounts['rejected'];
 
             $overview = [
                 'serviceRequests' => [
-                    'total' => ServiceRequest::where('user_id', $user->id)
-                        ->whereBetween('created_at', $periodRange)->count(),
+                    'total' => $requestCounts['period_total'],
                     'pending' => $stats['pendingRequests'],
                     'approved' => $approvedRequests,
                     'completed' => $completedRequests,
@@ -193,23 +209,19 @@ class DashboardController extends Controller
                 'requests' => ServiceRequest::where('user_id', $user->id),
             ];
 
-            $unresolvedIncidents = IncidentReport::where('reported_by', $user->id)
-                ->whereIn('status', ['open', 'under_review'])->count();
+            $unresolvedIncidents = $incidentCounts['open'] + $incidentCounts['under_review'];
             $overview['incidents'] = [
-                'total' => IncidentReport::where('reported_by', $user->id)
-                    ->whereBetween('created_at', $periodRange)->count(),
+                'total' => $incidentCounts['period_total'],
                 'unresolved' => $unresolvedIncidents,
             ];
             $pendingActions['incidentsUnresolved'] = $unresolvedIncidents;
             $activitySources['incidents'] = IncidentReport::where('reported_by', $user->id);
 
             if (! $isStudent) {
-                $pendingBookings = Booking::where('user_id', $user->id)
-                    ->where('booking_status', 'pending')->count();
+                $pendingBookings = $bookingCounts['pending'];
 
                 $overview['bookings'] = [
-                    'total' => Booking::where('user_id', $user->id)
-                        ->whereBetween('created_at', $periodRange)->count(),
+                    'total' => $bookingCounts['period_total'],
                     'pending' => $pendingBookings,
                 ];
 
@@ -226,6 +238,7 @@ class DashboardController extends Controller
                 : $this->buildActivitySeries($period, $activitySources);
 
             $recentRequests = ServiceRequest::where('user_id', $user->id)
+                ->select(['id', 'priority_level', 'request_status', 'problem_description', 'date_requested'])
                 ->latest()
                 ->take(5)
                 ->get()
@@ -240,6 +253,7 @@ class DashboardController extends Controller
 
             $recentJobOrders = [];
             $recentIncidents = IncidentReport::where('reported_by', $user->id)
+                ->select(['id', 'incident_type', 'status', 'incident_date'])
                 ->latest()->take(5)->get()
                 ->map(fn (IncidentReport $incident) => [
                     'id' => $incident->id,
@@ -264,6 +278,25 @@ class DashboardController extends Controller
             'recentIncidents' => $recentIncidents ?? collect(),
             'recentBookings' => $recentBookings ?? collect(),
         ]);
+    }
+
+    /**
+     * @param  list<string>  $statuses
+     * @param  array{CarbonInterface, CarbonInterface}  $periodRange
+     * @return array<string, int>
+     */
+    private function summarizeStatuses(EloquentBuilder $query, string $statusColumn, array $statuses, array $periodRange): array
+    {
+        $summary = $query->toBase()->selectRaw('COUNT(*) as total')
+            ->selectRaw('COALESCE(SUM(CASE WHEN created_at BETWEEN ? AND ? THEN 1 ELSE 0 END), 0) as period_total', $periodRange);
+        $column = $summary->getGrammar()->wrap($statusColumn);
+
+        foreach ($statuses as $status) {
+            $alias = $summary->getGrammar()->wrap($status);
+            $summary->selectRaw("COALESCE(SUM(CASE WHEN {$column} = ? THEN 1 ELSE 0 END), 0) as {$alias}", [$status]);
+        }
+
+        return array_map('intval', (array) $summary->first());
     }
 
     /**

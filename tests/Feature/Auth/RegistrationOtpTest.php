@@ -201,7 +201,7 @@ test('a student with a COR waits for admin approval before logging in', function
     $this->assertAuthenticatedAs($student->refresh());
 });
 
-test('student registration requires a certificate of registration', function () {
+test('student registration requires either a student ID or COR', function () {
     StudentRoster::create([
         'id_number' => '2023303709',
         'name' => 'Juan S. Dela Cruz',
@@ -211,10 +211,47 @@ test('student registration requires a certificate of registration', function () 
 
     $this->post(route('register.store'), studentRegistrationPayload([
         'cor' => null,
-    ]))->assertSessionHasErrors('cor');
+    ]))->assertSessionHasErrors([
+        'cor' => 'Upload your student ID or Certificate of Registration (COR).',
+    ]);
 
     Http::assertNothingSent();
     expect(User::where('email', 'student@ustp.edu.ph')->exists())->toBeFalse();
+});
+
+test('students can upload an ID image through OTP and admins can preview and approve it', function () {
+    Role::firstOrCreate(['role_name' => 'student']);
+    fakeBrevoMail();
+    $image = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aV1sAAAAASUVORK5CYII=');
+    $payload = studentRegistrationPayload([
+        'cor' => UploadedFile::fake()->createWithContent('student-id.png', $image),
+    ]);
+
+    $this->post(route('register.store'), $payload)->assertRedirect(route('register.otp.show'));
+    $pending = app(RegistrationOtpService::class)->pending($payload['email']);
+    expect($pending['payload']['cor_original_name'])->toBe('student-id.png');
+    $this->assertDatabaseMissing('users', ['email' => $payload['email']]);
+
+    $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
+        ->assertRedirect(route('student.login'));
+    $student = User::where('email', $payload['email'])->firstOrFail();
+    expect($student->status)->toBe('pending')
+        ->and($student->cor_original_name)->toBe('student-id.png')
+        ->and($student->cor_verification_status)->toBe('manual_review')
+        ->and($student->approval_block_reason)->toBeNull();
+    Storage::disk('local')->assertExists($student->cor_path);
+
+    $admin = User::factory()->create(['role_id' => Role::firstOrCreate(['role_name' => 'ict_admin'])->id]);
+    $this->actingAs($admin)->get(route('users.index'))->assertInertia(fn (Assert $page) => $page
+        ->where('pendingUsers.0.cor_url', route('users.cor', $student))
+        ->where('pendingUsers.0.approval_block_reason', null));
+    $this->get(route('users.cor', $student))
+        ->assertOk()->assertHeader('Content-Type', 'image/png')
+        ->assertHeader('Content-Disposition', 'inline; filename=student-id.png')
+        ->assertStreamedContent($image);
+    $this->put(route('users.update', $student), ['status' => 'active'])
+        ->assertSessionHasNoErrors()->assertRedirect();
+    expect($student->refresh()->status)->toBe('active');
 });
 
 test('student registration rejects an unsupported COR file type', function () {

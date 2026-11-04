@@ -85,7 +85,7 @@ const roles = [
         icon: Wifi,
         role: 'Students',
         description:
-            'Register with your student ID and COR, then submit limited service requests, report laboratory incidents, and review any assigned liabilities after approval.',
+            'Register with your ID number and upload a student ID or COR, then submit limited service requests, report laboratory incidents, and review any assigned liabilities after approval.',
         features: [
             'Limited Service Requests',
             'Track Requests',
@@ -95,7 +95,7 @@ const roles = [
         href: studentLogin().url,
         registerHref: register({ query: { role: 'student' } }).url,
         registrationNote:
-            'Enter your name, 10-digit student ID, and program, then upload your Certificate of Registration (COR).',
+            'Enter your name, 10-digit student ID number, and program, then upload either your student ID or Certificate of Registration (COR).',
     },
     {
         icon: Shield,
@@ -125,7 +125,7 @@ const workflowSteps = [
         step: '1',
         title: 'Register & Upload',
         description:
-            'Students upload a COR. Faculty personnel upload an Employee ID or Certificate of Employment with their registration details.',
+            'Students upload a student ID or COR. Faculty personnel upload an Employee ID or Certificate of Employment with their registration details.',
     },
     {
         step: '2',
@@ -137,7 +137,7 @@ const workflowSteps = [
         step: '3',
         title: 'ICT Admin Review',
         description:
-            'Your account stays pending while ICT Admin reviews your details and document. Automatic COR checks support student verification.',
+            'Your account stays pending while ICT Admin reviews your details and document. Automatic checks support text-based student ID or COR PDFs; photos and scans require manual review.',
     },
     {
         step: '4',
@@ -1231,7 +1231,7 @@ export default function Welcome() {
                                             href="#how-it-works"
                                             className="transition-colors hover:text-ustp-gold"
                                         >
-                                            COR Verification
+                                            Student ID / COR Verification
                                         </a>
                                     </li>
                                     <li>

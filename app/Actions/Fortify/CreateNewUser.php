@@ -88,7 +88,7 @@ class CreateNewUser implements CreatesNewUsers
     /**
      * Create the user account once the emailed OTP has been verified.
      *
-     * Student registrations collect a Certificate of Registration (COR),
+     * Student registrations collect a student ID or Certificate of Registration (COR),
      * which an ICT Admin must review before the account is activated.
      * Faculty/staff accounts continue to wait for admin approval as well.
      * API registrations may still auto-activate students because they cannot
@@ -290,9 +290,9 @@ class CreateNewUser implements CreatesNewUsers
         Validator::make($input, $rules, [
             'id_number.regex' => 'ID number must be exactly 10 digits (e.g., 2023303709).',
             'id_number.unique' => 'This ID number is already registered to an account.',
-            'cor.required_if' => 'Upload your Certificate of Registration (COR).',
-            'cor.mimes' => 'The COR must be a PDF, JPG, JPEG, or PNG file.',
-            'cor.max' => 'The COR must not be larger than 5 MB.',
+            'cor.required_if' => 'Upload your student ID or Certificate of Registration (COR).',
+            'cor.mimes' => 'Your student ID or COR must be a PDF, JPG, JPEG, or PNG file.',
+            'cor.max' => 'Your student ID or COR must not be larger than 5 MB.',
         ])->validate();
     }
 
@@ -318,7 +318,7 @@ class CreateNewUser implements CreatesNewUsers
     }
 
     /**
-     * Store the uploaded COR privately until the emailed OTP is verified.
+     * Store the uploaded student ID or COR privately until the emailed OTP is verified.
      * Only the resulting path is kept in the pending-registration cache.
      *
      * @param  array<string, mixed>  $input
@@ -337,7 +337,7 @@ class CreateNewUser implements CreatesNewUsers
 
         if (! is_string($path)) {
             throw ValidationException::withMessages([
-                'cor' => 'We could not save your Certificate of Registration. Please try again.',
+                'cor' => 'We could not save your student ID or COR. Please try again.',
             ]);
         }
 
@@ -349,7 +349,7 @@ class CreateNewUser implements CreatesNewUsers
     }
 
     /**
-     * Remove a temporarily stored COR when registration cannot continue.
+     * Remove a temporary student document when registration cannot continue.
      *
      * @param  array<string, mixed>  $input
      */

@@ -28,7 +28,7 @@ function corApplicant(string $role = 'student', string $status = 'pending'): Use
 
 function corText(User $user): string
 {
-    return "CERTIFICATE OF REGISTRATION\nBALUBAL CAMPUS\nAcademic Year/Term: 2nd Semester AY 2020-2021\nStudent No: {$user->id_number}    College: Computing\nName: DELA CRUZ, Juan Santos    Program: Bachelor of Science in Information Technology\nGender: M\n";
+    return "UNIVERSITY OF SCIENCE AND TECHNOLOGY OF SOUTHERN PHILIPPINES\nCERTIFICATE OF REGISTRATION\nBALUBAL CAMPUS\nAcademic Year/Term: 2nd Semester AY 2020-2021\nStudent No: {$user->id_number}    College: Computing\nName: DELA CRUZ, Juan Santos    Program: Bachelor of Science in Information Technology\nGender: M\n";
 }
 
 /** @param array<int, array{0: float, 1: float, 2: string}> $items */
@@ -78,6 +78,7 @@ function corPdf(string $text): string
 function corLayoutPdf(User $user, string $program = 'Bachelor of Science in Information Technology'): string
 {
     return corPdfFromItems([
+        [30, 810, 'University of Science and Technology of Southern Philippines'],
         [150, 780, 'C E R T I F I C A T E  O F  R E G I S T R A T I O N'],
         [278, 760, 'BALUBAL CAMPUS'],
         [30, 730, 'Student No:'], [80, 730, (string) $user->id_number], [230, 730, 'College:'], [270, 730, 'COLLEGE OF INFORMATION TECHNOLOGY AND COMPUTING'],
@@ -124,9 +125,73 @@ test('COR checks flag incorrect or absent fields', function (string $original, s
 })->with([
     ['DELA CRUZ, Juan Santos', 'DELA CRUZ, Other Person', 'name'],
     ['Bachelor of Science in Information Technology', 'Bachelor of Science in Agriculture', 'program'],
-    ['BALUBAL CAMPUS', 'OTHER CAMPUS', 'campus'],
+    ['UNIVERSITY OF SCIENCE AND TECHNOLOGY OF SOUTHERN PHILIPPINES', 'OTHER UNIVERSITY', 'school'],
     ['Student No:', 'Reference:', 'student_id'],
-    ['CERTIFICATE OF REGISTRATION', 'OTHER DOCUMENT', 'document'],
+]);
+
+test('COR verification checks exactly name id number program and school', function () {
+    $student = corApplicant();
+    $text = str_replace(
+        ['CERTIFICATE OF REGISTRATION', 'BALUBAL CAMPUS', 'Academic Year/Term: 2nd Semester AY 2020-2021', 'Gender: M'],
+        ['', 'OTHER CAMPUS', 'Academic Year/Term: any term', 'Gender: F'],
+        corText($student),
+    );
+    attachCor($student, $text);
+    app(CorVerificationService::class)->verify($student);
+
+    expect($student->refresh()->cor_verification_status)->toBe('matched')
+        ->and(array_keys($student->cor_verification_details['checks']))->toBe(['name', 'student_id', 'program', 'school']);
+});
+
+test('school verification accepts the university name and USTP abbreviation', function (string $school) {
+    $student = corApplicant();
+    attachCor($student, str_replace('UNIVERSITY OF SCIENCE AND TECHNOLOGY OF SOUTHERN PHILIPPINES', $school, corText($student)));
+    app(CorVerificationService::class)->verify($student);
+
+    expect($student->refresh()->cor_verification_status)->toBe('matched')
+        ->and($student->cor_verification_details['checks']['school']['matches'])->toBeTrue();
+})->with([
+    'USTP',
+    'U S T P',
+    "University of Science and Technology\nof Southern Philippines",
+]);
+
+test('campus text alone does not pass a missing school check', function () {
+    $student = corApplicant();
+    attachCor($student, str_replace('UNIVERSITY OF SCIENCE AND TECHNOLOGY OF SOUTHERN PHILIPPINES', '', corText($student)));
+    app(CorVerificationService::class)->verify($student);
+
+    expect($student->refresh()->cor_verification_status)->toBe('mismatch')
+        ->and($student->cor_verification_details['checks']['school']['matches'])->toBeFalse();
+});
+
+test('student IDs can be read from an ID number label', function () {
+    $student = corApplicant();
+    attachCor($student, str_replace('Student No:', 'ID Number:', corText($student)));
+    app(CorVerificationService::class)->verify($student);
+
+    expect($student->refresh()->cor_verification_status)->toBe('matched')
+        ->and($student->cor_verification_details['checks']['student_id']['actual'])->toBe($student->id_number);
+});
+
+test('text based student ID documents use the same four verification checks', function (string $idLabel, string $programLabel) {
+    $student = corApplicant();
+    $text = str_replace(
+        ['CERTIFICATE OF REGISTRATION', 'Student No:', 'Program:'],
+        ['STUDENT IDENTIFICATION CARD', $idLabel, $programLabel],
+        corText($student),
+    );
+    attachCor($student, $text);
+    app(CorVerificationService::class)->verify($student);
+
+    expect($student->refresh()->cor_verification_status)->toBe('matched')
+        ->and(array_keys($student->cor_verification_details['checks']))->toBe(['name', 'student_id', 'program', 'school'])
+        ->and($student->approval_block_reason)->toBeNull();
+})->with([
+    ['Student ID:', 'Course:'],
+    ['Student ID Number:', 'Program:'],
+    ['ID No.:', 'Course:'],
+    ['ID:', 'Program:'],
 ]);
 
 test('missing damaged image and scanned CORs require manual review', function (string $kind) {
@@ -152,7 +217,7 @@ test('bulk verification checks selected students and never approves them', funct
     $unselected = corApplicant();
     $faculty = corApplicant('faculty_staff');
     attachCor($first);
-    attachCor($second, str_replace('BALUBAL', 'OTHER', corText($second)));
+    attachCor($second, str_replace('UNIVERSITY OF SCIENCE AND TECHNOLOGY OF SOUTHERN PHILIPPINES', 'OTHER UNIVERSITY', corText($second)));
 
     $this->actingAs($admin)->post(route('users.bulk'), [
         'action' => 'verify', 'ids' => [$first->id, $second->id, $faculty->id],
@@ -171,21 +236,25 @@ test('bulk verification checks selected students and never approves them', funct
         ->where('pendingUsers', fn ($users) => collect($users)->firstWhere('id', $first->id)['cor_verification_status'] === 'matched'));
 });
 
-test('bulk approval preserves notifications and audit logs and skips missing CORs and stale selections', function () {
+test('bulk approval preserves notifications and audit logs and skips missing CORs mismatches and stale selections', function () {
     $admin = corApplicant('ict_admin', 'active');
     $student = corApplicant();
     $missing = corApplicant();
+    $mismatch = corApplicant();
     $inactive = corApplicant('student', 'inactive');
     $faculty = corApplicant('faculty_staff');
     attachCor($student);
+    attachCor($mismatch, str_replace('UNIVERSITY OF SCIENCE AND TECHNOLOGY OF SOUTHERN PHILIPPINES', 'OTHER UNIVERSITY', corText($mismatch)));
+    app(CorVerificationService::class)->verify($mismatch);
 
-    $payload = ['action' => 'approve', 'ids' => [$student->id, $missing->id, $inactive->id, $faculty->id]];
+    $payload = ['action' => 'approve', 'ids' => [$student->id, $missing->id, $mismatch->id, $inactive->id, $faculty->id]];
     $this->actingAs($admin)->post(route('users.bulk'), $payload)->assertSessionHasNoErrors();
     $this->post(route('users.bulk'), $payload)->assertSessionHasNoErrors();
 
     expect($student->refresh()->status)->toBe('active')
         ->and($faculty->refresh()->status)->toBe('active')
         ->and($missing->refresh()->status)->toBe('pending')
+        ->and($mismatch->refresh()->status)->toBe('pending')
         ->and($inactive->refresh()->status)->toBe('inactive')
         ->and(Notification::where('notification_type', 'account_approval')->count())->toBe(2)
         ->and(AuditLog::where('module_name', 'users')->count())->toBe(2);

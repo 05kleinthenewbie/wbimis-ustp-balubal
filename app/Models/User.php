@@ -52,6 +52,7 @@ use RuntimeException;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property bool $is_technician
+ * @property-read string|null $approval_block_reason
  */
 #[Fillable(['name', 'email', 'password', 'role_id', 'department', 'employment_type', 'id_number', 'educational_level', 'year_level', 'gender', 'birth_date', 'home_address', 'cor_path', 'cor_original_name', 'contact_no', 'status', 'avatar', 'employee_id_number', 'position', 'expertise', 'employment_document_path', 'employment_document_original_name', 'is_technician'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'cor_path', 'cor_original_name', 'employment_document_path', 'employment_document_original_name'])]
@@ -78,14 +79,36 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * Resolve the admin-only download URL for the student's uploaded
-     * Certificate of Registration, or null when none was submitted.
+     * Resolve the admin-only preview URL for the student's uploaded
+     * student ID or COR, or null when none was submitted.
      */
     protected function corUrl(): Attribute
     {
         return Attribute::get(fn (): ?string => filled($this->cor_path)
             ? route('users.cor', $this)
             : null);
+    }
+
+    /**
+     * Explain why a pending student registration cannot be approved.
+     */
+    protected function approvalBlockReason(): Attribute
+    {
+        return Attribute::get(function (): ?string {
+            if ($this->status !== 'pending' || $this->role?->role_name !== 'student') {
+                return null;
+            }
+
+            if (blank($this->cor_path) || ! Storage::disk('local')->exists((string) $this->cor_path)) {
+                return 'The student has no available student ID or COR. Upload either document before approving this account.';
+            }
+
+            if ($this->cor_verification_status === 'mismatch') {
+                return 'The student\'s details do not match their student ID or COR. Resolve the mismatch before approving this account.';
+            }
+
+            return null;
+        });
     }
 
     /**

@@ -503,7 +503,7 @@ export default function Register({ passwordRules }: Props) {
                                         className="text-sm font-medium text-foreground"
                                     >
                                         {isStudent
-                                            ? 'Certificate of Registration (COR)'
+                                            ? 'Student ID or Certificate of Registration (COR)'
                                             : 'Employee ID or Certificate of Employment'}
                                         <span className="ml-1 text-destructive">
                                             *
@@ -515,6 +515,8 @@ export default function Register({ passwordRules }: Props) {
                                                 <Upload className="size-5" />
                                             </div>
                                             <p className="text-sm text-muted-foreground">
+                                                {isStudent &&
+                                                    'Upload either your student ID or COR. '}
                                                 PDF, JPG, or PNG · Up to 5 MB
                                             </p>
                                         </div>

@@ -178,7 +178,13 @@ test('technicians store their expertise and it is listed for assignment', functi
     $this->actingAs($admin)
         ->get(route('job-orders.assignments'))
         ->assertInertia(fn (Assert $page) => $page
-            ->where('technicians.0.expertise', 'Networking and hardware repair'));
+            ->where('technicians', function ($technicians) {
+                $technician = collect($technicians)->first(
+                    fn ($technician) => data_get($technician, 'name') === 'Expert Tech',
+                );
+
+                return data_get($technician, 'expertise') === 'Networking and hardware repair';
+            }));
 });
 
 test('assignment inherits the request priority and recalculates the sla', function () {

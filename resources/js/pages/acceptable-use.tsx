@@ -35,8 +35,9 @@ export default function AcceptableUse() {
                         <strong>Legitimate Identification:</strong> Registering
                         under false identities, using another individual's
                         Student ID or Employee ID, or uploading counterfeit
-                        registration documents (COR/COE) is strictly prohibited
-                        and subject to university disciplinary action.
+                        identification or registration documents (Student
+                        ID/COR/COE) is strictly prohibited and subject to
+                        university disciplinary action.
                     </li>
                     <li>
                         <strong>Prompt Reporting:</strong> In the event of

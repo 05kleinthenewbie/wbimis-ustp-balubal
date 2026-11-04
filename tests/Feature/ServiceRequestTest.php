@@ -174,7 +174,7 @@ test('requests index scopes non admin users to their own requests', function () 
 
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
-        ->component('requests/index')
+        ->component('requests/my-requests')
         ->where('requests.data', fn ($requests) => $requests->count() === 1)
         ->where('requests.data.0.problem_description', 'Mine'),
     );

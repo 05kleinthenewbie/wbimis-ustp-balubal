@@ -16,7 +16,7 @@ class CorVerificationService
     public function verify(User $user): void
     {
         $disk = Storage::disk('local');
-        $details = ['message' => 'COR is missing. Upload or review the document manually.', 'checks' => []];
+        $details = ['message' => 'Student ID or COR is missing. Upload or review the document manually.', 'checks' => []];
         $status = 'manual_review';
 
         if (filled($user->cor_path) && $disk->exists($user->cor_path)) {
@@ -46,12 +46,12 @@ class CorVerificationService
     public function matchDetails(User $user, string $text): array
     {
         if (trim($text) === '') {
-            return ['message' => 'No readable PDF text was found. Review this COR manually.', 'checks' => []];
+            return ['message' => 'No readable PDF text was found. Review this student ID or COR manually.', 'checks' => []];
         }
 
-        $id = $this->field($text, 'Student\s*(?:No\.?|Number)', 'College|Name');
-        $name = $this->field($text, 'Name', 'Program|Gender|College');
-        $program = $this->field($text, 'Program', 'Major|Gender|Curriculum|Year\s*Level');
+        $id = $this->field($text, '(?:(?:Student\s*)?ID(?:\s*(?:No\.?|Number))?|Student\s*(?:No\.?|Number))', 'College|Name|Program|Course');
+        $name = $this->field($text, 'Name', 'Program|Course|Gender|College');
+        $program = $this->field($text, '(?:Program|Course)', 'Major|Gender|Curriculum|Year\s*Level');
         $programNames = [
             'BSIT' => ['BSIT', 'Bachelor of Science in Information Technology'],
             'BSA' => ['BSA', 'Bachelor of Science in Agriculture'],
@@ -60,19 +60,19 @@ class CorVerificationService
         $expectedProgram = (string) $user->department;
         $normalizedText = $this->normalize($text);
         $compactText = (string) preg_replace('/[^A-Z0-9]/', '', Str::upper(Str::ascii($text)));
-        $hasDocumentTitle = str_contains($compactText, 'CERTIFICATEOFREGISTRATION');
-        $hasCampus = str_contains($normalizedText, 'BALUBAL CAMPUS');
+        $schoolName = 'University of Science and Technology of Southern Philippines';
+        $hasSchool = str_contains($compactText, 'UNIVERSITYOFSCIENCEANDTECHNOLOGYOFSOUTHERNPHILIPPINES')
+            || preg_match('/\bU\s*S\s*T\s*P\b/', $normalizedText) === 1;
         $nameTokens = $this->nameTokens($name);
         $expectedNameTokens = $this->nameTokens($user->name);
         $checks = [
-            'document' => ['expected' => 'Certificate of Registration', 'actual' => $hasDocumentTitle ? 'Certificate of Registration' : 'Not found', 'matches' => $hasDocumentTitle],
-            'student_id' => ['expected' => (string) $user->id_number, 'actual' => $id, 'matches' => filled($user->id_number) && $id === $user->id_number],
             'name' => ['expected' => $user->name, 'actual' => $name, 'matches' => $nameTokens !== [] && array_diff($expectedNameTokens, $nameTokens) === []],
+            'student_id' => ['expected' => (string) $user->id_number, 'actual' => $id, 'matches' => filled($user->id_number) && $id === $user->id_number],
             'program' => ['expected' => $expectedProgram, 'actual' => $program, 'matches' => $program !== '' && in_array($this->normalize($program), array_map($this->normalize(...), $programNames[$expectedProgram] ?? [$expectedProgram]), true)],
-            'campus' => ['expected' => 'Balubal Campus', 'actual' => $hasCampus ? 'Balubal Campus' : 'Not found', 'matches' => $hasCampus],
+            'school' => ['expected' => $schoolName.' (USTP)', 'actual' => $hasSchool ? $schoolName.' (USTP)' : 'Not found', 'matches' => $hasSchool],
         ];
 
-        return ['message' => 'Text matching only; final approval remains with the ICT Admin. Academic term is not checked.', 'checks' => $checks];
+        return ['message' => 'Only name, ID number, program, and school are checked. Final approval remains with the ICT Admin.', 'checks' => $checks];
     }
 
     /**

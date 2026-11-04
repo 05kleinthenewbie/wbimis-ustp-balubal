@@ -2,6 +2,7 @@ import { usePage } from '@inertiajs/react';
 import { Moon, Sun } from 'lucide-react';
 import { NotificationBell } from '@/components/notification-bell';
 import { PushNotificationButton } from '@/components/push-notification-button';
+import { StudentLoginCodeButton } from '@/components/student-login-code-button';
 import { Button } from '@/components/ui/button';
 import { SidebarTrigger } from '@/components/ui/sidebar';
 import { useAppearance } from '@/hooks/use-appearance';
@@ -12,7 +13,13 @@ export function AppSidebarHeader({
 }: {
     breadcrumbs?: BreadcrumbItemType[];
 }) {
-    const { component } = usePage();
+    const {
+        component,
+        props: { auth },
+    } = usePage();
+    const isStudent =
+        (auth.user.role as { role_name?: string } | undefined)?.role_name ===
+        'student';
     const { resolvedAppearance, updateAppearance } = useAppearance();
     const isDark = resolvedAppearance === 'dark';
     const pageTitles: Record<string, string> = {
@@ -71,6 +78,7 @@ export function AppSidebarHeader({
                 </h1>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
+                {isStudent && <StudentLoginCodeButton />}
                 <PushNotificationButton />
                 <NotificationBell />
                 <Button

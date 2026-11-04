@@ -1,8 +1,10 @@
 <?php
 
+use App\Events\UserApproved;
 use App\Models\Notification;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -135,6 +137,70 @@ test('a pending student cannot be approved without a COR', function () {
     expect($student->refresh()->status)->toBe('pending');
 });
 
+test('blocked student registrations expose a disabled approval reason and cannot be activated', function (?string $path, string $verificationStatus, bool $fileExists) {
+    Storage::fake('local');
+    Event::fake([UserApproved::class]);
+    $admin = mgmtUser('ict_admin');
+    $student = mgmtUser('student', 'pending');
+    $student->forceFill(['cor_path' => $path, 'cor_verification_status' => $verificationStatus])->save();
+    if ($fileExists) {
+        Storage::disk('local')->put($path, 'COR contents');
+    }
+
+    $reason = $student->approval_block_reason;
+    expect($reason)->toBeString()->not->toBeEmpty();
+
+    $this->actingAs($admin)->get(route('users.index'))
+        ->assertOk()->assertInertia(fn (Assert $page) => $page
+        ->where('pendingUsers.0.id', $student->id)
+        ->where('pendingUsers.0.approval_block_reason', $reason));
+    $this->put(route('users.update', $student), ['status' => 'active'])
+        ->assertSessionHasErrors(['status' => $reason]);
+
+    expect($student->refresh()->status)->toBe('pending');
+    $this->assertDatabaseMissing('notifications', ['user_id' => $student->id]);
+    $this->assertDatabaseMissing('audit_logs', ['record_id' => $student->id, 'module_name' => 'users']);
+    Event::assertNotDispatched(UserApproved::class);
+})->with([
+    'no uploaded COR' => [null, 'matched', false],
+    'COR file missing from storage' => ['cor/students/missing.pdf', 'matched', false],
+    'details mismatch despite uploaded COR' => ['cor/students/cor.pdf', 'mismatch', true],
+]);
+
+test('the API cannot bypass missing COR or mismatch approval restrictions', function (bool $hasCor) {
+    Storage::fake('local');
+    Event::fake([UserApproved::class]);
+    $student = mgmtUser('student', 'pending');
+    if ($hasCor) {
+        Storage::disk('local')->put('cor/student.pdf', 'COR contents');
+        $student->forceFill(['cor_path' => 'cor/student.pdf', 'cor_verification_status' => 'mismatch'])->save();
+    }
+
+    $this->actingAs(mgmtUser('ict_admin'), 'api')
+        ->putJson('/api/v1/users/'.$student->id, ['status' => 'active'])
+        ->assertUnprocessable()->assertJsonValidationErrors('status');
+
+    expect($student->refresh()->status)->toBe('pending');
+    $this->assertDatabaseMissing('notifications', ['user_id' => $student->id]);
+    Event::assertNotDispatched(UserApproved::class);
+})->with(['missing COR' => false, 'mismatched COR' => true]);
+
+test('students with an available non mismatched COR remain eligible for admin approval', function (?string $verificationStatus) {
+    Storage::fake('local');
+    Event::fake([UserApproved::class]);
+    Storage::disk('local')->put('cor/student.pdf', 'COR contents');
+    $student = mgmtUser('student', 'pending');
+    $student->forceFill(['cor_path' => 'cor/student.pdf', 'cor_verification_status' => $verificationStatus])->save();
+
+    expect($student->approval_block_reason)->toBeNull();
+
+    $this->actingAs(mgmtUser('ict_admin'))
+        ->put(route('users.update', $student), ['status' => 'active'])
+        ->assertSessionHasNoErrors()->assertRedirect();
+
+    expect($student->refresh()->status)->toBe('active');
+})->with([null, 'matched', 'manual_review']);
+
 test('a pending student with a COR can be approved', function () {
     Storage::fake('local');
     Storage::disk('local')->put('cor/students/cor.pdf', 'cor contents');
@@ -153,9 +219,10 @@ test('a pending student with a COR can be approved', function () {
     expect($student->refresh()->status)->toBe('active');
 });
 
-test('admins can download a COR and other users cannot', function () {
+test('admins can view a COR inline without an automatic download and other users cannot', function () {
     Storage::fake('local');
-    Storage::disk('local')->put('cor/students/cor.pdf', 'cor contents');
+    $contents = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF";
+    Storage::disk('local')->put('cor/students/cor.pdf', $contents);
 
     $admin = mgmtUser('ict_admin');
     $faculty = mgmtUser('faculty_staff');
@@ -168,14 +235,17 @@ test('admins can download a COR and other users cannot', function () {
     $this->actingAs($admin)
         ->get(route('users.cor', $student->id))
         ->assertOk()
-        ->assertDownload('cor.pdf');
+        ->assertHeader('Content-Disposition', 'inline; filename=cor.pdf')
+        ->assertHeader('Content-Type', 'application/pdf')
+        ->assertHeader('X-Frame-Options', 'SAMEORIGIN')
+        ->assertStreamedContent($contents);
 
     $this->actingAs($faculty)
         ->get(route('users.cor', $student->id))
         ->assertForbidden();
 });
 
-test('downloading a missing COR returns not found', function () {
+test('viewing a missing COR returns not found', function () {
     Storage::fake('local');
     $admin = mgmtUser('ict_admin');
     $student = mgmtUser('student', 'pending');
@@ -183,4 +253,33 @@ test('downloading a missing COR returns not found', function () {
     $this->actingAs($admin)
         ->get(route('users.cor', $student->id))
         ->assertNotFound();
+});
+
+test('image CORs are also served inline for the in site preview', function () {
+    Storage::fake('local');
+    $contents = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aV1sAAAAASUVORK5CYII=');
+    Storage::disk('local')->put('cor/student.png', $contents);
+    $student = mgmtUser('student', 'pending');
+    $student->update(['cor_path' => 'cor/student.png', 'cor_original_name' => 'cor.png']);
+
+    $this->actingAs(mgmtUser('ict_admin'))->get(route('users.cor', $student))
+        ->assertOk()
+        ->assertHeader('Content-Type', 'image/png')
+        ->assertHeader('Content-Disposition', 'inline; filename=cor.png')
+        ->assertStreamedContent($contents);
+});
+
+test('unsupported stored files cannot execute inside a COR preview', function () {
+    Storage::fake('local');
+    Storage::disk('local')->put('cor/student.pdf', '<html><script>alert(1)</script></html>');
+    $student = mgmtUser('student', 'pending');
+    $student->update(['cor_path' => 'cor/student.pdf', 'cor_original_name' => 'cor.pdf']);
+
+    $this->actingAs(mgmtUser('ict_admin'))->get(route('users.cor', $student))->assertStatus(415);
+});
+
+test('COR previews require an authenticated administrator', function () {
+    $student = mgmtUser('student', 'pending');
+
+    $this->get(route('users.cor', $student))->assertRedirect(route('login'));
 });

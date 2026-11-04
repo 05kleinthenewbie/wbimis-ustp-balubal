@@ -27,6 +27,7 @@ type UserRow = {
     role: { role_name: string } | null;
     created_at: string;
     cor_url: string | null;
+    approval_block_reason: string | null;
     employment_document_url: string | null;
     employment_type: string | null;
     employee_id_number: string | null;
@@ -62,6 +63,13 @@ const roleLabels: Record<string, string> = {
     ict_admin: 'ICT Admin',
 };
 
+const corCheckLabels: Record<string, string> = {
+    name: 'Name',
+    student_id: 'ID number',
+    program: 'Program',
+    school: 'School',
+};
+
 export default function UsersIndex({
     status,
     error: flashError,
@@ -80,6 +88,7 @@ export default function UsersIndex({
     const [bulkProcessing, setBulkProcessing] = useState(false);
     const [roleFilter, setRoleFilter] = useState('all');
     const [reviewUser, setReviewUser] = useState<UserRow | null>(null);
+    const [corPreviewUser, setCorPreviewUser] = useState<UserRow | null>(null);
 
     function matchesRole(user: UserRow) {
         if (roleFilter === 'all') {
@@ -98,7 +107,10 @@ export default function UsersIndex({
     }
 
     function reviewDecision(status: 'active' | 'rejected') {
-        if (!reviewUser) {
+        if (
+            !reviewUser ||
+            (status === 'active' && reviewUser.approval_block_reason)
+        ) {
             return;
         }
 
@@ -119,6 +131,15 @@ export default function UsersIndex({
             return;
         }
 
+        if (
+            action === 'approve' &&
+            pendingUsers.some(
+                (user) => ids.includes(user.id) && user.approval_block_reason,
+            )
+        ) {
+            return;
+        }
+
         setBulkProcessing(true);
         router.post(
             bulk.url(),
@@ -131,10 +152,14 @@ export default function UsersIndex({
         );
     }
 
-    function approveUser(id: number) {
-        setProcessingId(id);
+    function approveUser(user: UserRow) {
+        if (user.approval_block_reason) {
+            return;
+        }
+
+        setProcessingId(user.id);
         router.put(
-            update.url(id),
+            update.url(user.id),
             { status: 'active' },
             { onFinish: () => setProcessingId(null) },
         );
@@ -200,6 +225,9 @@ export default function UsersIndex({
     );
     const selectedStudents = selectedPending.filter(
         (user) => user.role?.role_name === 'student',
+    );
+    const selectionHasBlockedApproval = selectedPending.some((user) =>
+        Boolean(user.approval_block_reason),
     );
     const allSelected =
         filteredPending.length > 0 &&
@@ -499,14 +527,20 @@ export default function UsersIndex({
                                     )
                                 }
                             >
-                                Verify selected CORs
+                                Verify selected documents
                             </Button>
                             <Button
                                 size="sm"
                                 disabled={
                                     bulkProcessing ||
                                     processingId !== null ||
-                                    selectedPending.length === 0
+                                    selectedPending.length === 0 ||
+                                    selectionHasBlockedApproval
+                                }
+                                title={
+                                    selectionHasBlockedApproval
+                                        ? 'Deselect students with missing IDs/CORs or mismatched details before approving.'
+                                        : undefined
                                 }
                                 onClick={() =>
                                     runBulk(
@@ -540,7 +574,7 @@ export default function UsersIndex({
                             >
                                 {bulkProcessing
                                     ? 'Processing selected accounts…'
-                                    : 'Select all to verify, approve, or reject all visible pending accounts. Up to 500 per action. COR matching checks ID, name, program, and campus—not academic term. Approval is a separate admin decision, including manual review of flagged CORs.'}
+                                    : 'Select all to verify, approve, or reject all visible pending accounts. Up to 500 per action. Student ID or COR matching checks name, ID number, program, and school (USTP) only. Students with missing documents or mismatched details cannot be approved.'}
                             </p>
                         </div>
 
@@ -575,7 +609,7 @@ export default function UsersIndex({
                                                     Registered
                                                 </th>
                                                 <th className="px-5 py-3.5 text-left text-xs text-slate-500">
-                                                    COR checks
+                                                    ID / COR checks
                                                 </th>
                                                 <th className="px-5 py-3.5" />
                                             </tr>
@@ -726,38 +760,47 @@ export default function UsersIndex({
                                                                             user
                                                                                 .cor_verification_details
                                                                                 .checks,
-                                                                        ).map(
-                                                                            ([
-                                                                                field,
-                                                                                check,
-                                                                            ]) => (
-                                                                                <p
-                                                                                    key={
-                                                                                        field
-                                                                                    }
-                                                                                    className="py-1"
-                                                                                >
-                                                                                    {check.matches
-                                                                                        ? 'Match'
-                                                                                        : 'Review'}{' '}
-                                                                                    —{' '}
-                                                                                    {field.replaceAll(
-                                                                                        '_',
-                                                                                        ' ',
-                                                                                    )}
+                                                                        )
+                                                                            .filter(
+                                                                                ([
+                                                                                    field,
+                                                                                ]) =>
+                                                                                    field in
+                                                                                    corCheckLabels,
+                                                                            )
+                                                                            .map(
+                                                                                ([
+                                                                                    field,
+                                                                                    check,
+                                                                                ]) => (
+                                                                                    <p
+                                                                                        key={
+                                                                                            field
+                                                                                        }
+                                                                                        className="py-1"
+                                                                                    >
+                                                                                        {check.matches
+                                                                                            ? 'Match'
+                                                                                            : 'Review'}{' '}
+                                                                                        —{' '}
+                                                                                        {
+                                                                                            corCheckLabels[
+                                                                                                field
+                                                                                            ]
+                                                                                        }
 
-                                                                                    :{' '}
-                                                                                    {check.actual ||
-                                                                                        'Not found'}{' '}
-                                                                                    (expected:{' '}
-                                                                                    {
-                                                                                        check.expected
-                                                                                    }
+                                                                                        :{' '}
+                                                                                        {check.actual ||
+                                                                                            'Not found'}{' '}
+                                                                                        (expected:{' '}
+                                                                                        {
+                                                                                            check.expected
+                                                                                        }
 
-                                                                                    )
-                                                                                </p>
-                                                                            ),
-                                                                        )}
+                                                                                        )
+                                                                                    </p>
+                                                                                ),
+                                                                            )}
                                                                     </details>
                                                                 )}
                                                                 <Button
@@ -777,7 +820,8 @@ export default function UsersIndex({
                                                                         )
                                                                     }
                                                                 >
-                                                                    Verify COR
+                                                                    Verify ID /
+                                                                    COR
                                                                 </Button>
                                                             </div>
                                                         ) : (
@@ -884,22 +928,26 @@ export default function UsersIndex({
                                                                 </Button>
                                                             )}
                                                             {user.cor_url ? (
-                                                                <a
-                                                                    href={
-                                                                        user.cor_url
+                                                                <Button
+                                                                    type="button"
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    onClick={() =>
+                                                                        setCorPreviewUser(
+                                                                            user,
+                                                                        )
                                                                     }
-                                                                    target="_blank"
-                                                                    rel="noreferrer"
                                                                     className="rounded-md border border-sky-200 bg-white px-3 py-1.5 text-xs font-medium text-sky-700 transition-colors hover:border-sky-300 hover:bg-sky-50"
                                                                 >
-                                                                    View COR
-                                                                </a>
+                                                                    View ID /
+                                                                    COR
+                                                                </Button>
                                                             ) : (
                                                                 user.role
                                                                     ?.role_name ===
                                                                     'student' && (
                                                                     <span className="text-[11px] font-medium text-rose-600">
-                                                                        COR
+                                                                        ID / COR
                                                                         missing
                                                                     </span>
                                                                 )
@@ -926,24 +974,20 @@ export default function UsersIndex({
                                                             <Button
                                                                 size="sm"
                                                                 disabled={
-                                                                    processingId ===
-                                                                        user.id ||
-                                                                    (user.role
-                                                                        ?.role_name ===
-                                                                        'student' &&
-                                                                        !user.cor_url)
+                                                                    processingId !==
+                                                                        null ||
+                                                                    bulkProcessing ||
+                                                                    Boolean(
+                                                                        user.approval_block_reason,
+                                                                    )
                                                                 }
                                                                 title={
-                                                                    user.role
-                                                                        ?.role_name ===
-                                                                        'student' &&
-                                                                    !user.cor_url
-                                                                        ? 'The student has not uploaded a COR yet.'
-                                                                        : undefined
+                                                                    user.approval_block_reason ??
+                                                                    undefined
                                                                 }
                                                                 onClick={() =>
                                                                     approveUser(
-                                                                        user.id,
+                                                                        user,
                                                                     )
                                                                 }
                                                                 className="h-8 bg-ustp-navy px-3 text-xs text-white shadow-lg shadow-ustp-navy/20 hover:bg-ustp-navy-dark"
@@ -951,6 +995,13 @@ export default function UsersIndex({
                                                                 Approve
                                                             </Button>
                                                         </div>
+                                                        {user.approval_block_reason && (
+                                                            <p className="mt-2 ml-auto max-w-xs text-xs text-rose-600">
+                                                                {
+                                                                    user.approval_block_reason
+                                                                }
+                                                            </p>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))}
@@ -1137,6 +1188,33 @@ export default function UsersIndex({
                 </div>
             </div>
             <Dialog
+                open={corPreviewUser !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setCorPreviewUser(null);
+                    }
+                }}
+            >
+                <DialogContent className="flex h-[85dvh] flex-col sm:max-w-5xl">
+                    <DialogHeader>
+                        <DialogTitle>
+                            Student ID / Certificate of Registration
+                        </DialogTitle>
+                        <DialogDescription>
+                            Review {corPreviewUser?.name}’s student ID or COR
+                            within the portal.
+                        </DialogDescription>
+                    </DialogHeader>
+                    {corPreviewUser?.cor_url && (
+                        <iframe
+                            src={`${corPreviewUser.cor_url}#toolbar=0&navpanes=0`}
+                            title={`${corPreviewUser.name} — Student ID or COR`}
+                            className="min-h-0 w-full flex-1 rounded-lg border border-slate-200 bg-slate-50"
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
+            <Dialog
                 open={reviewUser !== null}
                 onOpenChange={(open) => {
                     if (!open) {
@@ -1217,7 +1295,12 @@ export default function UsersIndex({
                                     Reject registration
                                 </Button>
                                 <Button
-                                    disabled={processingId !== null}
+                                    disabled={
+                                        processingId !== null ||
+                                        Boolean(
+                                            reviewUser.approval_block_reason,
+                                        )
+                                    }
                                     onClick={() => reviewDecision('active')}
                                 >
                                     Approve account

@@ -13,6 +13,7 @@ use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\RegisterOtpController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ServiceRequestController;
+use App\Http\Controllers\StudentLoginCodeController;
 use App\Http\Controllers\StudentLoginController;
 use App\Http\Controllers\StudentPasswordResetLinkController;
 use App\Http\Controllers\UserController;
@@ -44,6 +45,8 @@ Route::middleware('guest')->group(function () {
     Route::post('/student/login', [StudentLoginController::class, 'store'])
         ->middleware('throttle:6,1')
         ->name('student.authenticate');
+    Route::post('/student/scan-login', [StudentLoginCodeController::class, 'redeem'])
+        ->middleware('throttle:6,1')->name('student.login-codes.redeem');
     Route::get('/student/forgot-password', [StudentPasswordResetLinkController::class, 'create'])
         ->name('student.password.request');
     Route::post('/student/forgot-password', [StudentPasswordResetLinkController::class, 'store'])
@@ -55,6 +58,8 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/student/login-codes', [StudentLoginCodeController::class, 'store'])
+        ->middleware('throttle:6,1')->name('student.login-codes.store');
     Route::get('push-subscriptions/config', [PushSubscriptionController::class, 'show'])->name('push-subscriptions.show');
     Route::post('push-subscriptions', [PushSubscriptionController::class, 'store'])->middleware('throttle:20,1')->name('push-subscriptions.store');
     Route::delete('push-subscriptions', [PushSubscriptionController::class, 'destroy'])->middleware('throttle:20,1')->name('push-subscriptions.destroy');
@@ -93,7 +98,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::get('audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
-    Route::get('users/{user}/cor', [UserController::class, 'downloadCor'])->name('users.cor');
+    Route::get('users/{user}/cor', [UserController::class, 'viewCor'])->name('users.cor');
     Route::post('users/bulk', [UserController::class, 'bulk'])->name('users.bulk');
     Route::resource('users', UserController::class)->only(['index', 'update']);
     Route::post('technicians', [UserController::class, 'storeTechnician'])->name('technicians.store');

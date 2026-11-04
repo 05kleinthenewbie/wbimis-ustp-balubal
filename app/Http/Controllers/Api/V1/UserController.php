@@ -55,6 +55,9 @@ class UserController extends ApiController
         if (($user->status === 'rejected' && $validated['status'] !== 'pending') || ($validated['status'] === 'rejected' && $user->status !== 'pending')) {
             throw ValidationException::withMessages(['status' => 'Rejected registrations must return to verification before approval.']);
         }
+        if ($validated['status'] === 'active' && ($reason = $user->approval_block_reason) !== null) {
+            throw ValidationException::withMessages(['status' => $reason]);
+        }
         $user->update($validated);
 
         if ($validated['status'] === 'active') {
