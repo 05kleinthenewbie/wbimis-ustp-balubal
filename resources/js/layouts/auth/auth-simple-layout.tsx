@@ -13,10 +13,11 @@ export default function AuthSimpleLayout({
     icon,
     iconClassName = 'bg-ustp-navy/5 text-ustp-navy dark:bg-white/10 dark:text-white',
     backHref,
-    backLabel = 'Back',
+    backLabel = 'Back to home',
     backTestId,
 }: AuthLayoutProps) {
     const Icon = icon;
+    const resolvedBackHref = backHref ?? home().url;
 
     return (
         <div
@@ -65,21 +66,24 @@ export default function AuthSimpleLayout({
                 <div className="h-1 bg-ustp-gold" />
 
                 <div className="bg-background px-4 py-5 sm:px-8 sm:py-8 [@media(max-width:639px)]:[&_input:not([type=checkbox]):not([type=hidden]):not([type=file])]:text-base [@media(max-width:639px)]:[&_input[type=date]]:min-w-0">
-                    {backHref && (
+                    {resolvedBackHref && (
                         <div className="mb-2 flex sm:mb-4">
                             <Button
                                 asChild
                                 variant="ghost"
                                 size="sm"
-                                className="-ml-2 size-9 px-0 text-muted-foreground hover:text-ustp-navy dark:hover:text-white"
+                                className="-ml-2 h-9 gap-1.5 px-2 text-muted-foreground hover:text-ustp-navy dark:hover:text-white"
                             >
                                 <Link
-                                    href={backHref}
+                                    href={resolvedBackHref}
                                     data-test={backTestId}
                                     aria-label={backLabel}
                                     title={backLabel}
                                 >
                                     <ArrowLeft className="size-4" />
+                                    <span className="text-xs font-medium sm:text-sm">
+                                        {backLabel}
+                                    </span>
                                 </Link>
                             </Button>
                         </div>

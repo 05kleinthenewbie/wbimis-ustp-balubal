@@ -67,7 +67,6 @@ const corCheckLabels: Record<string, string> = {
     name: 'Name',
     student_id: 'ID number',
     program: 'Program',
-    school: 'School',
 };
 
 export default function UsersIndex({
@@ -574,7 +573,7 @@ export default function UsersIndex({
                             >
                                 {bulkProcessing
                                     ? 'Processing selected accounts…'
-                                    : 'Select all to verify, approve, or reject all visible pending accounts. Up to 500 per action. Student ID or COR matching checks name, ID number, program, and school (USTP) only. Students with missing documents or mismatched details cannot be approved.'}
+                                    : 'Select all to verify, approve, or reject all visible pending accounts. Up to 500 per action. Student ID or COR matching checks name, ID number, and program only. Students with missing documents or mismatched details cannot be approved.'}
                             </p>
                         </div>
 

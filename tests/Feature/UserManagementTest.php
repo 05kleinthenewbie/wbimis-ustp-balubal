@@ -59,7 +59,7 @@ test('admins can reactivate a deactivated account', function () {
         ->toBe('Your account has been reactivated. You can now log in.');
 });
 
-test('rejecting a pending registration keeps the rejection notice', function () {
+test('rejecting a pending registration removes it from the database', function () {
     $admin = mgmtUser('ict_admin');
     $user = mgmtUser('faculty_staff', 'pending');
 
@@ -67,9 +67,8 @@ test('rejecting a pending registration keeps the rejection notice', function () 
         ->put(route('users.update', $user->id), ['status' => 'inactive'])
         ->assertRedirect();
 
-    expect(Notification::where('user_id', $user->id)->latest('id')->first()->message)
-        ->toBe('Your account registration was not approved. Please contact the ICT office for more information.');
-    expect($user->refresh()->status)->toBe('rejected');
+    $this->assertDatabaseMissing('users', ['id' => $user->id]);
+    expect(User::where('email', $user->email)->exists())->toBeFalse();
 });
 
 test('rejected registrations are separate from deactivated accounts and must be reviewed again', function () {

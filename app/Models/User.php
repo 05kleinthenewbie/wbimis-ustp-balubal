@@ -79,6 +79,26 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
+     * Permanently remove the account and its uploaded documents.
+     */
+    public function purgeAccount(): void
+    {
+        $documents = [
+            ['local', $this->getRawOriginal('cor_path')],
+            ['local', $this->getRawOriginal('employment_document_path')],
+            ['public', $this->getRawOriginal('avatar')],
+        ];
+
+        foreach ($documents as [$disk, $path]) {
+            if (filled($path)) {
+                Storage::disk($disk)->delete((string) $path);
+            }
+        }
+
+        $this->delete();
+    }
+
+    /**
      * Resolve the admin-only preview URL for the student's uploaded
      * student ID or COR, or null when none was submitted.
      */

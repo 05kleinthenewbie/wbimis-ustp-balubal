@@ -276,6 +276,21 @@ class UserController extends Controller
             return;
         }
 
+        if ($status === 'rejected') {
+            AuditLog::record(
+                "Rejected and removed registration for {$user->email}",
+                'users',
+                $user->id,
+                null,
+                ['status' => $previousStatus],
+                ['status' => 'deleted'],
+            );
+
+            $user->purgeAccount();
+
+            return;
+        }
+
         if ($status === 'active' && ($reason = $user->approval_block_reason) !== null) {
             throw ValidationException::withMessages([
                 'status' => $reason,
@@ -298,7 +313,7 @@ class UserController extends Controller
             if ($user->wasChanged('status')) {
                 DB::afterCommit(fn () => UserApproved::dispatch($user));
             }
-        } elseif (in_array($status, ['inactive', 'rejected'], true)) {
+        } elseif ($status === 'inactive') {
             Notification::create([
                 'user_id' => $user->id,
                 'message' => $previousStatus === 'active'

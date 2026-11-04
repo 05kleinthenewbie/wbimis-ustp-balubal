@@ -58,6 +58,16 @@ class UserController extends ApiController
         if ($validated['status'] === 'active' && ($reason = $user->approval_block_reason) !== null) {
             throw ValidationException::withMessages(['status' => $reason]);
         }
+
+        if ($validated['status'] === 'rejected') {
+            AuditLog::record("Rejected and removed registration for {$user->email}", 'users', $user->id);
+            $user->purgeAccount();
+
+            return response()->json([
+                'message' => 'Registration rejected and removed. The applicant can register again.',
+            ]);
+        }
+
         $user->update($validated);
 
         if ($validated['status'] === 'active') {

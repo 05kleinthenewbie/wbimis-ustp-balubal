@@ -58,21 +58,15 @@ class CorVerificationService
             'BTLED' => ['BTLED', 'Bachelor of Technology and Livelihood Education'],
         ];
         $expectedProgram = (string) $user->department;
-        $normalizedText = $this->normalize($text);
-        $compactText = (string) preg_replace('/[^A-Z0-9]/', '', Str::upper(Str::ascii($text)));
-        $schoolName = 'University of Science and Technology of Southern Philippines';
-        $hasSchool = str_contains($compactText, 'UNIVERSITYOFSCIENCEANDTECHNOLOGYOFSOUTHERNPHILIPPINES')
-            || preg_match('/\bU\s*S\s*T\s*P\b/', $normalizedText) === 1;
         $nameTokens = $this->nameTokens($name);
         $expectedNameTokens = $this->nameTokens($user->name);
         $checks = [
             'name' => ['expected' => $user->name, 'actual' => $name, 'matches' => $nameTokens !== [] && array_diff($expectedNameTokens, $nameTokens) === []],
             'student_id' => ['expected' => (string) $user->id_number, 'actual' => $id, 'matches' => filled($user->id_number) && $id === $user->id_number],
             'program' => ['expected' => $expectedProgram, 'actual' => $program, 'matches' => $program !== '' && in_array($this->normalize($program), array_map($this->normalize(...), $programNames[$expectedProgram] ?? [$expectedProgram]), true)],
-            'school' => ['expected' => $schoolName.' (USTP)', 'actual' => $hasSchool ? $schoolName.' (USTP)' : 'Not found', 'matches' => $hasSchool],
         ];
 
-        return ['message' => 'Only name, ID number, program, and school are checked. Final approval remains with the ICT Admin.', 'checks' => $checks];
+        return ['message' => 'Only name, ID number, and program are checked. Final approval remains with the ICT Admin.', 'checks' => $checks];
     }
 
     /**
