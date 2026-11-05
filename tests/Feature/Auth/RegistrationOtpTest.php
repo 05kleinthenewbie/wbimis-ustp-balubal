@@ -117,13 +117,8 @@ test('failed OTP email removes the temporary employment document', function () {
     expect(Storage::disk('local')->allFiles('employment-documents'))->toBeEmpty();
 });
 
-test('a student can register with a COR and waits for admin approval', function () {
+test('a student registers and is activated immediately', function () {
     Role::firstOrCreate(['role_name' => 'student'], ['description' => 'Students']);
-    $roster = StudentRoster::create([
-        'id_number' => '2023303709',
-        'name' => 'Legacy Roster Name',
-        'program' => 'BSA',
-    ]);
     fakeBrevoMail();
 
     $this->post(route('register.store'), studentRegistrationPayload())
@@ -131,199 +126,73 @@ test('a student can register with a COR and waits for admin approval', function 
 
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
         ->assertRedirect(route('student.login'))
-        ->assertSessionHas('registration_id_number', '2023303709')
         ->assertSessionHas(
             'status',
-            'Registration successful! Your account is pending ICT Admin approval. You will be able to log in once approved.',
+            'Registration successful! You can now log in to your account.',
         );
 
     $this->get(route('student.login'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
-            ->component('auth/student-login')
-            ->where('idNumber', '2023303709')
-            ->where('status', 'Registration successful! Your account is pending ICT Admin approval. You will be able to log in once approved.'));
+            ->component('auth/student-login'));
 
     $user = User::where('email', 'student@ustp.edu.ph')->first();
 
     expect($user)->not->toBeNull()
-        ->and($user->status)->toBe('pending')
+        ->and($user->status)->toBe('active')
         ->and($user->email_verified_at)->not->toBeNull()
         ->and($user->role->role_name)->toBe('student')
-        ->and($user->id_number)->toBe('2023303709')
         ->and($user->department)->toBe('BSIT')
         ->and($user->name)->toBe('Juan S. Dela Cruz')
         ->and($user->educational_level)->toBe('college')
-        ->and($user->year_level)->toBe('1')
-        ->and($user->gender)->toBeNull()
-        ->and($user->birth_date)->toBeNull()
-        ->and($user->home_address)->toBeNull()
-        ->and($user->cor_original_name)->toBe('cor.pdf')
-        ->and(Storage::disk('local')->exists((string) $user->cor_path))->toBeTrue()
-        ->and($user->cor_verification_status)->toBe('manual_review')
-        ->and($user->cor_checked_at)->not->toBeNull()
-        ->and($roster->refresh()->user_id)->toBeNull();
+        ->and($user->year_level)->toBe('1');
 });
 
-test('a student with a COR waits for admin approval before logging in', function () {
+test('a student can log in with email immediately after OTP verification', function () {
     Role::firstOrCreate(['role_name' => 'student'], ['description' => 'Students']);
-    StudentRoster::create([
-        'id_number' => '2023303709',
-        'name' => 'Juan S. Dela Cruz',
-        'program' => 'BSIT',
-    ]);
-    $adminRole = Role::firstOrCreate(['role_name' => 'ict_admin'], ['description' => 'ICT Admins']);
-    $admin = User::factory()->create(['role_id' => $adminRole->id]);
     fakeBrevoMail();
 
     $this->post(route('register.store'), studentRegistrationPayload());
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()]);
 
     $this->post(route('student.authenticate'), [
-        'id_number' => '2023303709',
-        'password' => 'password',
-    ])->assertSessionHasErrors('id_number');
-
-    $this->assertGuest();
-
-    $student = User::where('email', 'student@ustp.edu.ph')->firstOrFail();
-
-    $this->actingAs($admin)
-        ->put(route('users.update', $student->id), ['status' => 'active'])
-        ->assertRedirect();
-
-    $this->post(route('logout'));
-    $this->post(route('student.authenticate'), [
-        'id_number' => '2023303709',
+        'email' => 'student@ustp.edu.ph',
         'password' => 'password',
     ])->assertRedirect(route('dashboard'));
 
-    $this->assertAuthenticatedAs($student->refresh());
+    $student = User::where('email', 'student@ustp.edu.ph')->firstOrFail();
+    $this->assertAuthenticatedAs($student);
 });
 
-test('student registration requires either a student ID or COR', function () {
-    StudentRoster::create([
-        'id_number' => '2023303709',
-        'name' => 'Juan S. Dela Cruz',
-        'program' => 'BSIT',
-    ]);
-    fakeBrevoMail();
-
-    $this->post(route('register.store'), studentRegistrationPayload([
-        'cor' => null,
-    ]))->assertSessionHasErrors([
-        'cor' => 'Upload your student ID or Certificate of Registration (COR).',
-    ]);
-
-    Http::assertNothingSent();
-    expect(User::where('email', 'student@ustp.edu.ph')->exists())->toBeFalse();
-});
-
-test('students can upload an ID image through OTP and admins can preview and approve it', function () {
-    Role::firstOrCreate(['role_name' => 'student']);
-    fakeBrevoMail();
-    $image = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aV1sAAAAASUVORK5CYII=');
-    $payload = studentRegistrationPayload([
-        'cor' => UploadedFile::fake()->createWithContent('student-id.png', $image),
-    ]);
-
-    $this->post(route('register.store'), $payload)->assertRedirect(route('register.otp.show'));
-    $pending = app(RegistrationOtpService::class)->pending($payload['email']);
-    expect($pending['payload']['cor_original_name'])->toBe('student-id.png');
-    $this->assertDatabaseMissing('users', ['email' => $payload['email']]);
-
-    $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
-        ->assertRedirect(route('student.login'));
-    $student = User::where('email', $payload['email'])->firstOrFail();
-    expect($student->status)->toBe('pending')
-        ->and($student->cor_original_name)->toBe('student-id.png')
-        ->and($student->cor_verification_status)->toBe('manual_review')
-        ->and($student->approval_block_reason)->toBeNull();
-    Storage::disk('local')->assertExists($student->cor_path);
-
-    $admin = User::factory()->create(['role_id' => Role::firstOrCreate(['role_name' => 'ict_admin'])->id]);
-    $this->actingAs($admin)->get(route('users.index'))->assertInertia(fn (Assert $page) => $page
-        ->where('pendingUsers.0.cor_url', route('users.cor', $student))
-        ->where('pendingUsers.0.approval_block_reason', null));
-    $this->get(route('users.cor', $student))
-        ->assertOk()->assertHeader('Content-Type', 'image/png')
-        ->assertHeader('Content-Disposition', 'inline; filename=student-id.png')
-        ->assertStreamedContent($image);
-    $this->put(route('users.update', $student), ['status' => 'active'])
-        ->assertSessionHasNoErrors()->assertRedirect();
-    expect($student->refresh()->status)->toBe('active');
-});
-
-test('student registration rejects an unsupported COR file type', function () {
-    StudentRoster::create([
-        'id_number' => '2023303709',
-        'name' => 'Juan S. Dela Cruz',
-        'program' => 'BSIT',
-    ]);
-    fakeBrevoMail();
-
-    $this->post(route('register.store'), studentRegistrationPayload([
-        'cor' => UploadedFile::fake()->create('cor.txt', 100, 'text/plain'),
-    ]))->assertSessionHasErrors('cor');
-
-    Http::assertNothingSent();
-});
-
-test('student registration rejects a COR larger than five megabytes', function () {
-    StudentRoster::create([
-        'id_number' => '2023303709',
-        'name' => 'Juan S. Dela Cruz',
-        'program' => 'BSIT',
-    ]);
-    fakeBrevoMail();
-
-    $this->post(route('register.store'), studentRegistrationPayload([
-        'cor' => UploadedFile::fake()->create('cor.pdf', 5121, 'application/pdf'),
-    ]))->assertSessionHasErrors('cor');
-
-    Http::assertNothingSent();
-});
-
-test('a deactivated student cannot register again with the same id number', function () {
-    Role::firstOrCreate(['role_name' => 'student'], ['description' => 'Students']);
-    StudentRoster::create([
-        'id_number' => '2023303709',
-        'name' => 'Juan S. Dela Cruz',
-        'program' => 'BSIT',
-    ]);
-    User::factory()->create([
-        'email' => 'blocked@ustp.edu.ph',
-        'status' => 'inactive',
-        'id_number' => '2023303709',
-        'role_id' => Role::firstOrCreate(['role_name' => 'student'])->id,
-    ]);
-    fakeBrevoMail();
-
-    $this->post(route('register.store'), studentRegistrationPayload([
-        'email' => 'new@ustp.edu.ph',
-    ]))->assertSessionHasErrors('id_number');
-
-    Http::assertNothingSent();
-    expect(User::where('email', 'new@ustp.edu.ph')->exists())->toBeFalse();
-});
-
-test('a student can register directly without a rostered id number', function () {
+test('a student can register directly without an id number', function () {
     Role::firstOrCreate(['role_name' => 'student']);
     fakeBrevoMail();
 
     $this->post(route('register.store'), studentRegistrationPayload([
         'email' => 'unknown@ustp.edu.ph',
-        'id_number' => '9999999999',
     ]))->assertRedirect(route('register.otp.show'));
 
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
         ->assertRedirect(route('student.login'));
+
     $student = User::where('email', 'unknown@ustp.edu.ph')->firstOrFail();
-    expect($student->id_number)->toBe('9999999999')
-        ->and($student->name)->toBe('Juan S. Dela Cruz')
+    expect($student->name)->toBe('Juan S. Dela Cruz')
         ->and($student->department)->toBe('BSIT')
-        ->and($student->status)->toBe('pending')
-        ->and($student->cor_checked_at)->not->toBeNull();
+        ->and($student->status)->toBe('active');
+});
+
+test('a student can register with BAT as their department', function () {
+    Role::firstOrCreate(['role_name' => 'student']);
+    fakeBrevoMail();
+
+    $this->post(route('register.store'), studentRegistrationPayload([
+        'department' => 'BAT',
+    ]))->assertRedirect(route('register.otp.show'));
+
+    $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
+        ->assertRedirect(route('student.login'));
+
+    expect(User::where('email', 'student@ustp.edu.ph')->sole()->department)->toBe('BAT');
 });
 
 test('a student registration with an invalid department is rejected', function () {

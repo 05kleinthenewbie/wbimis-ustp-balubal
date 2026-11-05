@@ -6,6 +6,7 @@ use App\Events\UserApproved;
 use App\Models\AuditLog;
 use App\Models\Notification;
 use App\Models\User;
+use App\Services\BrevoMailService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -43,9 +44,10 @@ class UserController extends ApiController
 
         $validated = $request->validate([
             'status' => ['required', 'in:pending,active,inactive,rejected'],
+            'reason' => ['nullable', 'string', 'max:2000', 'required_if:status,rejected'],
         ]);
 
-        $user = User::findOrFail($id);
+        $user = User::query()->with('role')->lockForUpdate()->findOrFail($id);
 
         abort_if($user->isTechnician(), 403, 'Technician records do not have login accounts.');
 
@@ -55,20 +57,27 @@ class UserController extends ApiController
         if (($user->status === 'rejected' && $validated['status'] !== 'pending') || ($validated['status'] === 'rejected' && $user->status !== 'pending')) {
             throw ValidationException::withMessages(['status' => 'Rejected registrations must return to verification before approval.']);
         }
-        if ($validated['status'] === 'active' && ($reason = $user->approval_block_reason) !== null) {
-            throw ValidationException::withMessages(['status' => $reason]);
-        }
 
         if ($validated['status'] === 'rejected') {
-            AuditLog::record("Rejected and removed registration for {$user->email}", 'users', $user->id);
-            $user->purgeAccount();
+            if ($user->role?->role_name === 'student') {
+                $user->update(['status' => 'rejected']);
+                Notification::create(['user_id' => $user->id, 'message' => 'Your account registration needs attention: '.($validated['reason'] ?? 'Please contact the ICT office.'), 'notification_type' => 'account_rejection', 'notification_status' => 'unread']);
+                try {
+                    app(BrevoMailService::class)->sendStudentRegistrationDecisionEmail($user->email, $user->name, 'rejected', $validated['reason'] ?? null);
+                } catch (\Throwable $exception) {
+                    report($exception);
+                }
+            } else {
+                AuditLog::record("Rejected and removed registration for {$user->email}", 'users', $user->id);
+                $user->purgeAccount();
+            }
 
             return response()->json([
-                'message' => 'Registration rejected and removed. The applicant can register again.',
+                'message' => 'Registration rejected and the reason was recorded. The applicant can register again.',
             ]);
         }
 
-        $user->update($validated);
+        $user->update(['status' => $validated['status']]);
 
         if ($validated['status'] === 'active') {
             Notification::create([
@@ -80,6 +89,13 @@ class UserController extends ApiController
             ]);
 
             if ($user->wasChanged('status')) {
+                if ($user->role?->role_name === 'student') {
+                    try {
+                        app(BrevoMailService::class)->sendStudentRegistrationDecisionEmail($user->email, $user->name, 'approved', null);
+                    } catch (\Throwable $exception) {
+                        report($exception);
+                    }
+                }
                 UserApproved::dispatch($user);
             }
         } elseif (in_array($validated['status'], ['inactive', 'rejected'], true)) {

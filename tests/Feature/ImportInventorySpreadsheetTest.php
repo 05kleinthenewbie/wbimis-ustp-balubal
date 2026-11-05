@@ -177,6 +177,7 @@ test('imports equipment rows, expands quantities, and maps inventory fields', fu
 
     $laptop = InventoryItem::query()->where('property_no', 'P-100')->sole();
     expect($laptop->item_name)->toBe('Branded Laptop')
+        ->and($laptop->document_type)->toBe('ICS')
         ->and($laptop->brand)->toBe('Lenovo')
         ->and($laptop->model)->toBe('ThinkPad E14')
         ->and($laptop->category)->toBe('Laptops')
@@ -255,6 +256,89 @@ test('cleans messy descriptions without explicit field separators', function () 
         ->and($branded->location)->toBe('Faculty Office / NTP Office');
 });
 
+test('computes shelf-life expiration dates from acquisition dates or the acquisition year', function () {
+    $header = array_merge(invHeader(), ['YEAR', 'SHELF LIFE']);
+    $path = invCsv([
+        $header,
+        ['Printer', '1', '100', 'S-1', '', '', '', '44197', 'Office', 'SERVICEABLE', '', '2021', '5 Years'],
+        ['Laptop', '1', '100', 'S-2', '', '', '', '-', 'Office', 'SERVICEABLE', '', '2021', '2 Years'],
+        ['Monitor', '1', '100', 'S-3', '', '', '', '44197', 'Office', 'SERVICEABLE', '', '2021', '6'],
+        ['Router', '1', '100', 'S-4', '', '', '', '44197', 'Office', 'SERVICEABLE', '', '2021', '-'],
+    ]);
+
+    try {
+        app(EquipmentSpreadsheetImporter::class)->import($path);
+    } finally {
+        @unlink($path);
+    }
+
+    $exact = InventoryItem::where('property_no', 'S-1')->sole();
+    expect($exact->expiration_date?->toDateString())->toBe('2026-01-01')
+        ->and($exact->expiration_type)->toBe('Shelf Life');
+
+    $yearOnly = InventoryItem::where('property_no', 'S-2')->sole();
+    expect($yearOnly->purchase_date)->toBeNull()
+        ->and($yearOnly->expiration_date?->toDateString())->toBe('2023-01-01')
+        ->and($yearOnly->expiration_type)->toBe('Shelf Life');
+
+    expect(InventoryItem::where('property_no', 'S-3')->sole()->expiration_date?->toDateString())->toBe('2027-01-01');
+
+    $missing = InventoryItem::where('property_no', 'S-4')->sole();
+    expect($missing->expiration_date)->toBeNull()
+        ->and($missing->expiration_type)->toBeNull();
+});
+
+test('imports spreadsheet procurement and acquisition fields', function () {
+    $header = array_merge(invHeader(), ['YEAR', 'FUND CLUSTER', 'ICS No.', 'UNIT', 'TOTAL', 'STICKER DATE', 'SUPPLIER', 'TO BE TRANSFERRED TO', 'SHELF LIFE']);
+    $path = invCsv([
+        $header,
+        ['Laptop / Brand: Lenovo Model: E14', '1', '40000', 'P-900', 'S-1', 'PO-1', 'Jane Doe', '44197', 'Library', 'SERVICEABLE', '', '2021', 'STF 21-03-3577', '2021-03-00124', 'unit', '40000', '44277', 'WIZMASTER', 'TO BE RETURNED', '5 Years'],
+    ]);
+
+    try {
+        app(EquipmentSpreadsheetImporter::class)->import($path);
+    } finally {
+        @unlink($path);
+    }
+
+    $item = InventoryItem::where('property_no', 'P-900')->sole();
+
+    expect($item->acquisition_year)->toBe(2021)
+        ->and($item->fund_cluster)->toBe('STF 21-03-3577')
+        ->and($item->document_no)->toBe('2021-03-00124')
+        ->and($item->unit_of_measure)->toBe('unit')
+        ->and($item->document_quantity)->toBe(1)
+        ->and((float) $item->total_cost)->toBe(40000.0)
+        ->and($item->sticker_date?->toDateString())->toBe('2021-03-22')
+        ->and($item->supplier)->toBe('WIZMASTER')
+        ->and($item->transfer_to)->toBe('TO BE RETURNED')
+        ->and($item->shelf_life)->toBe('5 Years')
+        ->and($item->purchase_date?->toDateString())->toBe('2021-01-01')
+        ->and($item->expiration_date?->toDateString())->toBe('2026-01-01')
+        ->and($item->expiration_type)->toBe('Shelf Life');
+});
+
+test('imports warranty wording only when it is present in the spreadsheet', function () {
+    $path = invCsv([
+        invHeader(),
+        ["Projector\nSpecifications: 1 year warranty on main parts w/o physical damage S/N: ABC", '1', '100', 'W-1', '', '', '', '', '', 'SERVICEABLE', ''],
+        ["Desktop PC SET\nSpecifications: NOTE: 1 YR WARRANTY FOR MAJOR PARTS", '1', '100', 'W-2', '', '', '', '', 'SERVICEABLE', ''],
+        ["Printer\nWARRANTY: 1 YEAR", '1', '100', 'W-3', '', '', '', '', 'SERVICEABLE', ''],
+        ['Laptop', '1', '100', 'W-4', '', '', '', '', 'SERVICEABLE', ''],
+    ]);
+
+    try {
+        app(EquipmentSpreadsheetImporter::class)->import($path);
+    } finally {
+        @unlink($path);
+    }
+
+    expect(InventoryItem::where('property_no', 'W-1')->sole()->warranty_details)->toBe('1 year warranty on main parts w/o physical damage')
+        ->and(InventoryItem::where('property_no', 'W-2')->sole()->warranty_details)->toBe('1 YR WARRANTY FOR MAJOR PARTS')
+        ->and(InventoryItem::where('property_no', 'W-3')->sole()->warranty_details)->toBe('WARRANTY: 1 YEAR')
+        ->and(InventoryItem::where('property_no', 'W-4')->sole()->warranty_details)->toBeNull();
+});
+
 test('skips existing property numbers and duplicates in the same file', function () {
     InventoryItem::factory()->create(['property_no' => 'P-100']);
 
@@ -278,6 +362,76 @@ test('skips existing property numbers and duplicates in the same file', function
         ->and($result['skipped'])->toBe(2)
         ->and(InventoryItem::query()->count())->toBe(2)
         ->and(InventoryItem::query()->where('property_no', 'P-101')->sole()->serial_no)->toBe('S-2');
+});
+
+test('updating existing items uses spreadsheet details without changing their status or duplicating rows', function () {
+    $existing = InventoryItem::factory()->create([
+        'property_no' => 'P-200',
+        'item_name' => 'Old name',
+        'status' => 'retired',
+    ]);
+    $purchaseDate = $existing->purchase_date?->toDateString();
+    $expirationDate = $existing->expiration_date?->toDateString();
+    $unrelated = InventoryItem::factory()->create(['property_no' => 'P-OTHER']);
+    $path = invCsv([
+        invHeader(),
+        ['Laptop / Brand: Lenovo Model: E14', '1', '40000', 'P-200', 'S-1', '', '', '', 'Library', 'SERVICEABLE', ''],
+        ['Printer', '1', '1000', 'P-201', 'S-2', '', '', '', 'Office', 'SERVICEABLE', ''],
+        ['Desktop', '1', '1000', 'P-200', 'S-3', '', '', '', 'Office', 'SERVICEABLE', ''],
+    ]);
+
+    try {
+        $preview = app(EquipmentSpreadsheetImporter::class)->import($path, dryRun: true, updateExisting: true);
+        expect($preview['updated'])->toBe(1)
+            ->and($existing->refresh()->item_name)->toBe('Old name');
+
+        $result = app(EquipmentSpreadsheetImporter::class)->import($path, updateExisting: true);
+    } finally {
+        @unlink($path);
+    }
+
+    expect($result['updated'])->toBe(1)
+        ->and($result['imported'])->toBe(1)
+        ->and($result['skipped'])->toBe(1)
+        ->and($existing->refresh()->item_name)->toBe('Laptop')
+        ->and($existing->location)->toBe('Library')
+        ->and($existing->status)->toBe('retired')
+        ->and($existing->purchase_date?->toDateString())->toBe($purchaseDate)
+        ->and($existing->expiration_date?->toDateString())->toBe($expirationDate)
+        ->and($unrelated->refresh()->property_no)->toBe('P-OTHER')
+        ->and(InventoryItem::count())->toBe(3);
+});
+
+test('imports spreadsheet location wording while preserving multi-location values', function () {
+    $path = invCsv([
+        invHeader(),
+        ['Laptop', '1', '100', 'LOC-1', '', '', '', '', "ComLab\nNTP Office", 'SERVICEABLE', ''],
+        ['Laptop', '1', '100', 'LOC-2', '', '', '', '', 'LRC / Registrar', 'SERVICEABLE', ''],
+        ['Laptop', '1', '100', 'LOC-3', '', '', '', '', 'MPB HR', 'SERVICEABLE', ''],
+    ]);
+
+    try {
+        app(EquipmentSpreadsheetImporter::class)->import($path);
+    } finally {
+        @unlink($path);
+    }
+
+    expect(InventoryItem::where('property_no', 'LOC-1')->sole()->location)->toBe('ComLab / NTP Office')
+        ->and(InventoryItem::where('property_no', 'LOC-2')->sole()->location)->toBe('LRC / Registrar')
+        ->and(InventoryItem::where('property_no', 'LOC-3')->sole()->location)->toBe('MPB HR');
+});
+
+test('normalizing existing locations supports a dry run and changes no other item details', function () {
+    $item = InventoryItem::factory()->create(['location' => 'Storage / ComLab', 'item_name' => 'Test item']);
+    $other = InventoryItem::factory()->create(['location' => 'Library']);
+
+    $this->artisan('inventory:normalize-locations', ['--dry-run' => true])->assertSuccessful();
+    expect($item->refresh()->location)->toBe('Storage / ComLab');
+
+    $this->artisan('inventory:normalize-locations')->assertSuccessful();
+    expect($item->refresh()->location)->toBe('Storage / Computer Laboratory')
+        ->and($item->item_name)->toBe('Test item')
+        ->and($other->refresh()->location)->toBe('Library');
 });
 
 test('a dry run reports what would be imported without writing records', function () {
@@ -319,6 +473,36 @@ test('imports a csv export using the same column mapping', function () {
     expect($switch->item_name)->toBe('Network Switch')
         ->and($switch->category)->toBe('Network Devices')
         ->and($switch->purchase_date?->toDateString())->toBe('2021-01-01');
+});
+
+test('keeps ICS and PAR records identified by their source sheet', function () {
+    $path = invWorkbook([
+        [
+            'name' => 'ICS',
+            'rows' => [
+                invHeader(),
+                ['Laptop', '1', '100', 'ICS-1', '', '', '', '', 'Lab', 'SERVICEABLE', ''],
+            ],
+        ],
+        [
+            'name' => 'PAR',
+            'rows' => [
+                ['PROPERTY ACKNOWLEDGEMENT RECEIPT'],
+                invHeader(),
+                ['Printer', '1', '100', 'PAR-1', '', '', '', '', 'Office', 'SERVICEABLE', ''],
+            ],
+        ],
+    ]);
+
+    try {
+        $result = app(EquipmentSpreadsheetImporter::class)->import($path);
+    } finally {
+        @unlink($path);
+    }
+
+    expect($result['imported'])->toBe(2)
+        ->and(InventoryItem::where('property_no', 'ICS-1')->sole()->document_type)->toBe('ICS')
+        ->and(InventoryItem::where('property_no', 'PAR-1')->sole()->document_type)->toBe('PAR');
 });
 
 test('ignores sheets without a description header', function () {

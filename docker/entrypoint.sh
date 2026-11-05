@@ -47,12 +47,14 @@ if [ "${SEED_DATABASE:-false}" = "true" ]; then
 fi
 
 if [ -f database/data/ict-related-equipment.xlsx ]; then
-    php artisan inventory:import database/data/ict-related-equipment.xlsx \
+    php artisan inventory:import database/data/ict-related-equipment.xlsx --update-existing \
         || echo "Inventory import failed; continuing." >&2
 fi
 
 if [ -n "${ADMIN_PASSWORD:-}" ]; then
     php artisan tinker --execute="\App\Models\User::query()->where('email', 'admin@ustp.edu.ph')->update(['password' => bcrypt(getenv('ADMIN_PASSWORD'))]);"
 fi
+
+php artisan schedule:work >/dev/null 2>&1 &
 
 wait "$apache_pid"

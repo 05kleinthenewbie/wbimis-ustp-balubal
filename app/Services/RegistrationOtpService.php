@@ -46,6 +46,7 @@ class RegistrationOtpService
 
         $payload = $input;
         unset($payload['password_confirmation'], $payload['terms']);
+        unset($payload['cor']);
         $payload['password'] = Crypt::encryptString((string) $payload['password']);
 
         Cache::put(self::key($email), [

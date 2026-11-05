@@ -7,7 +7,7 @@ use App\Models\AuditLog;
 use App\Models\Notification;
 use App\Models\Role;
 use App\Models\User;
-use App\Services\CorVerificationService;
+use App\Services\BrevoMailService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class UserController extends Controller
@@ -34,7 +35,7 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): Response
     {
         $this->ensureAdmin();
 
@@ -46,57 +47,29 @@ class UserController extends Controller
                 ->where('status', 'pending')
                 ->latest()
                 ->get()
-                ->each->append(['cor_url', 'employment_document_url', 'approval_block_reason']),
+                ->each->append(['employment_document_url']),
             'activeUsers' => User::with('role')
                 ->where('is_technician', false)
                 ->where('status', 'active')
                 ->where('id', '!=', Auth::id())
                 ->latest()
                 ->get()
-                ->each->append(['cor_url', 'employment_document_url']),
+                ->each->append(['employment_document_url']),
             'deactivatedUsers' => User::with('role')
                 ->where('is_technician', false)
                 ->where('status', 'inactive')
                 ->where('id', '!=', Auth::id())
                 ->latest()
                 ->get()
-                ->each->append(['cor_url', 'employment_document_url']),
+                ->each->append(['employment_document_url']),
             'rejectedUsers' => User::with('role')
                 ->where('is_technician', false)
                 ->where('status', 'rejected')
+                ->whereDoesntHave('role', fn ($query) => $query->where('role_name', 'student'))
                 ->latest()
                 ->get()
-                ->each->append(['cor_url', 'employment_document_url']),
+                ->each->append(['employment_document_url']),
         ]);
-    }
-
-    /**
-     * Stream a student's ID or COR to an ICT administrator
-     * so it can be reviewed before the account is approved.
-     */
-    public function viewCor(User $user): StreamedResponse
-    {
-        $this->ensureAdmin();
-
-        abort_unless(
-            filled($user->cor_path) && Storage::disk('local')->exists((string) $user->cor_path),
-            404,
-        );
-
-        $mimeType = Storage::disk('local')->mimeType((string) $user->cor_path);
-        abort_unless(in_array($mimeType, ['application/pdf', 'image/jpeg', 'image/png'], true), 415);
-
-        return Storage::disk('local')->response(
-            (string) $user->cor_path,
-            $user->cor_original_name ?: 'student-verification-document.pdf',
-            [
-                'Content-Type' => $mimeType,
-                'Cache-Control' => 'private, no-store',
-                'X-Content-Type-Options' => 'nosniff',
-                'X-Frame-Options' => 'SAMEORIGIN',
-            ],
-            'inline',
-        );
     }
 
     public function downloadEmploymentDocument(User $user): StreamedResponse
@@ -112,28 +85,12 @@ class UserController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
      * Create a new technician record for job order assignments.
      *
      * The technician account is managed by the admin only; no login
      * credentials are issued, so a random unusable password is set.
      */
-    public function storeTechnician(Request $request)
+    public function storeTechnician(Request $request): RedirectResponse
     {
         $this->ensureAdmin();
 
@@ -169,92 +126,25 @@ class UserController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, string $id): RedirectResponse
     {
         $this->ensureAdmin();
 
         $validated = $request->validate([
             'status' => ['required', 'in:pending,active,inactive,rejected'],
+            'reason' => ['nullable', 'string', 'max:2000', 'required_if:status,rejected'],
         ]);
 
-        DB::transaction(function () use ($id, $validated): void {
-            $user = User::lockForUpdate()->findOrFail($id);
-            $this->changeStatus($user, $validated['status']);
-        });
+        $user = User::with('role')->findOrFail($id);
+
+        $this->changeStatus($user, $validated['status'], $validated['reason'] ?? null);
 
         return redirect()->back()->with('status', 'User account updated successfully.');
     }
 
-    public function bulk(Request $request, CorVerificationService $verification): RedirectResponse
-    {
-        $this->ensureAdmin();
-        $validated = $request->validate([
-            'action' => ['required', 'in:verify,approve,reject'],
-            'ids' => ['required', 'array', 'min:1', 'max:500'],
-            'ids.*' => ['required', 'integer', 'distinct', 'exists:users,id'],
-        ]);
-
-        $processed = 0;
-        $skipped = 0;
-        foreach ($validated['ids'] as $id) {
-            DB::transaction(function () use ($id, $validated, $verification, &$processed, &$skipped): void {
-                $user = User::query()->lockForUpdate()->find($id);
-
-                if ($user === null || $user->status !== 'pending' || $user->id === Auth::id()) {
-                    $skipped++;
-
-                    return;
-                }
-
-                $user->loadMissing('role');
-
-                if ($validated['action'] === 'verify') {
-                    if ($user->role?->role_name !== 'student') {
-                        $skipped++;
-
-                        return;
-                    }
-
-                    $verification->verify($user);
-                    AuditLog::record('Checked student ID / COR: '.$user->cor_verification_status, 'users', $user->id);
-                } else {
-                    try {
-                        $this->changeStatus($user, $validated['action'] === 'approve' ? 'active' : 'rejected');
-                    } catch (ValidationException) {
-                        $skipped++;
-
-                        return;
-                    }
-                }
-
-                $processed++;
-            });
-        }
-
-        $action = ['verify' => 'checked', 'approve' => 'approved', 'reject' => 'rejected'][$validated['action']];
-
-        return back()->with('status', "{$processed} account(s) {$action}; {$skipped} skipped (no longer pending, not applicable, missing student ID or COR, or mismatched details). Verification does not activate accounts.");
-    }
-
-    private function changeStatus(User $user, string $status): void
+    private function changeStatus(User $user, string $status, ?string $reason = null): void
     {
         if ($user->isTechnician()) {
             throw ValidationException::withMessages([
@@ -277,24 +167,42 @@ class UserController extends Controller
         }
 
         if ($status === 'rejected') {
+            Notification::create([
+                'user_id' => $user->id,
+                'message' => filled($reason)
+                    ? 'Your account registration needs correction: '.$reason
+                    : 'Your account registration was not approved. Contact the ICT office for review.',
+                'notification_type' => 'account_rejection',
+                'notification_status' => 'unread',
+            ]);
+            if ($user->role?->role_name === 'student') {
+                try {
+                    app(BrevoMailService::class)->sendStudentRegistrationDecisionEmail(
+                        $user->email,
+                        $user->name,
+                        'rejected',
+                        $reason,
+                    );
+                } catch (\Throwable $exception) {
+                    report($exception);
+                }
+            }
             AuditLog::record(
                 "Rejected and removed registration for {$user->email}",
                 'users',
                 $user->id,
                 null,
                 ['status' => $previousStatus],
-                ['status' => 'deleted'],
+                ['status' => 'rejected'],
             );
 
-            $user->purgeAccount();
+            if ($user->role?->role_name === 'student') {
+                $user->update(['status' => 'rejected']);
+            } else {
+                $user->purgeAccount();
+            }
 
             return;
-        }
-
-        if ($status === 'active' && ($reason = $user->approval_block_reason) !== null) {
-            throw ValidationException::withMessages([
-                'status' => $reason,
-            ]);
         }
 
         $user->update(['status' => $status]);
@@ -309,6 +217,19 @@ class UserController extends Controller
                 'link' => '/dashboard',
                 'notification_status' => 'unread',
             ]);
+
+            if ($user->role?->role_name === 'student') {
+                try {
+                    app(BrevoMailService::class)->sendStudentRegistrationDecisionEmail(
+                        $user->email,
+                        $user->name,
+                        'approved',
+                        null,
+                    );
+                } catch (\Throwable $exception) {
+                    report($exception);
+                }
+            }
 
             if ($user->wasChanged('status')) {
                 DB::afterCommit(fn () => UserApproved::dispatch($user));
@@ -333,6 +254,5 @@ class UserController extends Controller
             ['status' => $previousStatus],
             ['status' => $user->status],
         );
-
     }
 }

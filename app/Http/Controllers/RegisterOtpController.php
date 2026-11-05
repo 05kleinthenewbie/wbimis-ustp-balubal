@@ -38,6 +38,7 @@ class RegisterOtpController extends Controller
         return Inertia::render('auth/register-otp', [
             'email' => $email,
             'status' => $request->session()->get('status'),
+            'studentRegistration' => ($this->registrationOtp->pending($email)['payload']['role'] ?? null) === 'student',
         ]);
     }
 
@@ -70,19 +71,15 @@ class RegisterOtpController extends Controller
         event(new Registered($user));
 
         $isStudent = $user->role?->role_name === 'student';
-        $status = $user->status === 'active'
+        $status = $isStudent
             ? 'Registration successful! You can now log in to your account.'
-            : 'Registration successful! Your account is pending ICT Admin approval. You will be able to log in once approved.';
+            : ($user->status === 'active'
+                ? 'Registration successful! You can now log in to your account.'
+                : 'Registration successful! Your account is pending ICT Admin approval. You will be able to log in once approved.');
 
-        $response = redirect()
+        return redirect()
             ->route($isStudent ? 'student.login' : 'faculty.login')
             ->with('status', $status);
-
-        if ($isStudent) {
-            $response->with('registration_id_number', $user->id_number);
-        }
-
-        return $response;
     }
 
     /**

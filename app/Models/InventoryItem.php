@@ -27,18 +27,6 @@ class InventoryItem extends Model
             'Network Devices',
             'UPS Devices',
         ],
-        'ICT Consumables' => [
-            'Printer Ink',
-            'Toner Cartridges',
-            'Thermal Paste',
-            'Cleaning Supplies',
-            'Batteries',
-        ],
-        'Software & Licenses' => [
-            'Antivirus Licenses',
-            'Software Subscriptions',
-            'SSL/TLS Certificates',
-        ],
     ];
 
     /**
@@ -65,6 +53,7 @@ class InventoryItem extends Model
         'purchase_date',
         'expiration_date',
         'expiration_type',
+        'warranty_details',
         'unit_cost',
         'purchase_order_no',
         'end_user',
@@ -78,6 +67,17 @@ class InventoryItem extends Model
         'validation',
         'inspection_date',
         'inspection_remarks',
+        'acquisition_year',
+        'fund_cluster',
+        'document_no',
+        'unit_of_measure',
+        'total_cost',
+        'sticker_date',
+        'supplier',
+        'transfer_to',
+        'shelf_life',
+        'document_quantity',
+        'document_type',
     ];
 
     protected $casts = [
@@ -85,6 +85,8 @@ class InventoryItem extends Model
         'expiration_date' => 'date',
         'unit_cost' => 'decimal:2',
         'inspection_date' => 'date',
+        'sticker_date' => 'date',
+        'total_cost' => 'decimal:2',
     ];
 
     /**

@@ -47,8 +47,20 @@ test('admin pages render without server errors', function (string $uri) {
     'report export' => '/reports/export',
     'audit log' => '/audit-log',
     'users' => '/users',
+    'liabilities' => '/liabilities',
+    'notifications' => '/notifications',
     'settings profile' => '/settings/profile',
+    'settings appearance' => '/settings/appearance',
 ]);
+
+test('the security settings page renders once the password is confirmed', function () {
+    $admin = smokeUser('ict_admin');
+
+    $this->actingAs($admin)
+        ->withSession(['auth.password_confirmed_at' => time()])
+        ->get('/settings/security')
+        ->assertSuccessful();
+});
 
 test('the security settings page requires recent password confirmation', function () {
     foreach (['ict_admin', 'faculty_staff', 'student'] as $roleName) {
@@ -138,7 +150,10 @@ test('faculty and staff pages render without server errors', function (string $u
     'bookings create' => '/bookings/create',
     'incidents index' => '/incidents',
     'incidents create' => '/incidents/create',
+    'liabilities' => '/liabilities',
+    'notifications' => '/notifications',
     'settings profile' => '/settings/profile',
+    'settings appearance' => '/settings/appearance',
 ]);
 
 test('student pages render without server errors', function (string $uri) {
@@ -150,5 +165,10 @@ test('student pages render without server errors', function (string $uri) {
     'requests index' => '/requests',
     'request create' => '/requests/create',
     'job orders index' => '/job-orders',
+    'incidents index' => '/incidents',
+    'incidents create' => '/incidents/create',
+    'liabilities' => '/liabilities',
+    'notifications' => '/notifications',
     'settings profile' => '/settings/profile',
+    'settings appearance' => '/settings/appearance',
 ]);

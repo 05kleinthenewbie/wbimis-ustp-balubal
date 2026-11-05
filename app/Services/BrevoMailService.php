@@ -158,4 +158,24 @@ class BrevoMailService
             "Hi {$name}, your account at {$appName} has been approved. You can now log in here: {$loginUrl}",
         );
     }
+
+    public function sendStudentRegistrationDecisionEmail(string $email, string $name, string $decision, ?string $reason): array
+    {
+        $appName = (string) config('app.name');
+        $approved = $decision === 'approved';
+        $subject = $approved
+            ? "Your {$appName} student registration has been approved"
+            : "Your {$appName} student registration needs attention";
+        $message = $approved
+            ? 'Your student account is approved. You can now sign in.'
+            : 'Your registration needs attention. '.($reason ?: 'Please contact the ICT office for next steps.');
+        $html = '<p>Hi '.e($name).',</p><p>'.e($message).'</p>';
+
+        return $this->send(
+            [['email' => $email, 'name' => $name]],
+            $subject,
+            $html,
+            "Hi {$name}, {$message}",
+        );
+    }
 }

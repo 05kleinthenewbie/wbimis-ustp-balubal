@@ -53,8 +53,9 @@ test('submitted requests derive priority from the note 2 rules', function (strin
 
     expect(ServiceRequest::query()->latest('id')->firstOrFail()->priority_level)->toBe($expected);
 })->with([
-    'virus is urgent' => ['The computer is infected with a virus', 'urgent'],
+    'virus is high' => ['The computer is infected with a virus', 'high'],
     'department wide is high' => ['The whole department printer is offline', 'high'],
+    'single printer is not assumed department wide' => ['My printer is offline', 'medium'],
     'non operational is high' => ['The monitor is dead and will not turn on', 'high'],
     'intermittent is medium' => ['The mouse is intermittent and sometimes unresponsive', 'medium'],
 ]);
@@ -208,4 +209,71 @@ test('assignment inherits the request priority and recalculates the sla', functi
 
     expect($jobOrder->priority_level)->toBe('urgent')
         ->and($jobOrder->sla_deadline)->not->toBeNull();
+});
+
+test('remote job order support cannot be saved without requester permission', function () {
+    $admin = wpAdmin();
+    $requester = wpRequester();
+    $request = ServiceRequest::create([
+        'user_id' => $requester->id,
+        'problem_description' => 'Email setup',
+        'request_status' => 'approved',
+    ]);
+    $jobOrder = JobOrder::create(['request_id' => $request->id, 'status' => 'open']);
+
+    $this->actingAs($admin)
+        ->put(route('job-orders.update', $jobOrder), [
+            'status' => 'in_progress',
+            'support_type' => 'remote',
+            'user_permission_granted' => false,
+        ])
+        ->assertSessionHasErrors('user_permission_granted');
+
+    expect($jobOrder->fresh()->support_type)->toBe('on_site')
+        ->and($jobOrder->fresh()->status)->toBe('open');
+});
+
+test('remote job order support can be saved after requester permission is granted', function () {
+    $admin = wpAdmin();
+    $requester = wpRequester();
+    $request = ServiceRequest::create([
+        'user_id' => $requester->id,
+        'problem_description' => 'Email setup',
+        'request_status' => 'approved',
+    ]);
+    $jobOrder = JobOrder::create(['request_id' => $request->id, 'status' => 'open']);
+
+    $this->actingAs($admin)
+        ->put(route('job-orders.update', $jobOrder), [
+            'status' => 'in_progress',
+            'support_type' => 'remote',
+            'user_permission_granted' => true,
+        ])
+        ->assertRedirect();
+
+    expect($jobOrder->fresh()->support_type)->toBe('remote')
+        ->and($jobOrder->fresh()->user_permission_granted)->toBeTrue();
+});
+
+test('an admin cannot close a job order until the requester verifies completion', function () {
+    $admin = wpAdmin();
+    $requester = wpRequester();
+    $request = ServiceRequest::create([
+        'user_id' => $requester->id,
+        'problem_description' => 'Broken monitor',
+        'request_status' => 'approved',
+    ]);
+    $jobOrder = JobOrder::create([
+        'request_id' => $request->id,
+        'status' => 'completed',
+        'date_completed' => now(),
+    ]);
+
+    $this->actingAs($admin)
+        ->put(route('job-orders.update', $jobOrder), [
+            'status' => 'closed',
+        ])
+        ->assertSessionHasErrors('status');
+
+    expect($jobOrder->fresh()->status)->toBe('completed');
 });

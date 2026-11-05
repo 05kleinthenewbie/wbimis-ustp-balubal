@@ -40,8 +40,8 @@ test('student self registration uses the submitted details and chosen password w
     Role::firstOrCreate(['role_name' => 'student']);
     $this->post(route('register.store'), studentRegistrationPayload())->assertRedirect(route('register.otp.show'));
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])->assertRedirect(route('student.login'));
-    $user = User::where('id_number', '2023303709')->firstOrFail();
-    expect($user->status)->toBe('pending')
+    $user = User::where('email', 'student@ustp.edu.ph')->firstOrFail();
+    expect($user->status)->toBe('active')
         ->and($user->name)->toBe('Juan S. Dela Cruz')
         ->and($user->department)->toBe('BSIT')
         ->and(Hash::check('password', $user->password))->toBeTrue()
@@ -54,18 +54,18 @@ test('guests can open the dedicated student login form', function () {
         ->assertInertia(fn ($page) => $page->component('auth/student-login'));
 });
 
-test('students log in with their id number as username and password and land on the dashboard', function () {
+test('students log in with their email and password and land on the dashboard', function () {
     $role = Role::firstOrCreate(['role_name' => 'student']);
     $user = User::factory()->create([
         'role_id' => $role->id,
-        'id_number' => '2023303709',
-        'password' => '2023303709',
+        'email' => 'student@ustp.edu.ph',
+        'password' => 'password',
         'status' => 'active',
     ]);
 
     $this->post(route('student.authenticate'), [
-        'id_number' => '2023303709',
-        'password' => '2023303709',
+        'email' => 'student@ustp.edu.ph',
+        'password' => 'password',
     ])->assertRedirect(route('dashboard'));
 
     $this->assertAuthenticatedAs($user);
@@ -77,15 +77,15 @@ test('the student login form rejects credentials that do not match', function ()
     $role = Role::firstOrCreate(['role_name' => 'student']);
     User::factory()->create([
         'role_id' => $role->id,
-        'id_number' => '2023303709',
-        'password' => '2023303709',
+        'email' => 'student@ustp.edu.ph',
+        'password' => 'password',
         'status' => 'active',
     ]);
 
     $this->post(route('student.authenticate'), [
-        'id_number' => '2023303709',
+        'email' => 'student@ustp.edu.ph',
         'password' => 'WrongPassword1',
-    ])->assertSessionHasErrors('id_number');
+    ])->assertSessionHasErrors('email');
 
     $this->assertGuest();
 });
@@ -94,15 +94,15 @@ test('the student login form only accepts student accounts', function () {
     $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
     User::factory()->create([
         'role_id' => $role->id,
-        'id_number' => '2023303709',
-        'password' => '2023303709',
+        'email' => 'faculty@ustp.edu.ph',
+        'password' => 'password',
         'status' => 'active',
     ]);
 
     $this->post(route('student.authenticate'), [
-        'id_number' => '2023303709',
-        'password' => '2023303709',
-    ])->assertSessionHasErrors('id_number');
+        'email' => 'faculty@ustp.edu.ph',
+        'password' => 'password',
+    ])->assertSessionHasErrors('email');
 
     $this->assertGuest();
 });
@@ -111,15 +111,15 @@ test('the student login form blocks deactivated accounts', function () {
     $role = Role::firstOrCreate(['role_name' => 'student']);
     User::factory()->create([
         'role_id' => $role->id,
-        'id_number' => '2023303709',
-        'password' => '2023303709',
+        'email' => 'student@ustp.edu.ph',
+        'password' => 'password',
         'status' => 'inactive',
     ]);
 
     $this->post(route('student.authenticate'), [
-        'id_number' => '2023303709',
-        'password' => '2023303709',
-    ])->assertSessionHasErrors('id_number');
+        'email' => 'student@ustp.edu.ph',
+        'password' => 'password',
+    ])->assertSessionHasErrors('email');
 
     $this->assertGuest();
 });
@@ -141,15 +141,14 @@ test('non admins cannot reset student passwords', function () {
         ->assertNotFound();
 });
 
-test('duplicate student accounts are prevented for the same id number', function () {
+test('duplicate student accounts are prevented for the same email', function () {
     Storage::fake('local');
     fakeBrevoMail();
-    User::factory()->create(['id_number' => '2023303709']);
+    User::factory()->create(['email' => 'student@ustp.edu.ph', 'status' => 'active']);
     $this->post(route('register.store'), studentRegistrationPayload(['name' => 'Duplicate']))
-        ->assertSessionHasErrors('id_number');
+        ->assertSessionHasErrors('email');
 
-    expect(User::where('id_number', '2023303709')->count())->toBe(1)
-        ->and(StudentRoster::where('id_number', '2023303709')->count())->toBe(0);
+    expect(User::where('email', 'student@ustp.edu.ph')->count())->toBe(1);
 });
 
 test('retired imports cannot provision active accounts', function () {

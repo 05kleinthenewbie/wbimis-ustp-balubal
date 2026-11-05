@@ -46,6 +46,7 @@ type InventoryItemRow = {
     brand: string | null;
     model: string | null;
     serial_no: string | null;
+    location: string | null;
     campus: string | null;
     building: string | null;
     room: string | null;
@@ -54,6 +55,7 @@ type InventoryItemRow = {
     status: string;
     expiration_date: string | null;
     expiration_type?: string | null;
+    document_type: 'ICS' | 'PAR' | null;
 };
 
 type Filters = {
@@ -63,6 +65,7 @@ type Filters = {
     status?: string;
     campus?: string;
     end_user?: string;
+    document_type?: string;
 };
 
 type Options = {
@@ -165,16 +168,13 @@ function getCategoryFromName(name: string): string {
         return 'Network Devices';
     }
 
-    if (lower.includes('toner')) {
-        return 'Toner Cartridges';
-    }
-
     if (
+        lower.includes('toner') ||
         lower.includes('ink') ||
         lower.includes('cartridge') ||
         lower.includes('refill')
     ) {
-        return 'Printer Ink';
+        return 'Printers';
     }
 
     if (lower.includes('laptop') || lower.includes('notebook')) {
@@ -193,31 +193,17 @@ function getCategoryFromName(name: string): string {
         return 'Printers';
     }
 
-    if (lower.includes('thermal paste') || lower.includes('thermal compound')) {
-        return 'Thermal Paste';
-    }
-
     if (
-        lower.includes('cleaning solution') ||
-        lower.includes('cleaner') ||
-        lower.includes('contact cleaner')
+        lower.includes('desktop') ||
+        lower.includes('monitor') ||
+        lower.includes('system unit') ||
+        lower.includes('pc set') ||
+        lower.includes('server')
     ) {
-        return 'Cleaning Supplies';
+        return 'Desktop Computers';
     }
 
-    if (lower.includes('antivirus') || lower.includes('security suite')) {
-        return 'Antivirus Licenses';
-    }
-
-    if (
-        lower.includes('ssl') ||
-        lower.includes('tls') ||
-        lower.includes('certificate')
-    ) {
-        return 'SSL/TLS Certificates';
-    }
-
-    return 'Desktop Computers';
+    return 'Uncategorized';
 }
 
 const legacyCategoryAliases: Record<string, string> = {
@@ -449,6 +435,9 @@ export default function InventoryIndex({
     const [status, setStatus] = useState(filters.status ?? 'all');
     const [campus, setCampus] = useState(filters.campus ?? 'all');
     const [endUser, setEndUser] = useState(filters.end_user ?? '');
+    const [documentType, setDocumentType] = useState(
+        filters.document_type ?? 'all',
+    );
 
     function applyFilters(overrides: Partial<Filters> = {}) {
         const next = {
@@ -458,6 +447,7 @@ export default function InventoryIndex({
             status: overrides.status ?? status,
             campus: overrides.campus ?? campus,
             end_user: overrides.end_user ?? endUser,
+            document_type: overrides.document_type ?? documentType,
         };
 
         router.get(
@@ -470,6 +460,10 @@ export default function InventoryIndex({
                 status: next.status !== 'all' ? next.status : undefined,
                 campus: next.campus !== 'all' ? next.campus : undefined,
                 end_user: next.end_user || undefined,
+                document_type:
+                    next.document_type !== 'all'
+                        ? next.document_type
+                        : undefined,
             },
             { preserveState: true, replace: true },
         );
@@ -505,7 +499,8 @@ export default function InventoryIndex({
         condition !== 'all' ||
         status !== 'all' ||
         campus !== 'all' ||
-        endUser;
+        endUser ||
+        documentType !== 'all';
 
     return (
         <>
@@ -754,6 +749,38 @@ export default function InventoryIndex({
 
                     {/* Filters */}
                     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <div className="mb-3 flex flex-wrap items-center gap-2">
+                            <span className="mr-1 text-xs font-medium text-slate-500">
+                                Source document
+                            </span>
+                            {[
+                                ['all', 'All'],
+                                ['ICS', 'ICS'],
+                                ['PAR', 'PAR'],
+                            ].map(([value, label]) => (
+                                <Button
+                                    key={value}
+                                    type="button"
+                                    size="sm"
+                                    variant={
+                                        documentType === value
+                                            ? 'default'
+                                            : 'outline'
+                                    }
+                                    onClick={() => {
+                                        setDocumentType(value);
+                                        applyFilters({ document_type: value });
+                                    }}
+                                    className={
+                                        documentType === value
+                                            ? 'bg-ustp-navy text-white hover:bg-ustp-navy-dark'
+                                            : ''
+                                    }
+                                >
+                                    {label}
+                                </Button>
+                            ))}
+                        </div>
                         <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
                             <div className="relative">
                                 <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
@@ -859,7 +886,7 @@ export default function InventoryIndex({
                                 </SelectTrigger>
                                 <SelectContent className="border-slate-200 bg-white text-slate-800">
                                     <SelectItem value="all">
-                                        All locations
+                                        All item locations
                                     </SelectItem>
                                     {options.campuses.map((c) => (
                                         <SelectItem key={c} value={c}>
@@ -978,13 +1005,7 @@ export default function InventoryIndex({
                                             const catColor =
                                                 categoryColors[category] ??
                                                 'bg-slate-50 text-slate-400';
-                                            const locationParts = [
-                                                item.campus,
-                                                item.building,
-                                                item.room,
-                                            ]
-                                                .filter(Boolean)
-                                                .join(' · ');
+                                            const locationParts = item.location;
 
                                             return (
                                                 <tr

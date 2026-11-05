@@ -1,5 +1,5 @@
 import { Form, Head, router } from '@inertiajs/react';
-import { GraduationCap, ScanLine } from 'lucide-react';
+import { GraduationCap, Mail, ScanLine } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
 import { LoginCodeScanner } from '@/components/login-code-scanner';
@@ -19,31 +19,20 @@ import { request as forgotPassword } from '@/routes/student/password';
 
 type Props = {
     status?: string;
-    idNumber?: string | null;
 };
 
-export default function StudentLogin({ status, idNumber }: Props) {
+export default function StudentLogin({ status }: Props) {
     const [scanOpen, setScanOpen] = useState(false);
     const [scanProcessing, setScanProcessing] = useState(false);
     const [scanMessage, setScanMessage] = useState('');
-    const [studentId, setStudentId] = useState(idNumber ?? '');
 
     function handleScan(text: string) {
         const result = classifyLoginScan(text);
         setScanOpen(false);
 
-        if (result.type === 'student_id') {
-            setStudentId(result.idNumber);
+        if (result.type !== 'login') {
             setScanMessage(
-                'Student ID detected. Enter your password to sign in.',
-            );
-
-            return;
-        }
-
-        if (result.type === 'unsupported') {
-            setScanMessage(
-                'This is not a supported login code. Generate a secure code from a signed-in student account, or enter your ID number and password.',
+                'This is not a supported login code. Generate a secure code from a signed-in student account, or sign in with your email and password.',
             );
 
             return;
@@ -106,33 +95,27 @@ export default function StudentLogin({ status, idNumber }: Props) {
                         <div className="grid items-start gap-5">
                             <div className="grid content-start gap-2">
                                 <Label
-                                    htmlFor="id_number"
+                                    htmlFor="email"
                                     className="text-sm font-medium text-foreground"
                                 >
-                                    Student ID
+                                    Email address
                                 </Label>
                                 <div className="relative flex items-center">
-                                    <GraduationCap className="pointer-events-none absolute top-1/2 left-3 size-4.5 -translate-y-1/2 text-muted-foreground" />
+                                    <Mail className="pointer-events-none absolute top-1/2 left-3 size-4.5 -translate-y-1/2 text-muted-foreground" />
                                     <Input
-                                        id="id_number"
-                                        type="text"
-                                        name="id_number"
-                                        value={studentId}
-                                        onChange={(event) =>
-                                            setStudentId(event.target.value)
-                                        }
+                                        id="email"
+                                        type="email"
+                                        name="email"
                                         required
                                         autoFocus
                                         autoComplete="username"
-                                        inputMode="numeric"
-                                        maxLength={10}
-                                        placeholder="e.g. 2023303709"
+                                        placeholder="name@example.com"
                                         className="h-11 rounded-lg border-border pl-10 text-sm transition-all focus-visible:border-ustp-navy focus-visible:ring-ustp-navy/20"
                                     />
                                 </div>
-                                {errors.id_number && (
+                                {errors.email && (
                                     <StatusAlert
-                                        message={errors.id_number}
+                                        message={errors.email}
                                         variant="warning"
                                         className="mt-1.5"
                                     />

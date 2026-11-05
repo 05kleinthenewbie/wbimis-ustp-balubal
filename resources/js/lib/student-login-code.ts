@@ -16,8 +16,16 @@ export function classifyLoginScan(value: string): LoginScanResult {
         return { type: 'login', code: text };
     }
 
-    if (/^[0-9]{10}$/.test(text)) {
+    if (/^[A-Za-z0-9-]{6,20}$/.test(text)) {
         return { type: 'student_id', idNumber: text };
+    }
+
+    for (const line of text.split(/\r?\n/)) {
+        const candidate = line.trim();
+
+        if (/^[0-9]{8,12}$/.test(candidate)) {
+            return { type: 'student_id', idNumber: candidate };
+        }
     }
 
     return { type: 'unsupported' };

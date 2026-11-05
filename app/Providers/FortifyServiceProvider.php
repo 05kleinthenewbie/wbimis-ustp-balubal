@@ -7,6 +7,7 @@ use App\Actions\Fortify\ResetUserPassword;
 use App\Http\Responses\LoginResponse;
 use App\Http\Responses\RegisterResponse;
 use App\Http\Responses\VerifyEmailResponse;
+use App\Models\StudentRoster;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -61,11 +62,7 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::authenticateUsing(function (Request $request) {
             $login = trim((string) $request->input(Fortify::username()));
 
-            // Students sign in with their university ID number, while
-            // faculty, staff, and administrators continue to use email.
-            $user = preg_match('/^\d{10}$/', $login) === 1
-                ? User::where('id_number', $login)->first()
-                : User::where('email', $login)->first();
+            $user = User::where('email', $login)->first();
 
             if (! $user || ! Hash::check($request->password, $user->password)) {
                 return null;
@@ -136,7 +133,10 @@ class FortifyServiceProvider extends ServiceProvider
             'status' => $request->session()->get('status'),
         ]));
 
-        Fortify::registerView(fn () => Inertia::render('auth/register'));
+        Fortify::registerView(fn () => Inertia::render('auth/register', [
+            'programs' => StudentRoster::PROGRAMS,
+            'passwordRules' => 'minlength:12; required: lower; required: upper; required: digit; required: [!@#$%^&*(),.?":{}|<>_-];',
+        ]));
 
         Fortify::confirmPasswordView(fn () => Inertia::render('auth/confirm-password'));
     }

@@ -19,7 +19,7 @@ class PrioritizationService
      * Determine priority based on rules from NOTE 2.
      *
      * Rules:
-     * 1. Computer viruses = urgent
+     * 1. Computer viruses = high
      * 2. Department-wide issues (affecting multiple users) = high
      * 3. Non-operational equipment = high
      * 4. Intermittent problems = medium
@@ -33,18 +33,23 @@ class PrioritizationService
             ->map(fn ($name) => strtolower($name))
             ->toArray();
 
-        // Rule 1: Computer viruses = urgent
+        // Virus-related problems receive high priority under the manual.
         $virusKeywords = ['virus', 'malware', 'ransomware', 'trojan', 'infected', 'infection'];
         foreach ($virusKeywords as $keyword) {
             if (str_contains($description, $keyword) || in_array($keyword, $serviceNames)) {
-                return 'urgent';
+                return 'high';
             }
         }
 
-        // Rule 2: Department-wide issues = high
-        $departmentKeywords = ['department', 'entire', 'all computers', 'network', 'server', 'printer', 'lab'];
-        foreach ($departmentKeywords as $keyword) {
-            if (str_contains($description, $keyword)) {
+        // A service name alone does not imply that the issue affects a group.
+        $impactPatterns = [
+            '/\b(entire|whole|all)\s+(department|office|unit|laboratory|lab|computers|users)\b/',
+            '/\b(multiple|many|several)\s+(users|computers|devices|staff|students)\b/',
+            '/\b(department[- ]wide|office[- ]wide|campus[- ]wide)\b/',
+            '/\b(affecting|affects)\s+(the\s+)?(entire|whole|multiple)\b/',
+        ];
+        foreach ($impactPatterns as $pattern) {
+            if (preg_match($pattern, $description) === 1) {
                 return 'high';
             }
         }

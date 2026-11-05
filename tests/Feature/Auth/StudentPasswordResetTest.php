@@ -84,7 +84,7 @@ test('students can set a new password with the emailed reset link', function () 
         ->assertRedirect(route('login'));
 
     $this->post(route('student.authenticate'), [
-        'id_number' => '2023303709',
+        'email' => 'student.reset@gmail.com',
         'password' => 'BrandNewPass123',
     ])->assertRedirect(route('dashboard'));
 });

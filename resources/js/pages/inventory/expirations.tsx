@@ -382,7 +382,9 @@ export default function InventoryExpirations({
                                     <th className="px-4 py-3">
                                         Expiration Type
                                     </th>
-                                    <th className="px-4 py-3">Expires</th>
+                                    <th className="px-4 py-3">
+                                        Shelf Life / Expires
+                                    </th>
                                     <th className="px-4 py-3">Status</th>
                                     <th className="px-4 py-3">End User</th>
                                     <th className="px-4 py-3" />
@@ -511,7 +513,7 @@ export default function InventoryExpirations({
                                     <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
                                         <div>
                                             <p className="text-slate-400">
-                                                Expires
+                                                Shelf Life / Expires
                                             </p>
                                             <p className="font-medium text-slate-700">
                                                 {formatDate(

@@ -100,6 +100,7 @@ type InventoryItemData = {
     location: string | null;
     purchase_date: string | null;
     expiration_date: string | null;
+    warranty_details: string | null;
     expiration_type: string | null;
     unit_cost: string | null;
     purchase_order_no: string | null;
@@ -114,6 +115,16 @@ type InventoryItemData = {
     validation: string | null;
     inspection_date: string | null;
     inspection_remarks: string | null;
+    acquisition_year: number | null;
+    fund_cluster: string | null;
+    document_no: string | null;
+    document_type: 'ICS' | 'PAR' | null;
+    unit_of_measure: string | null;
+    total_cost: string | null;
+    sticker_date: string | null;
+    supplier: string | null;
+    transfer_to: string | null;
+    shelf_life: string | null;
     request_items?: RequestItemRecord[];
     defective_records?: DefectiveRecord[];
     incident_reports?: IncidentRecord[];
@@ -140,16 +151,13 @@ function getCategoryFromName(name: string): string {
         return 'Network Devices';
     }
 
-    if (lower.includes('toner')) {
-        return 'Toner Cartridges';
-    }
-
     if (
+        lower.includes('toner') ||
         lower.includes('ink') ||
         lower.includes('cartridge') ||
         lower.includes('refill')
     ) {
-        return 'Printer Ink';
+        return 'Printers';
     }
 
     if (lower.includes('laptop') || lower.includes('notebook')) {
@@ -168,31 +176,17 @@ function getCategoryFromName(name: string): string {
         return 'Printers';
     }
 
-    if (lower.includes('thermal paste') || lower.includes('thermal compound')) {
-        return 'Thermal Paste';
-    }
-
     if (
-        lower.includes('cleaning solution') ||
-        lower.includes('cleaner') ||
-        lower.includes('contact cleaner')
+        lower.includes('desktop') ||
+        lower.includes('monitor') ||
+        lower.includes('system unit') ||
+        lower.includes('pc set') ||
+        lower.includes('server')
     ) {
-        return 'Cleaning Supplies';
+        return 'Desktop Computers';
     }
 
-    if (lower.includes('antivirus') || lower.includes('security suite')) {
-        return 'Antivirus Licenses';
-    }
-
-    if (
-        lower.includes('ssl') ||
-        lower.includes('tls') ||
-        lower.includes('certificate')
-    ) {
-        return 'SSL/TLS Certificates';
-    }
-
-    return 'Desktop Computers';
+    return 'Uncategorized';
 }
 
 const legacyCategoryAliases: Record<string, string> = {
@@ -768,7 +762,16 @@ export default function InventoryShow({ item }: Props) {
                                     </div>
                                     <div>
                                         <p className="text-[10px] font-semibold tracking-[0.15em] text-slate-400 uppercase">
-                                            Expiration Date
+                                            Warranty
+                                        </p>
+                                        <p className="mt-1 text-sm text-slate-800">
+                                            {item.warranty_details ??
+                                                'Not specified'}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] font-semibold tracking-[0.15em] text-slate-400 uppercase">
+                                            Shelf Life / Expires
                                         </p>
                                         <div className="mt-1 flex items-center gap-2 text-sm text-slate-800">
                                             <CalendarClock className="size-3.5 text-slate-400" />
@@ -800,6 +803,103 @@ export default function InventoryShow({ item }: Props) {
 
                                 <div className="border-t border-slate-200 px-5 py-4 md:px-6">
                                     <p className="text-[10px] font-semibold tracking-[0.15em] text-slate-400 uppercase">
+                                        Acquisition &amp; Procurement Details
+                                    </p>
+                                    <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                                        <div>
+                                            <p className="text-xs text-slate-400">
+                                                Source Document
+                                            </p>
+                                            <p className="mt-1 text-sm font-medium text-slate-800">
+                                                {item.document_type ?? '—'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-400">
+                                                {item.document_type === 'PAR'
+                                                    ? 'PAR No.'
+                                                    : item.document_type ===
+                                                        'ICS'
+                                                      ? 'ICS No.'
+                                                      : 'Document No.'}
+                                            </p>
+                                            <p className="mt-1 font-mono text-sm text-slate-800">
+                                                {item.document_no ?? '—'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-400">
+                                                Fund Cluster
+                                            </p>
+                                            <p className="mt-1 text-sm text-slate-800">
+                                                {item.fund_cluster ?? '—'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-400">
+                                                Supplier
+                                            </p>
+                                            <p className="mt-1 text-sm text-slate-800">
+                                                {item.supplier ?? '—'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-400">
+                                                Acquisition Year
+                                            </p>
+                                            <p className="mt-1 text-sm text-slate-800">
+                                                {item.acquisition_year ?? '—'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-400">
+                                                Unit
+                                            </p>
+                                            <p className="mt-1 text-sm text-slate-800">
+                                                {item.unit_of_measure ?? '—'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-400">
+                                                Document Total
+                                            </p>
+                                            <p className="mt-1 text-sm font-medium text-slate-800">
+                                                {item.total_cost === null
+                                                    ? '—'
+                                                    : formatCurrency(
+                                                          item.total_cost,
+                                                      )}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-400">
+                                                Sticker Date
+                                            </p>
+                                            <p className="mt-1 text-sm text-slate-800">
+                                                {formatDate(item.sticker_date)}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-400">
+                                                Shelf Life
+                                            </p>
+                                            <p className="mt-1 text-sm text-slate-800">
+                                                {item.shelf_life ?? '—'}
+                                            </p>
+                                        </div>
+                                        <div className="sm:col-span-2 lg:col-span-4">
+                                            <p className="text-xs text-slate-400">
+                                                Transfer / Assignment Note
+                                            </p>
+                                            <p className="mt-1 text-sm text-slate-800">
+                                                {item.transfer_to ?? '—'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="border-t border-slate-200 px-5 py-4 md:px-6">
+                                    <p className="text-[10px] font-semibold tracking-[0.15em] text-slate-400 uppercase">
                                         Assignment &amp; Location
                                     </p>
                                     <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -824,10 +924,19 @@ export default function InventoryShow({ item }: Props) {
                                         <div>
                                             <p className="flex items-center gap-1.5 text-xs text-slate-400">
                                                 <LocateFixed className="size-3" />
-                                                Campus / Location
+                                                Campus
                                             </p>
                                             <p className="mt-1 text-sm text-slate-800">
                                                 {item.campus ?? '—'}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="flex items-center gap-1.5 text-xs text-slate-400">
+                                                <MapPin className="size-3" />
+                                                Location
+                                            </p>
+                                            <p className="mt-1 text-sm text-slate-800">
+                                                {item.location ?? '—'}
                                             </p>
                                         </div>
                                         <div>
@@ -857,19 +966,14 @@ export default function InventoryShow({ item }: Props) {
                                         </div>
                                     </div>
 
-                                    {locationParts && (
-                                        <div className="mt-4 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
-                                            <MapPin className="size-3.5 text-slate-400" />
-                                            {locationParts}
-                                            {item.location &&
-                                                item.location !==
-                                                    locationParts && (
-                                                    <span className="text-slate-300">
-                                                        ·{item.location}
-                                                    </span>
-                                                )}
-                                        </div>
-                                    )}
+                                    {locationParts &&
+                                        item.location &&
+                                        item.location !== locationParts && (
+                                            <div className="mt-4 flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                                                <MapPin className="size-3.5 text-slate-400" />
+                                                {locationParts}
+                                            </div>
+                                        )}
                                 </div>
                             </div>
 
@@ -971,7 +1075,7 @@ export default function InventoryShow({ item }: Props) {
                                                                             }
                                                                         </span>
                                                                         <Link
-                                                                            href={`/service-requests/${sr.id}`}
+                                                                            href={`/requests/${sr.id}`}
                                                                             className="flex items-center gap-1 text-xs text-ustp-gold/90 transition-colors hover:text-ustp-gold"
                                                                         >
                                                                             <ArrowUpRight className="size-3" />
@@ -1567,7 +1671,7 @@ export default function InventoryShow({ item }: Props) {
 
                                             <div>
                                                 <p className="text-[10px] font-semibold tracking-[0.15em] text-slate-400 uppercase">
-                                                    Expiration Date
+                                                    Shelf Life / Expires
                                                 </p>
                                                 <div className="mt-1.5 flex items-center gap-2">
                                                     <CalendarClock className="size-3.5 text-slate-400" />

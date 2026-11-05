@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Notifications\Notifiable;
@@ -28,6 +27,7 @@ use RuntimeException;
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $avatar
+ * @property string|null $department
  * @property string|null $id_number
  * @property string|null $employment_type
  * @property string|null $employee_id_number
@@ -43,8 +43,13 @@ use RuntimeException;
  * @property string|null $cor_path
  * @property string|null $cor_original_name
  * @property string|null $cor_verification_status
+ * @property string|null $identity_verification_status
  * @property array<string, mixed>|null $cor_verification_details
  * @property Carbon|null $cor_checked_at
+ * @property string|null $registration_review_status
+ * @property string|null $registration_review_reason
+ * @property int|null $registration_reviewed_by
+ * @property Carbon|null $registration_reviewed_at
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
@@ -52,9 +57,8 @@ use RuntimeException;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property bool $is_technician
- * @property-read string|null $approval_block_reason
  */
-#[Fillable(['name', 'email', 'password', 'role_id', 'department', 'employment_type', 'id_number', 'educational_level', 'year_level', 'gender', 'birth_date', 'home_address', 'cor_path', 'cor_original_name', 'contact_no', 'status', 'avatar', 'employee_id_number', 'position', 'expertise', 'employment_document_path', 'employment_document_original_name', 'is_technician'])]
+#[Fillable(['name', 'email', 'password', 'role_id', 'department', 'employment_type', 'id_number', 'educational_level', 'year_level', 'gender', 'birth_date', 'home_address', 'cor_path', 'cor_original_name', 'proof_type', 'contact_no', 'status', 'avatar', 'employee_id_number', 'position', 'expertise', 'employment_document_path', 'employment_document_original_name', 'is_technician', 'identity_verification_status', 'registration_review_status', 'registration_review_reason', 'registration_reviewed_by', 'registration_reviewed_at'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'cor_path', 'cor_original_name', 'employment_document_path', 'employment_document_original_name'])]
 class User extends Authenticatable implements JWTSubject
 {
@@ -73,6 +77,7 @@ class User extends Authenticatable implements JWTSubject
             'birth_date' => 'date',
             'cor_verification_details' => 'array',
             'cor_checked_at' => 'datetime',
+            'registration_reviewed_at' => 'datetime',
             'password' => 'hashed',
             'is_technician' => 'boolean',
         ];
@@ -96,39 +101,6 @@ class User extends Authenticatable implements JWTSubject
         }
 
         $this->delete();
-    }
-
-    /**
-     * Resolve the admin-only preview URL for the student's uploaded
-     * student ID or COR, or null when none was submitted.
-     */
-    protected function corUrl(): Attribute
-    {
-        return Attribute::get(fn (): ?string => filled($this->cor_path)
-            ? route('users.cor', $this)
-            : null);
-    }
-
-    /**
-     * Explain why a pending student registration cannot be approved.
-     */
-    protected function approvalBlockReason(): Attribute
-    {
-        return Attribute::get(function (): ?string {
-            if ($this->status !== 'pending' || $this->role?->role_name !== 'student') {
-                return null;
-            }
-
-            if (blank($this->cor_path) || ! Storage::disk('local')->exists((string) $this->cor_path)) {
-                return 'The student has no available student ID or COR. Upload either document before approving this account.';
-            }
-
-            if ($this->cor_verification_status === 'mismatch') {
-                return 'The student\'s details do not match their student ID or COR. Resolve the mismatch before approving this account.';
-            }
-
-            return null;
-        });
     }
 
     /**
@@ -203,15 +175,6 @@ class User extends Authenticatable implements JWTSubject
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
-    }
-
-    /**
-     * Get the roster record linked to this user account, when the user is a
-     * student provisioned from the ICT-managed student roster.
-     */
-    public function studentRoster(): HasOne
-    {
-        return $this->hasOne(StudentRoster::class);
     }
 
     /**

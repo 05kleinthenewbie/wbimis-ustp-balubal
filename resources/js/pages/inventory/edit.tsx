@@ -64,8 +64,19 @@ type InventoryItemData = {
     location: string | null;
     purchase_date: string | null;
     expiration_date: string | null;
+    warranty_details: string | null;
     expiration_type: string | null;
     unit_cost: string | null;
+    acquisition_year: number | null;
+    fund_cluster: string | null;
+    document_no: string | null;
+    document_type: 'ICS' | 'PAR' | null;
+    unit_of_measure: string | null;
+    total_cost: string | null;
+    sticker_date: string | null;
+    supplier: string | null;
+    transfer_to: string | null;
+    shelf_life: string | null;
     purchase_order_no: string | null;
     end_user: string | null;
     department: string | null;
@@ -101,16 +112,13 @@ function getCategoryFromName(name: string): string {
         return 'Network Devices';
     }
 
-    if (lower.includes('toner')) {
-        return 'Toner Cartridges';
-    }
-
     if (
+        lower.includes('toner') ||
         lower.includes('ink') ||
         lower.includes('cartridge') ||
         lower.includes('refill')
     ) {
-        return 'Printer Ink';
+        return 'Printers';
     }
 
     if (lower.includes('laptop') || lower.includes('notebook')) {
@@ -129,31 +137,17 @@ function getCategoryFromName(name: string): string {
         return 'Printers';
     }
 
-    if (lower.includes('thermal paste') || lower.includes('thermal compound')) {
-        return 'Thermal Paste';
-    }
-
     if (
-        lower.includes('cleaning solution') ||
-        lower.includes('cleaner') ||
-        lower.includes('contact cleaner')
+        lower.includes('desktop') ||
+        lower.includes('monitor') ||
+        lower.includes('system unit') ||
+        lower.includes('pc set') ||
+        lower.includes('server')
     ) {
-        return 'Cleaning Supplies';
+        return 'Desktop Computers';
     }
 
-    if (lower.includes('antivirus') || lower.includes('security suite')) {
-        return 'Antivirus Licenses';
-    }
-
-    if (
-        lower.includes('ssl') ||
-        lower.includes('tls') ||
-        lower.includes('certificate')
-    ) {
-        return 'SSL/TLS Certificates';
-    }
-
-    return 'Desktop Computers';
+    return 'Uncategorized';
 }
 
 const categoryIcons: Record<string, React.ElementType> = {
@@ -316,9 +310,20 @@ export default function InventoryEdit({
         location: item.location ?? '',
         purchase_date: item.purchase_date?.slice(0, 10) ?? '',
         expiration_date: item.expiration_date?.slice(0, 10) ?? '',
+        warranty_details: item.warranty_details ?? '',
         expiration_type:
             item.expiration_type ?? suggestExpirationType(resolvedCategory),
         unit_cost: item.unit_cost ?? '',
+        acquisition_year: item.acquisition_year?.toString() ?? '',
+        fund_cluster: item.fund_cluster ?? '',
+        document_no: item.document_no ?? '',
+        document_type: item.document_type ?? '',
+        unit_of_measure: item.unit_of_measure ?? '',
+        total_cost: item.total_cost ?? '',
+        sticker_date: item.sticker_date?.slice(0, 10) ?? '',
+        supplier: item.supplier ?? '',
+        transfer_to: item.transfer_to ?? '',
+        shelf_life: item.shelf_life ?? '',
         purchase_order_no: item.purchase_order_no ?? '',
         end_user: item.end_user ?? '',
         department: item.department ?? '',
@@ -815,10 +820,36 @@ export default function InventoryEdit({
 
                                         <div className="grid gap-2">
                                             <Label
+                                                htmlFor="warranty_details"
+                                                className="text-xs font-medium text-slate-700"
+                                            >
+                                                Warranty details
+                                            </Label>
+                                            <Input
+                                                id="warranty_details"
+                                                value={data.warranty_details}
+                                                onChange={(e) =>
+                                                    setData(
+                                                        'warranty_details',
+                                                        e.target.value,
+                                                    )
+                                                }
+                                                placeholder="e.g. 1 year warranty"
+                                                maxLength={255}
+                                                className={inputClass}
+                                            />
+                                            {errors.warranty_details && (
+                                                <p className="text-xs text-red-400">
+                                                    {errors.warranty_details}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label
                                                 htmlFor="expiration_date"
                                                 className="text-xs font-medium text-slate-700"
                                             >
-                                                Expiration date
+                                                Shelf life expiration
                                             </Label>
                                             <div className="relative">
                                                 <CalendarClock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
@@ -931,6 +962,221 @@ export default function InventoryEdit({
                                                 className={`${inputClass} font-mono`}
                                             />
                                         </div>
+
+                                        <details className="rounded-xl border border-slate-200 p-4 md:col-span-2">
+                                            <summary className="cursor-pointer text-sm font-medium text-slate-700">
+                                                Procurement details
+                                            </summary>
+                                            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="document_no">
+                                                        {data.document_type ===
+                                                        'PAR'
+                                                            ? 'PAR No.'
+                                                            : data.document_type ===
+                                                                'ICS'
+                                                              ? 'ICS No.'
+                                                              : 'Document No.'}
+                                                    </Label>
+                                                    <Input
+                                                        id="document_no"
+                                                        value={data.document_no}
+                                                        onChange={(e) =>
+                                                            setData(
+                                                                'document_no',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className={inputClass}
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="document_type">
+                                                        Source document
+                                                    </Label>
+                                                    <Select
+                                                        value={
+                                                            data.document_type ||
+                                                            'none'
+                                                        }
+                                                        onValueChange={(
+                                                            value,
+                                                        ) =>
+                                                            setData(
+                                                                'document_type',
+                                                                value === 'none'
+                                                                    ? ''
+                                                                    : value,
+                                                            )
+                                                        }
+                                                    >
+                                                        <SelectTrigger
+                                                            id="document_type"
+                                                            className={
+                                                                selectClass
+                                                            }
+                                                        >
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="none">
+                                                                Not specified
+                                                            </SelectItem>
+                                                            <SelectItem value="ICS">
+                                                                ICS
+                                                            </SelectItem>
+                                                            <SelectItem value="PAR">
+                                                                PAR
+                                                            </SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="fund_cluster">
+                                                        Fund cluster
+                                                    </Label>
+                                                    <Input
+                                                        id="fund_cluster"
+                                                        value={
+                                                            data.fund_cluster
+                                                        }
+                                                        onChange={(e) =>
+                                                            setData(
+                                                                'fund_cluster',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className={inputClass}
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="acquisition_year">
+                                                        Acquisition year
+                                                    </Label>
+                                                    <Input
+                                                        id="acquisition_year"
+                                                        type="number"
+                                                        min="1900"
+                                                        max="2100"
+                                                        value={
+                                                            data.acquisition_year
+                                                        }
+                                                        onChange={(e) =>
+                                                            setData(
+                                                                'acquisition_year',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className={inputClass}
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="unit_of_measure">
+                                                        Unit
+                                                    </Label>
+                                                    <Input
+                                                        id="unit_of_measure"
+                                                        value={
+                                                            data.unit_of_measure
+                                                        }
+                                                        onChange={(e) =>
+                                                            setData(
+                                                                'unit_of_measure',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className={inputClass}
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="total_cost">
+                                                        Document total (PHP)
+                                                    </Label>
+                                                    <Input
+                                                        id="total_cost"
+                                                        type="number"
+                                                        min="0"
+                                                        step="0.01"
+                                                        value={data.total_cost}
+                                                        onChange={(e) =>
+                                                            setData(
+                                                                'total_cost',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className={inputClass}
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="sticker_date">
+                                                        Sticker date
+                                                    </Label>
+                                                    <Input
+                                                        id="sticker_date"
+                                                        type="date"
+                                                        value={
+                                                            data.sticker_date
+                                                        }
+                                                        onChange={(e) =>
+                                                            setData(
+                                                                'sticker_date',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className={inputClass}
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="supplier">
+                                                        Supplier
+                                                    </Label>
+                                                    <Input
+                                                        id="supplier"
+                                                        value={data.supplier}
+                                                        onChange={(e) =>
+                                                            setData(
+                                                                'supplier',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className={inputClass}
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="transfer_to">
+                                                        Transfer to
+                                                    </Label>
+                                                    <Input
+                                                        id="transfer_to"
+                                                        value={data.transfer_to}
+                                                        onChange={(e) =>
+                                                            setData(
+                                                                'transfer_to',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        className={inputClass}
+                                                    />
+                                                </div>
+                                                <div className="grid gap-2 sm:col-span-2">
+                                                    <Label htmlFor="shelf_life">
+                                                        Shelf life
+                                                    </Label>
+                                                    <Input
+                                                        id="shelf_life"
+                                                        value={data.shelf_life}
+                                                        onChange={(e) =>
+                                                            setData(
+                                                                'shelf_life',
+                                                                e.target.value,
+                                                            )
+                                                        }
+                                                        placeholder="e.g. 5 Years"
+                                                        className={inputClass}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </details>
                                     </div>
                                 </section>
 

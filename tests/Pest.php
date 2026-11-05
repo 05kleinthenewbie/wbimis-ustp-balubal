@@ -85,8 +85,8 @@ function registrationPayload(array $overrides = []): array
 }
 
 /**
- * A student registration payload with the profile details and COR required
- * by the web registration flow.
+ * A student registration payload with the profile details required by the
+ * web registration flow.
  *
  * @param  array<string, mixed>  $overrides
  * @return array<string, mixed>
@@ -99,10 +99,8 @@ function studentRegistrationPayload(array $overrides = []): array
         'role' => 'student',
         'employment_type' => null,
         'department' => 'BSIT',
-        'id_number' => '2023303709',
         'educational_level' => 'college',
         'year_level' => '1',
-        'cor' => UploadedFile::fake()->create('cor.pdf', 200, 'application/pdf'),
     ], $overrides));
 }
 

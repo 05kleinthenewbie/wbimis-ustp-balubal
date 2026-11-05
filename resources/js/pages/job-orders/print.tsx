@@ -1,6 +1,5 @@
 import { Head } from '@inertiajs/react';
 import { ArrowLeft, Printer } from 'lucide-react';
-import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import ustpLogo from '@/assets/ustp-logo.png';
 
@@ -27,6 +26,8 @@ type PrintProps = {
         date_in_progress: string | null;
         date_completed: string | null;
         date_closed: string | null;
+        support_type: string | null;
+        user_permission_granted: boolean;
         technician: {
             id: number;
             name: string;
@@ -63,7 +64,7 @@ const CAMPUSES = [
 
 const DOC_CODE = 'FM-USTP-ICT-001';
 const REV_NO = '00';
-const EFFECTIVE_DATE = '03.17.26';
+const EFFECTIVE_DATE = '03.17.25';
 
 const CATEGORY_CONFIG: {
     title: string;
@@ -318,61 +319,6 @@ export default function PrintJobRequestForm({
     jobOrder,
     hasAttachment,
 }: PrintProps) {
-    const sheetRef = useRef<HTMLElement>(null);
-
-    // Scale the whole form down (fonts included) so it fits a single
-    // short bond paper: 11in tall minus 0.25in top/bottom margins.
-    // The result is written to --print-scale, which only the print CSS
-    // uses, so the on-screen preview stays full size.
-    useEffect(() => {
-        const printableHeightPx = (11 - 0.5) * 96;
-
-        const applyPrintScale = () => {
-            const element = sheetRef.current;
-
-            if (!element) {
-                return;
-            }
-
-            // Measure using the printed layout (8in printable width, no
-            // vertical padding) so the scale matches what the printer sees.
-            const previousWidth = element.style.width;
-            const previousPadding = element.style.padding;
-
-            element.style.width = '768px';
-            element.style.padding = '0 4.8px';
-
-            const contentHeight = element.scrollHeight;
-
-            element.style.width = previousWidth;
-            element.style.padding = previousPadding;
-
-            if (contentHeight > 0) {
-                const scale = Math.min(
-                    1,
-                    (printableHeightPx * 0.99) / contentHeight,
-                );
-                const rounded = Math.floor(scale * 100) / 100;
-
-                element.style.setProperty(
-                    '--print-scale',
-                    String(Math.max(0.5, rounded)),
-                );
-            }
-        };
-
-        applyPrintScale();
-
-        window.addEventListener('beforeprint', applyPrintScale);
-        window.addEventListener('load', applyPrintScale);
-        document.fonts?.ready.then(applyPrintScale).catch(() => undefined);
-
-        return () => {
-            window.removeEventListener('beforeprint', applyPrintScale);
-            window.removeEventListener('load', applyPrintScale);
-        };
-    }, []);
-
     const services = jobOrder.service_request?.request_services ?? [];
     const serviceRequest = jobOrder.service_request;
     const user = serviceRequest?.user;
@@ -406,7 +352,7 @@ export default function PrintJobRequestForm({
             <style>{`
                 @page {
                     size: letter portrait;
-                    margin: 0.25in;
+                    margin: 0.2in 0.25in 0.25in;
                 }
 
                 @media print {
@@ -441,17 +387,52 @@ export default function PrintJobRequestForm({
                     }
 
                     .page-container {
-                        position: absolute;
-                        top: 0;
-                        left: 0;
                         box-sizing: border-box;
                         border: none !important;
                         box-shadow: none !important;
                         padding: 0 0.05in !important;
-                        width: 100% !important;
-                        max-width: 100% !important;
+                        width: 8in !important;
+                        max-width: 8in !important;
                         margin: 0 !important;
-                        zoom: var(--print-scale, 1);
+                        transform: none !important;
+                    }
+
+                    .page-container [data-purpose='header-section'] {
+                        padding-top: 0 !important;
+                        padding-bottom: 0.08in !important;
+                    }
+
+                    .page-container [data-purpose='title-section'] {
+                        padding-top: 0.04in !important;
+                        padding-bottom: 0.08in !important;
+                    }
+
+                    .page-container section > table,
+                    .page-container section table {
+                        font-size: 8px !important;
+                    }
+
+                    .page-container section td,
+                    .page-container section th {
+                        padding-top: 1px !important;
+                        padding-bottom: 1px !important;
+                    }
+
+                    .page-container .border-b.border-dotted {
+                        min-height: 0 !important;
+                        margin-top: 1px !important;
+                        padding-top: 1px !important;
+                        padding-bottom: 1px !important;
+                    }
+
+                    .page-container [data-purpose='header-section'] img {
+                        height: 0.72in !important;
+                        width: 0.72in !important;
+                    }
+
+                    .page-container {
+                        break-inside: avoid !important;
+                        page-break-inside: avoid !important;
                     }
                 }
             `}</style>
@@ -477,86 +458,101 @@ export default function PrintJobRequestForm({
                 </div>
 
                 {/* Form sheet */}
-                <main
-                    ref={sheetRef}
-                    className="page-container mx-auto max-w-215 border border-gray-300 bg-white p-6 text-black shadow-md sm:p-8"
-                >
+                <main className="page-container mx-auto max-w-215 border border-gray-300 bg-white p-6 text-black shadow-md sm:p-8">
                     {/* Document header */}
-                    <header
-                        className="flex items-start justify-between gap-2 pt-1 pb-4"
-                        data-purpose="header-section"
-                    >
-                        <div className="flex w-33.75 shrink-0 items-start justify-start">
-                            <img
-                                src={ustpLogo}
-                                alt="USTP Logo"
-                                className="h-20 w-auto object-contain"
-                                style={{ height: '92px' }}
-                            />
-                        </div>
-
-                        <div className="flex flex-1 flex-col items-center justify-center px-2 text-center">
-                            <h1 className="text-[14px] leading-tight font-bold tracking-tight text-black uppercase sm:text-[15px]">
-                                University of Science and Technology
-                                <br />
-                                of Southern Philippines
-                            </h1>
-                            <p className="mt-1 text-[10px] font-normal tracking-tight text-black sm:text-[10.5px]">
-                                {CAMPUSES.join(' | ')}
-                            </p>
-                        </div>
-
-                        <div className="w-48.75 shrink-0 self-center">
-                            <table className="w-full border-collapse border border-[#002855] text-center">
-                                <tbody>
-                                    <tr>
-                                        <td
-                                            colSpan={3}
-                                            className="border-b border-[#002855] bg-[#002855] px-1 py-0.5 text-[9.5px] font-semibold tracking-tight text-white"
-                                        >
-                                            Document Code no.
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td
-                                            colSpan={3}
-                                            className="border-b border-[#002855] bg-white px-1 py-0.5 text-[12px] font-bold tracking-wider text-black"
-                                        >
-                                            {DOC_CODE}
-                                        </td>
-                                    </tr>
-                                    <tr className="bg-[#002855] text-[8px] leading-tight font-semibold text-white">
-                                        <td
-                                            className="border-r border-[#002855] px-0.5 py-0.5"
-                                            style={{ width: '30%' }}
-                                        >
-                                            Rev. No.
-                                        </td>
-                                        <td
-                                            className="border-r border-l border-white px-0.5 py-0.5"
-                                            style={{ width: '40%' }}
-                                        >
-                                            Effective Date
-                                        </td>
-                                        <td
-                                            className="border-l border-white px-0.5 py-0.5"
-                                            style={{ width: '30%' }}
-                                        >
-                                            Page No.
-                                        </td>
-                                    </tr>
-                                    <tr className="border-t border-[#002855] bg-white text-[9px] leading-tight font-normal text-black">
-                                        <td className="border-r border-[#002855] py-0.5">
-                                            {REV_NO}
-                                        </td>
-                                        <td className="border-r border-[#002855] py-0.5">
-                                            {EFFECTIVE_DATE}
-                                        </td>
-                                        <td className="py-0.5">1 of 1</td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <header className="pt-1 pb-4" data-purpose="header-section">
+                        <table
+                            className="w-full table-fixed border-collapse"
+                            style={{ width: '100%', tableLayout: 'fixed' }}
+                        >
+                            <tbody>
+                                <tr>
+                                    <td
+                                        className="align-middle"
+                                        style={{ width: '1.1in' }}
+                                    >
+                                        <img
+                                            src={ustpLogo}
+                                            alt="USTP Logo"
+                                            className="h-20 w-auto object-contain"
+                                            style={{
+                                                height: '0.9in',
+                                                width: '0.9in',
+                                            }}
+                                        />
+                                    </td>
+                                    <td
+                                        className="px-2 text-center align-middle"
+                                        style={{ width: '3.7in' }}
+                                    >
+                                        <h1 className="text-[13px] leading-tight font-bold tracking-tight text-black uppercase sm:text-[14px]">
+                                            University of Science and Technology
+                                            <br />
+                                            of Southern Philippines
+                                        </h1>
+                                        <p className="mt-1 text-[9px] leading-tight font-normal tracking-tight text-black sm:text-[9px]">
+                                            {CAMPUSES.join(' | ')}
+                                        </p>
+                                    </td>
+                                    <td
+                                        className="align-middle"
+                                        style={{ width: '2.25in' }}
+                                    >
+                                        <table className="w-full border-collapse border border-[#002855] text-center">
+                                            <tbody>
+                                                <tr>
+                                                    <td
+                                                        colSpan={3}
+                                                        className="border-b border-[#002855] bg-[#002855] px-1 py-0.5 text-[9.5px] font-semibold tracking-tight text-white"
+                                                    >
+                                                        Document Code no.
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td
+                                                        colSpan={3}
+                                                        className="border-b border-[#002855] bg-white px-1 py-0.5 text-[12px] font-bold tracking-wider text-black"
+                                                    >
+                                                        {DOC_CODE}
+                                                    </td>
+                                                </tr>
+                                                <tr className="bg-[#002855] text-[8px] leading-tight font-semibold text-white">
+                                                    <td
+                                                        className="border-r border-[#002855] px-0.5 py-0.5"
+                                                        style={{ width: '30%' }}
+                                                    >
+                                                        Rev. No.
+                                                    </td>
+                                                    <td
+                                                        className="border-r border-l border-white px-0.5 py-0.5"
+                                                        style={{ width: '40%' }}
+                                                    >
+                                                        Effective Date
+                                                    </td>
+                                                    <td
+                                                        className="border-l border-white px-0.5 py-0.5"
+                                                        style={{ width: '30%' }}
+                                                    >
+                                                        Page No.
+                                                    </td>
+                                                </tr>
+                                                <tr className="border-t border-[#002855] bg-white text-[9px] leading-tight font-normal text-black">
+                                                    <td className="border-r border-[#002855] py-0.5">
+                                                        {REV_NO}
+                                                    </td>
+                                                    <td className="border-r border-[#002855] py-0.5">
+                                                        {EFFECTIVE_DATE}
+                                                    </td>
+                                                    <td className="py-0.5">
+                                                        1 of 1
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </header>
 
                     {/* Document title */}
@@ -654,6 +650,38 @@ export default function PrintJobRequestForm({
                                                 Check if with attachment (e.g.,
                                                 print-outs)
                                             </span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td className="px-2 py-1" colSpan={2}>
+                                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                            <span className="flex items-center gap-1.5">
+                                                <Checkbox
+                                                    checked={
+                                                        jobOrder.support_type ===
+                                                        'remote'
+                                                    }
+                                                />
+                                                <span className="text-[9px]">
+                                                    Remote support
+                                                </span>
+                                            </span>
+                                            {jobOrder.support_type ===
+                                                'remote' && (
+                                                <span className="flex items-center gap-1.5">
+                                                    <Checkbox
+                                                        checked={
+                                                            jobOrder.user_permission_granted
+                                                        }
+                                                    />
+                                                    <span className="text-[9px]">
+                                                        Requester permission
+                                                        granted for remote
+                                                        access
+                                                    </span>
+                                                </span>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>

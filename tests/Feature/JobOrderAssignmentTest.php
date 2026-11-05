@@ -72,6 +72,27 @@ test('only requesters assigned technicians and admins can view a job order', fun
         ->assertForbidden();
 });
 
+test('assigning a technician through job order update sets an SLA deadline', function () {
+    Mail::fake();
+
+    $admin = assignTechUser('ict_admin');
+    $technician = assignTechUser('ict_admin');
+    $jobOrder = makeAssignableJobOrder();
+
+    $this->actingAs($admin)
+        ->put(route('job-orders.update', $jobOrder), [
+            'assigned_to' => $technician->id,
+            'status' => 'in_progress',
+        ])
+        ->assertSessionHasNoErrors();
+
+    $jobOrder->refresh();
+
+    expect($jobOrder->date_assigned)->not->toBeNull()
+        ->and($jobOrder->sla_deadline)->not->toBeNull()
+        ->and($jobOrder->sla_deadline->greaterThan($jobOrder->date_assigned))->toBeTrue();
+});
+
 test('admins can add a technician to a job order from the assignments board', function () {
     Mail::fake();
 

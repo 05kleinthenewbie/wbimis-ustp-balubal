@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('home_address', 255)->nullable()->after('birth_date');
             $table->string('cor_path', 500)->nullable()->after('home_address');
             $table->string('cor_original_name', 255)->nullable()->after('cor_path');
+            $table->string('proof_type', 30)->nullable()->after('cor_original_name');
         });
     }
 
@@ -36,6 +37,7 @@ return new class extends Migration
                 'home_address',
                 'cor_path',
                 'cor_original_name',
+                'proof_type',
             ]);
         });
     }

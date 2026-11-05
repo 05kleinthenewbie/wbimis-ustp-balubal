@@ -12,9 +12,14 @@ import { resend, verify } from '@/routes/register/otp';
 type Props = {
     email: string;
     status?: string;
+    studentRegistration?: boolean;
 };
 
-export default function RegisterOtp({ email, status }: Props) {
+export default function RegisterOtp({
+    email,
+    status,
+    studentRegistration = false,
+}: Props) {
     return (
         <>
             <Head title="Verify your email" />
@@ -112,7 +117,11 @@ export default function RegisterOtp({ email, status }: Props) {
             <div className="mt-4 text-center text-sm text-muted-foreground">
                 Entered the wrong email address?{' '}
                 <TextLink
-                    href={register()}
+                    href={register(
+                        studentRegistration
+                            ? { query: { role: 'student' } }
+                            : undefined,
+                    )}
                     className="font-medium text-ustp-navy hover:text-ustp-navy-dark dark:text-white/80 dark:hover:text-white"
                     data-test="register-restart-link"
                 >

@@ -7,7 +7,6 @@ use App\Concerns\ProfileValidationRules;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\BrevoMailService;
-use App\Services\CorVerificationService;
 use App\Services\RegistrationOtpService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -29,7 +28,6 @@ class CreateNewUser implements CreatesNewUsers
     public function __construct(
         private RegistrationOtpService $registrationOtp,
         private BrevoMailService $mail,
-        private CorVerificationService $corVerification,
     ) {}
 
     /**
@@ -53,7 +51,6 @@ class CreateNewUser implements CreatesNewUsers
         $email = (string) $input['email'];
         $this->throttleOtpRequest($email);
 
-        $input = $this->storeCorFile($input);
         $input = $this->storeEmploymentDocument($input);
 
         $code = $this->registrationOtp->issue($email, $input);
@@ -68,7 +65,7 @@ class CreateNewUser implements CreatesNewUsers
         } catch (RuntimeException|ConnectionException $exception) {
             report($exception);
             $this->registrationOtp->forget($email);
-            $this->deleteCorFile($input);
+            $this->deleteEmploymentDocument($input);
 
             throw ValidationException::withMessages([
                 'email' => 'We could not send a verification code to your email address. Please try again.',
@@ -88,58 +85,35 @@ class CreateNewUser implements CreatesNewUsers
     /**
      * Create the user account once the emailed OTP has been verified.
      *
-     * Student registrations collect a student ID or Certificate of Registration (COR),
-     * which an ICT Admin must review before the account is activated.
-     * Faculty/staff accounts continue to wait for admin approval as well.
-     * API registrations may still auto-activate students because they cannot
-     * complete the browser-based COR review flow.
+     * Student registrations are activated immediately after email
+     * verification; there is no document review or approval step.
+     * Faculty/staff accounts still wait for admin approval.
      *
      * @param  array<string, string>  $input
      */
-    public function createVerified(array $input, bool $autoApproveStudents = false): User
+    public function createVerified(array $input): User
     {
         $this->applyEmploymentDefaults($input);
 
-        $autoApproved = $autoApproveStudents && ($input['role'] ?? null) === 'student';
-        $studentDetails = $this->studentDetails($input);
-        if (($input['role'] ?? null) === 'faculty_staff') {
-            $studentDetails = [
+        $isStudent = ($input['role'] ?? null) === 'student';
+        $studentDetails = $isStudent
+            ? $this->studentDetails($input)
+            : [
                 'employee_id_number' => $input['employee_id_number'] ?? null,
                 'position' => $input['position'] ?? null,
                 'contact_no' => $input['contact_no'] ?? null,
                 'employment_document_path' => $input['employment_document_path'] ?? null,
                 'employment_document_original_name' => $input['employment_document_original_name'] ?? null,
             ];
-        }
 
-        return DB::transaction(function () use ($input, $autoApproved, $studentDetails) {
+        return DB::transaction(function () use ($input, $isStudent, $studentDetails) {
             $role = Role::where('role_name', $input['role'])->firstOrFail();
 
             $rejected = User::where('email', $input['email'])
                 ->whereIn('status', ['inactive', 'rejected'])
                 ->first();
 
-            if ($rejected !== null) {
-                $rejected->update([
-                    'name' => $input['name'],
-                    'password' => $input['password'],
-                    'role_id' => $role->id,
-                    'department' => $input['department'] ?? null,
-                    'employment_type' => $input['employment_type'] ?? null,
-                    'id_number' => $input['id_number'] ?? null,
-                    ...$studentDetails,
-                    'status' => 'pending',
-                    'email_verified_at' => null,
-                ]);
-
-                if ($role->role_name === 'student' && filled($rejected->cor_path)) {
-                    $this->corVerification->verify($rejected);
-                }
-
-                return $rejected->refresh();
-            }
-
-            $user = User::create([
+            $attributes = [
                 'name' => $input['name'],
                 'email' => $input['email'],
                 'password' => $input['password'],
@@ -148,15 +122,17 @@ class CreateNewUser implements CreatesNewUsers
                 'employment_type' => $input['employment_type'] ?? null,
                 'id_number' => $input['id_number'] ?? null,
                 ...$studentDetails,
-                'status' => $autoApproved ? 'active' : 'pending',
-                'email_verified_at' => $autoApproved ? now() : null,
-            ]);
+                'status' => $isStudent ? 'active' : 'pending',
+                'email_verified_at' => $isStudent ? now() : null,
+            ];
 
-            if ($role->role_name === 'student' && filled($user->cor_path)) {
-                $this->corVerification->verify($user);
+            if ($rejected !== null) {
+                $rejected->update($attributes);
+
+                return $rejected->refresh();
             }
 
-            return $user;
+            return User::create($attributes);
         });
     }
 
@@ -172,7 +148,7 @@ class CreateNewUser implements CreatesNewUsers
         $input = $this->withFullName($input);
         $this->validateInput($input);
 
-        return $this->createVerified($input, autoApproveStudents: true);
+        return $this->createVerified($input);
     }
 
     /**
@@ -239,25 +215,11 @@ class CreateNewUser implements CreatesNewUsers
                 'max:100',
                 Rule::when(
                     ($input['role'] ?? null) === 'student',
-                    Rule::in(['BSA', 'BSIT', 'BTLED']),
+                    Rule::in(['BSA', 'BAT', 'BSIT', 'BTLED']),
                 ),
             ],
-            // Students register with their university ID number.
-            // The ID is strictly unique: deactivated students must be
-            // reactivated by an admin instead of registering a new account.
-            'id_number' => [
-                'required_if:role,student',
-                'nullable',
-                'string',
-                'max:20',
-                'regex:/^[0-9]{10}$/',
-                Rule::when(
-                    ($input['role'] ?? null) === 'student',
-                    [
-                        Rule::unique(User::class, 'id_number'),
-                    ],
-                ),
-            ],
+            // Students register with their email address only; no student ID
+            // number or document is collected.
             'password' => $this->passwordRules(),
         ];
 
@@ -278,22 +240,9 @@ class CreateNewUser implements CreatesNewUsers
                 'string',
                 Rule::in(['1', '2', '3', '4', '5']),
             ];
-            $rules['cor'] = [
-                'required_if:role,student',
-                'nullable',
-                'file',
-                'mimes:pdf,jpg,jpeg,png',
-                'max:5120',
-            ];
         }
 
-        Validator::make($input, $rules, [
-            'id_number.regex' => 'ID number must be exactly 10 digits (e.g., 2023303709).',
-            'id_number.unique' => 'This ID number is already registered to an account.',
-            'cor.required_if' => 'Upload your student ID or Certificate of Registration (COR).',
-            'cor.mimes' => 'Your student ID or COR must be a PDF, JPG, JPEG, or PNG file.',
-            'cor.max' => 'Your student ID or COR must not be larger than 5 MB.',
-        ])->validate();
+        Validator::make($input, $rules)->validate();
     }
 
     /**
@@ -312,54 +261,18 @@ class CreateNewUser implements CreatesNewUsers
         return [
             'educational_level' => $input['educational_level'] ?? null,
             'year_level' => $input['year_level'] ?? null,
-            'cor_path' => $input['cor_path'] ?? null,
-            'cor_original_name' => $input['cor_original_name'] ?? null,
         ];
     }
 
     /**
-     * Store the uploaded student ID or COR privately until the emailed OTP is verified.
-     * Only the resulting path is kept in the pending-registration cache.
-     *
-     * @param  array<string, mixed>  $input
-     * @return array<string, mixed>
-     */
-    private function storeCorFile(array $input): array
-    {
-        $file = $input['cor'] ?? null;
-
-        if (($input['role'] ?? null) !== 'student' || ! $file instanceof UploadedFile) {
-            return $input;
-        }
-
-        $extension = $file->extension() ?: $file->guessExtension() ?: 'bin';
-        $path = $file->storeAs('cor/students', Str::uuid()->toString().'.'.$extension, 'local');
-
-        if (! is_string($path)) {
-            throw ValidationException::withMessages([
-                'cor' => 'We could not save your student ID or COR. Please try again.',
-            ]);
-        }
-
-        $input['cor_path'] = $path;
-        $input['cor_original_name'] = basename($file->getClientOriginalName());
-        unset($input['cor']);
-
-        return $input;
-    }
-
-    /**
-     * Remove a temporary student document when registration cannot continue.
+     * Remove a temporary employment document when registration cannot continue.
      *
      * @param  array<string, mixed>  $input
      */
-    private function deleteCorFile(array $input): void
+    private function deleteEmploymentDocument(array $input): void
     {
         if (filled($input['employment_document_path'] ?? null)) {
             Storage::disk('local')->delete((string) $input['employment_document_path']);
-        }
-        if (filled($input['cor_path'] ?? null)) {
-            Storage::disk('local')->delete((string) $input['cor_path']);
         }
     }
 

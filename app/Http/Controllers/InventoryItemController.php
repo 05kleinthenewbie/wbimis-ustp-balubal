@@ -44,6 +44,14 @@ class InventoryItemController extends Controller
             });
         }
 
+        $documentType = $request->input('document_type');
+
+        if (in_array($documentType, ['ICS', 'PAR'], true)) {
+            $query->where('document_type', $documentType);
+        } else {
+            $documentType = 'all';
+        }
+
         if ($category = $request->input('category')) {
             $storedAliases = [
                 'Desktop Computers' => [
@@ -84,11 +92,10 @@ class InventoryItemController extends Controller
 
         if ($campus = $request->input('campus')) {
             $query->where(function ($q) use ($campus) {
-                $q->where('campus', $campus)
+                $q->where('location', 'like', "%{$campus}%")
                     ->orWhere('building', $campus)
                     ->orWhere('room', $campus)
-                    ->orWhere('specific_location', $campus)
-                    ->orWhere('location', 'like', "%{$campus}%");
+                    ->orWhere('specific_location', $campus);
             });
         }
 
@@ -116,14 +123,19 @@ class InventoryItemController extends Controller
                 ->merge(
                     InventoryItem::whereNotNull('category')
                         ->distinct()
-                        ->pluck('category'),
+                        ->pluck('category')
+                        ->reject(fn (string $category): bool => in_array($category, [
+                            'Printer Ink', 'Toner Cartridges', 'Thermal Paste', 'Cleaning Supplies',
+                            'Batteries', 'Battery', 'Antivirus Licenses', 'Software Subscriptions',
+                            'SSL/TLS Certificates', 'SSL Certificate',
+                        ], true)),
                 )
                 ->unique()
                 ->sort()
                 ->values(),
-            'campuses' => InventoryItem::whereNotNull('campus')
+            'campuses' => InventoryItem::whereNotNull('location')
                 ->distinct()
-                ->pluck('campus')
+                ->pluck('location')
                 ->sort()
                 ->values(),
             'endUsers' => InventoryItem::whereNotNull('end_user')
@@ -135,7 +147,7 @@ class InventoryItemController extends Controller
 
         return Inertia::render('inventory/index', [
             'items' => $items,
-            'filters' => $request->only(['search', 'category', 'condition', 'status', 'campus', 'end_user']),
+            'filters' => [...$request->only(['search', 'category', 'condition', 'status', 'campus', 'end_user']), 'document_type' => $documentType],
             'stats' => [
                 'total' => (int) array_sum($conditionCounts->all() ?: [0]),
                 'working' => (int) ($conditionCounts['working'] ?? 0),
@@ -461,6 +473,18 @@ class InventoryItemController extends Controller
             'location' => ['nullable', 'string', 'max:150'],
             'purchase_date' => ['nullable', 'date'],
             'expiration_date' => ['nullable', 'date'],
+            'warranty_details' => ['nullable', 'string', 'max:255'],
+            'acquisition_year' => ['nullable', 'integer', 'min:1900', 'max:2100'],
+            'fund_cluster' => ['nullable', 'string', 'max:100'],
+            'document_no' => ['nullable', 'string', 'max:100'],
+            'unit_of_measure' => ['nullable', 'string', 'max:30'],
+            'total_cost' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
+            'sticker_date' => ['nullable', 'date'],
+            'supplier' => ['nullable', 'string', 'max:150'],
+            'transfer_to' => ['nullable', 'string', 'max:150'],
+            'shelf_life' => ['nullable', 'string', 'max:50'],
+            'document_quantity' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'document_type' => ['nullable', 'in:ICS,PAR'],
             'expiration_type' => [
                 'nullable',
                 'string',

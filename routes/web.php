@@ -98,8 +98,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::get('audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
-    Route::get('users/{user}/cor', [UserController::class, 'viewCor'])->name('users.cor');
-    Route::post('users/bulk', [UserController::class, 'bulk'])->name('users.bulk');
     Route::resource('users', UserController::class)->only(['index', 'update']);
     Route::post('technicians', [UserController::class, 'storeTechnician'])->name('technicians.store');
 });

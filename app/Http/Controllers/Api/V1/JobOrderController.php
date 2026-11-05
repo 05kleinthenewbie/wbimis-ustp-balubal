@@ -13,6 +13,7 @@ use App\Services\SlaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\ValidationException;
 
 class JobOrderController extends ApiController
 {
@@ -107,8 +108,25 @@ class JobOrderController extends ApiController
         $jobOrder = JobOrder::findOrFail($id);
         $oldStatus = $jobOrder->status;
 
+        $supportType = $validated['support_type'] ?? $jobOrder->support_type;
+        $userPermissionGranted = $validated['user_permission_granted']
+            ?? $jobOrder->user_permission_granted;
+
+        if ($supportType === 'remote' && ! $userPermissionGranted) {
+            throw ValidationException::withMessages([
+                'user_permission_granted' => 'Requester permission is required before remote support can be saved.',
+            ]);
+        }
+
+        if ($validated['status'] === 'closed' && $oldStatus !== 'closed') {
+            throw ValidationException::withMessages([
+                'status' => 'The requester must verify the completed work before the job order can be closed.',
+            ]);
+        }
+
         if (isset($validated['assigned_to']) && ! $jobOrder->date_assigned) {
             $validated['date_assigned'] = now();
+            $jobOrder->date_assigned = $validated['date_assigned'];
             $validated['sla_deadline'] = SlaService::calculateResolutionDeadline($jobOrder);
             $validated['sla_status'] = 'on_track';
 

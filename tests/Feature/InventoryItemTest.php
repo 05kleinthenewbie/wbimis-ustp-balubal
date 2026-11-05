@@ -4,6 +4,7 @@ use App\Models\InventoryItem;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Inertia\Testing\AssertableInertia;
 
 function inventoryItemAdmin(): User
 {
@@ -24,6 +25,63 @@ function inventoryItemPayload(array $overrides = []): array
         'status' => 'active',
     ], $overrides);
 }
+
+test('inventory category choices focus on equipment without deleting existing records', function () {
+    $admin = inventoryItemAdmin();
+    $item = InventoryItem::factory()->create(['category' => 'Cleaning Supplies']);
+
+    $this->actingAs($admin)->get(route('inventory.index'))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('options.categories', fn ($categories) => collect($categories)->contains('Laptops')
+                && ! collect($categories)->contains('Cleaning Supplies')
+                && ! collect($categories)->contains('Software Subscriptions')));
+
+    $this->assertDatabaseHas('inventory_items', ['id' => $item->id, 'category' => 'Cleaning Supplies']);
+    expect(InventoryItem::CATEGORY_GROUPS)->toHaveKey('ICT Equipment')
+        ->not->toHaveKey('ICT Consumables')
+        ->not->toHaveKey('Software & Licenses');
+});
+
+test('admin can filter inventory by ICS or PAR source document', function () {
+    $admin = inventoryItemAdmin();
+    InventoryItem::factory()->create(['document_type' => 'ICS']);
+    InventoryItem::factory()->create(['document_type' => 'PAR']);
+
+    $this->actingAs($admin)
+        ->get(route('inventory.index', ['document_type' => 'ICS']))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('items', 1)
+            ->where('items.0.document_type', 'ICS')
+            ->where('filters.document_type', 'ICS'));
+
+    $this->actingAs($admin)
+        ->get(route('inventory.index', ['document_type' => 'PAR']))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('items', 1)
+            ->where('items.0.document_type', 'PAR')
+            ->where('filters.document_type', 'PAR'));
+});
+
+test('inventory location filter uses the Excel item location rather than campus', function () {
+    $admin = inventoryItemAdmin();
+    InventoryItem::factory()->create([
+        'property_no' => 'LOC-FACULTY',
+        'campus' => 'Balubal Campus',
+        'location' => 'Faculty Office',
+    ]);
+    InventoryItem::factory()->create([
+        'property_no' => 'LOC-LAB',
+        'campus' => 'Balubal Campus',
+        'location' => 'Computer Laboratory',
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('inventory.index', ['campus' => 'Faculty Office']))
+        ->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('items', 1)
+            ->where('items.0.property_no', 'LOC-FACULTY')
+            ->where('options.campuses', fn ($locations) => collect($locations)->contains('Faculty Office')));
+});
 
 test('admin can create an inventory item with an expiration date', function () {
     $admin = inventoryItemAdmin();

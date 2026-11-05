@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import { ArrowLeft } from 'lucide-react';
 import ustpLogo from '@/assets/ustp-logo.png';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ export default function AuthSimpleLayout({
     icon,
     iconClassName = 'bg-ustp-navy/5 text-ustp-navy dark:bg-white/10 dark:text-white',
     backHref,
-    backLabel = 'Back to home',
+    backLabel = 'Go back',
     backTestId,
 }: AuthLayoutProps) {
     const Icon = icon;
@@ -66,28 +66,26 @@ export default function AuthSimpleLayout({
                 <div className="h-1 bg-ustp-gold" />
 
                 <div className="bg-background px-4 py-5 sm:px-8 sm:py-8 [@media(max-width:639px)]:[&_input:not([type=checkbox]):not([type=hidden]):not([type=file])]:text-base [@media(max-width:639px)]:[&_input[type=date]]:min-w-0">
-                    {resolvedBackHref && (
-                        <div className="mb-2 flex sm:mb-4">
-                            <Button
-                                asChild
-                                variant="ghost"
-                                size="sm"
-                                className="-ml-2 h-9 gap-1.5 px-2 text-muted-foreground hover:text-ustp-navy dark:hover:text-white"
-                            >
-                                <Link
-                                    href={resolvedBackHref}
-                                    data-test={backTestId}
-                                    aria-label={backLabel}
-                                    title={backLabel}
-                                >
-                                    <ArrowLeft className="size-4" />
-                                    <span className="text-xs font-medium sm:text-sm">
-                                        {backLabel}
-                                    </span>
-                                </Link>
-                            </Button>
-                        </div>
-                    )}
+                    <div className="mb-2 flex sm:mb-4">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="-ml-2 size-9 px-0 text-muted-foreground hover:text-ustp-navy dark:hover:text-white"
+                            data-test={backTestId}
+                            aria-label={backLabel}
+                            title={backLabel}
+                            onClick={() => {
+                                if (window.history.length > 1) {
+                                    window.history.back();
+                                } else {
+                                    router.visit(resolvedBackHref);
+                                }
+                            }}
+                        >
+                            <ArrowLeft className="size-4" />
+                        </Button>
+                    </div>
 
                     <div className="mb-6 space-y-2 text-center sm:mb-8">
                         {Icon && (

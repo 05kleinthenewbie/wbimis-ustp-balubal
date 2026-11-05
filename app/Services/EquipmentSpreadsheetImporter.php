@@ -13,6 +13,8 @@ use ZipArchive;
 
 class EquipmentSpreadsheetImporter
 {
+    public function __construct(private InventoryLocationNormalizer $locations) {}
+
     private const SPREADSHEET_NAMESPACE = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
 
     private const RELATIONSHIP_NAMESPACE = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
@@ -20,7 +22,7 @@ class EquipmentSpreadsheetImporter
     /**
      * @return array{sheets: array<int, string>, rows: int, units: int, imported: int, skipped: int}
      */
-    public function import(string $path, bool $dryRun = false): array
+    public function import(string $path, bool $dryRun = false, bool $updateExisting = false): array
     {
         if (! is_file($path)) {
             throw new RuntimeException("Spreadsheet not found: {$path}");
@@ -33,6 +35,7 @@ class EquipmentSpreadsheetImporter
         $units = 0;
         $imported = 0;
         $skipped = 0;
+        $updated = 0;
 
         DB::beginTransaction();
 
@@ -51,7 +54,7 @@ class EquipmentSpreadsheetImporter
                         continue;
                     }
 
-                    $items = $this->buildItems($cells, $header['columns']);
+                    $items = $this->buildItems($cells, $header['columns'], $sheet['name']);
 
                     if ($items === []) {
                         continue;
@@ -63,13 +66,44 @@ class EquipmentSpreadsheetImporter
                         $units++;
                         $property = $item['property_no'];
 
-                        if ($existing->has($property) || isset($seen[$property])) {
+                        if (isset($seen[$property])) {
                             $skipped++;
 
                             continue;
                         }
 
                         $seen[$property] = true;
+
+                        if ($existing->has($property)) {
+                            if (! $updateExisting) {
+                                $skipped++;
+
+                                continue;
+                            }
+
+                            if (! $dryRun) {
+                                unset($item['status']);
+                                if ($item['warranty_details'] === null) {
+                                    unset($item['warranty_details']);
+                                }
+                                if ($item['purchase_date'] === null) {
+                                    unset($item['purchase_date']);
+                                }
+                                if ($item['expiration_date'] === null) {
+                                    unset($item['expiration_date'], $item['expiration_type']);
+                                }
+                                foreach (['acquisition_year', 'fund_cluster', 'document_no', 'unit_of_measure', 'total_cost', 'sticker_date', 'supplier', 'transfer_to', 'shelf_life'] as $field) {
+                                    if ($item[$field] === null) {
+                                        unset($item[$field]);
+                                    }
+                                }
+                                InventoryItem::query()->where('property_no', $property)->update($item);
+                            }
+
+                            $updated++;
+
+                            continue;
+                        }
 
                         if (! $dryRun) {
                             InventoryItem::query()->create($item);
@@ -91,13 +125,19 @@ class EquipmentSpreadsheetImporter
             throw $exception;
         }
 
-        return [
+        $result = [
             'sheets' => $sheets,
             'rows' => $rows,
             'units' => $units,
             'imported' => $imported,
             'skipped' => $skipped,
         ];
+
+        if ($updateExisting) {
+            $result['updated'] = $updated;
+        }
+
+        return $result;
     }
 
     /**
@@ -322,12 +362,20 @@ class EquipmentSpreadsheetImporter
             $key = match ($this->normalizeHeader($value)) {
                 'DESCRIPTION' => 'description',
                 'QTY', 'QUANTITY' => 'qty',
+                'UNIT' => 'unit_of_measure',
                 'PRICE', 'UNITCOST' => 'price',
+                'TOTAL' => 'total_cost',
+                'FUNDCLUSTER' => 'fund_cluster',
+                'SUPPLIER' => 'supplier',
+                'STICKERDATE' => 'sticker_date',
+                'TOBETRANSFERREDTO', 'TOBETRANSFEREDTO' => 'transfer_to',
                 'PROPERTYNUMBERINVENTORYITEMNO', 'PROPERTYNUMBER', 'INVENTORYITEMNO' => 'property',
                 'SERIALNUMBER', 'SERIALNO' => 'serial',
                 'PO', 'PONO', 'PURCHASEORDERNO' => 'po',
                 'ENDUSER' => 'end_user',
                 'DATEACQUIRED' => 'acquired',
+                'YEAR' => 'year',
+                'SHELFLIFE' => 'shelf_life',
                 'LOCATION' => 'location',
                 'ITEMNOTFOUND', 'CONDITION' => 'condition',
                 'REMARKS' => 'remarks',
@@ -348,7 +396,7 @@ class EquipmentSpreadsheetImporter
      * @param  array<string, string>  $columns
      * @return array<int, array<string, mixed>>
      */
-    private function buildItems(array $cells, array $columns): array
+    private function buildItems(array $cells, array $columns, string $sheetName): array
     {
         $value = function (string $key) use ($cells, $columns): string {
             $column = $columns[$key] ?? null;
@@ -378,7 +426,17 @@ class EquipmentSpreadsheetImporter
         $purchaseOrder = $this->inline($value('po'));
         $remarks = $value('remarks');
         $purchaseDate = $this->excelDate($value('acquired'));
+        $documentQuantity = $this->quantity($value('qty'), count($properties));
+        $shelfLife = $value('shelf_life');
+        $expirationBase = $purchaseDate ?? $this->yearDate($value('year'));
+        $expirationDate = $this->expirationDate($expirationBase, $shelfLife);
         $unitCost = $this->money($value('price'));
+        $totalCost = $this->money($value('total_cost'));
+        $stickerDate = $this->excelDate($value('sticker_date'));
+        $acquisitionYear = $this->acquisitionYear($value('year'));
+        $documentType = in_array(Str::upper(trim($sheetName)), ['ICS', 'PAR'], true)
+            ? Str::upper(trim($sheetName))
+            : null;
         $specification = $this->specification($description);
 
         $items = [];
@@ -396,15 +454,29 @@ class EquipmentSpreadsheetImporter
                 'serial_no' => $serial,
                 'specification' => $specification,
                 'description' => $description,
+                'warranty_details' => $this->warrantyDetails($description) ?? $this->warrantyDetails($remarks),
                 'location' => $location === '' ? null : Str::limit($location, 150, ''),
                 'campus' => 'Balubal Campus',
                 'condition' => $condition,
                 'status' => 'active',
                 'purchase_date' => $purchaseDate,
+                'expiration_date' => $expirationDate,
+                'expiration_type' => $expirationDate === null ? null : 'Shelf Life',
                 'unit_cost' => $unitCost,
                 'purchase_order_no' => $purchaseOrder === '' ? null : Str::limit($purchaseOrder, 150, ''),
                 'end_user' => $endUser === '' ? null : Str::limit($endUser, 150, ''),
                 'inspection_remarks' => $remarks === '' ? null : $remarks,
+                'acquisition_year' => $acquisitionYear,
+                'fund_cluster' => $this->nullable($value('fund_cluster')),
+                'document_no' => $this->nullable($value('document_no')),
+                'unit_of_measure' => $this->nullable($value('unit_of_measure')),
+                'total_cost' => $totalCost,
+                'sticker_date' => $stickerDate,
+                'supplier' => $this->nullable($value('supplier')),
+                'transfer_to' => $this->nullable($value('transfer_to')),
+                'shelf_life' => $shelfLife === '' || $shelfLife === '-' ? null : Str::limit($shelfLife, 50, ''),
+                'document_quantity' => $documentQuantity,
+                'document_type' => $documentType,
             ];
         }
 
@@ -494,6 +566,17 @@ class EquipmentSpreadsheetImporter
         return trim($value);
     }
 
+    private function warrantyDetails(string $text): ?string
+    {
+        $pattern = '/(?:\b\d+\s*(?:years?|yrs?|months?|mos?)\s+warrant(?:y|ies)(?:\s+(?:on|for)\s+[^\r\n;]{1,100}?)?(?=\s+(?:S\/?N|serial)\s*:|[\r\n;]|\s*$)|\bwarrant(?:y|ies)\s*:\s*\d+\s*(?:years?|yrs?|months?|mos?))/iu';
+
+        if (preg_match($pattern, $text, $matches) !== 1) {
+            return null;
+        }
+
+        return Str::limit(trim((string) preg_replace('/\s+/u', ' ', $matches[0])), 255, '');
+    }
+
     private function specification(string $description): ?string
     {
         if (preg_match('/Specifications?\s*:?\s*(.+)$/isu', $description, $matches) !== 1) {
@@ -556,6 +639,55 @@ class EquipmentSpreadsheetImporter
         }
     }
 
+    private function acquisitionYear(string $value): ?int
+    {
+        if (preg_match('/\b(19|20)\d{2}\b/', $value, $matches) !== 1) {
+            return null;
+        }
+
+        return (int) $matches[0];
+    }
+
+    private function yearDate(string $value): ?string
+    {
+        if (preg_match('/\b(19|20)\d{2}\b/', $value, $matches) !== 1) {
+            return null;
+        }
+
+        return $matches[0].'-01-01';
+    }
+
+    private function expirationDate(?string $baseDate, string $shelfLife): ?string
+    {
+        if ($baseDate === null) {
+            return null;
+        }
+
+        $value = trim($shelfLife);
+
+        if ($value === '' || $value === '-') {
+            return null;
+        }
+
+        if (preg_match('/^(\d+)$/', $value, $matches) === 1) {
+            $amount = (int) $matches[1];
+            $unit = 'year';
+        } elseif (preg_match('/(\d+)\s*(years?|yrs?|months?|mos?)/i', $value, $matches) === 1) {
+            $amount = (int) $matches[1];
+            $unit = str_starts_with(strtolower($matches[2]), 'm') ? 'month' : 'year';
+        } else {
+            return null;
+        }
+
+        if ($amount <= 0) {
+            return null;
+        }
+
+        $date = CarbonImmutable::parse($baseDate);
+
+        return ($unit === 'month' ? $date->addMonths($amount) : $date->addYears($amount))->toDateString();
+    }
+
     private function money(string $value): ?float
     {
         if ($value === '' || $value === '-') {
@@ -565,6 +697,13 @@ class EquipmentSpreadsheetImporter
         $number = (string) preg_replace('/[^0-9.\-]/', '', $value);
 
         return is_numeric($number) ? (float) $number : null;
+    }
+
+    private function quantity(string $value, int $fallback): int
+    {
+        $quantity = is_numeric($value) ? (int) $value : 0;
+
+        return $quantity > 0 ? $quantity : $fallback;
     }
 
     private function serial(string $value): ?string

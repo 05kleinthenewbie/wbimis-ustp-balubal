@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->string('cor_verification_status')->nullable();
+            $table->string('identity_verification_status')->nullable();
             $table->json('cor_verification_details')->nullable();
             $table->timestamp('cor_checked_at')->nullable();
         });
@@ -24,7 +25,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropColumn(['cor_verification_status', 'cor_verification_details', 'cor_checked_at']);
+            $table->dropColumn(['cor_verification_status', 'identity_verification_status', 'cor_verification_details', 'cor_checked_at']);
         });
     }
 };
