@@ -41,6 +41,7 @@ test('admins can deactivate an active account', function () {
 });
 
 test('admins can reactivate a deactivated account', function () {
+    fakeBrevoMail();
     $admin = mgmtUser('ict_admin');
     $user = mgmtUser('student', 'inactive');
 

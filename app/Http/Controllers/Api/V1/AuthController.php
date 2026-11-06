@@ -37,7 +37,7 @@ class AuthController extends ApiController
             abort(403, 'Technician records do not have login accounts. Please contact the ICT office.');
         }
 
-        if ($user->status === 'pending') {
+        if (! $user->isStudent() && $user->status === 'pending') {
             abort(403, 'Your account is pending ICT Admin approval. You will be able to log in once approved.');
         }
 
@@ -45,8 +45,12 @@ class AuthController extends ApiController
             abort(403, 'Your account has been deactivated. Please contact the ICT office.');
         }
 
-        if ($user->status === 'rejected') {
+        if (! $user->isStudent() && $user->status === 'rejected') {
             abort(403, 'Your registration was not approved. Please contact the ICT office.');
+        }
+
+        if (! $user->isStudent() && ! $user->is_approved && ! $user->isAdministrator()) {
+            abort(403, 'Your account is pending administrator approval. You will be able to log in once approved.');
         }
 
         $token = auth('api')->login($user);
@@ -71,9 +75,9 @@ class AuthController extends ApiController
         ]));
 
         return response()->json([
-            'message' => $user->status === 'active'
+            'message' => $user->isStudent() ? 'Account created. Sign in to verify your email and submit your student ID and COR for review.' : ($user->is_approved
                 ? 'Account created successfully. You can now log in.'
-                : 'Account created successfully. Please wait for ICT Admin approval before logging in.',
+                : 'Account created successfully. Please wait for admin approval before logging in.'),
             'user' => $user->load('role'),
         ], 201);
     }

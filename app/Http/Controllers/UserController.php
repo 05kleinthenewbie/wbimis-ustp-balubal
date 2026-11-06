@@ -70,7 +70,7 @@ class UserController extends Controller
             'department' => ['nullable', 'string', 'max:100'],
             'expertise' => ['nullable', 'string', 'max:150'],
             'contact_no' => ['nullable', 'string', 'max:20', 'regex:/^[0-9+\-\s()]{7,20}$/'],
-            'email' => ['nullable', 'email', 'max:255', 'unique:users,email'],
+            'email' => ['nullable', 'email', 'max:191', 'unique:users,email'],
         ], [
             'contact_no.regex' => 'Please enter a valid Philippine phone number (e.g. 0917 123 4567).',
         ]);
@@ -112,6 +112,166 @@ class UserController extends Controller
         $this->changeStatus($user, $validated['status']);
 
         return redirect()->back()->with('status', 'User account updated successfully.');
+    }
+
+    /**
+     * Show the pending account approvals panel: registered users whose
+     * email has been verified but whose account still awaits approval.
+     */
+    public function approvals(): Response
+    {
+        $this->ensureAdmin();
+
+        $pendingUsers = User::query()
+            ->with('role')
+            ->where('is_technician', false)
+            ->where('is_approved', false)
+            ->whereDoesntHave('role', fn ($query) => $query->where('role_name', 'student'))
+            ->whereNotNull('email_verified_at')
+            ->whereNotIn('status', ['inactive', 'rejected'])
+            ->where('id', '!=', Auth::id())
+            ->latest()
+            ->get();
+
+        return Inertia::render('users/approvals', [
+            'status' => session('status'),
+            'error' => session('error'),
+            'pendingUsers' => $pendingUsers,
+        ]);
+    }
+
+    /**
+     * Approve a pending account so it can access the application.
+     */
+    public function approve(Request $request, string $id): RedirectResponse
+    {
+        $this->ensureAdmin();
+
+        $user = User::with('role')->findOrFail($id);
+
+        $this->approveAccount($user);
+
+        return redirect()->route('users.approvals')->with(
+            'status',
+            $user->name.'\'s account has been approved.',
+        );
+    }
+
+    /**
+     * Revoke an account approval. The change takes effect immediately,
+     * including for any currently logged-in session.
+     */
+    public function revokeApproval(Request $request, string $id): RedirectResponse
+    {
+        $this->ensureAdmin();
+
+        $user = User::with('role')->findOrFail($id);
+
+        if ($user->isStudent()) {
+            throw ValidationException::withMessages(['revoke' => 'Use Student Approvals to revoke a student approval with a reason.']);
+        }
+
+        if ($user->isTechnician()) {
+            throw ValidationException::withMessages([
+                'revoke' => 'Technician records are not login accounts and do not need approval.',
+            ]);
+        }
+
+        if ($user->isAdministrator()) {
+            throw ValidationException::withMessages([
+                'revoke' => 'Administrator accounts cannot have their approval revoked.',
+            ]);
+        }
+
+        if (! $user->is_approved) {
+            return redirect()->route('users.approvals');
+        }
+
+        $user->update(['is_approved' => false]);
+
+        Notification::create([
+            'user_id' => $user->id,
+            'message' => 'Your account approval has been revoked. Please contact the ICT office for more information.',
+            'notification_type' => 'account_rejection',
+            'link' => '/dashboard',
+            'notification_status' => 'unread',
+        ]);
+
+        AuditLog::record(
+            'Revoked account approval',
+            'users',
+            $user->id,
+            null,
+            ['is_approved' => true],
+            ['is_approved' => false],
+        );
+
+        return redirect()->route('users.approvals')->with(
+            'status',
+            'Account approval revoked. The user must be approved again to access the system.',
+        );
+    }
+
+    /**
+     * Mark an account as approved, notify the user and email students the
+     * registration decision, mirroring the account reactivation flow.
+     */
+    private function approveAccount(User $user): void
+    {
+        if ($user->isStudent()) {
+            throw ValidationException::withMessages(['approve' => 'Use Student Approvals to review the student documents.']);
+        }
+        if ($user->isTechnician()) {
+            throw ValidationException::withMessages([
+                'approve' => 'Technician records are not login accounts and do not need approval.',
+            ]);
+        }
+
+        if ($user->email_verified_at === null) {
+            throw ValidationException::withMessages([
+                'approve' => 'The user must verify their email address before the account can be approved.',
+            ]);
+        }
+
+        if ($user->is_approved) {
+            return;
+        }
+
+        $user->update(['is_approved' => true, 'status' => 'active']);
+
+        Notification::create([
+            'user_id' => $user->id,
+            'message' => 'Your account has been approved. You can now log in.',
+            'notification_type' => 'account_approval',
+            'link' => '/dashboard',
+            'notification_status' => 'unread',
+        ]);
+
+        if ($user->role?->role_name === 'student') {
+            try {
+                app(BrevoMailService::class)->sendStudentRegistrationDecisionEmail(
+                    $user->email,
+                    $user->name,
+                    'approved',
+                    null,
+                );
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        }
+
+        if ($user->wasChanged('is_approved')) {
+            DB::afterCommit(fn () => UserApproved::dispatch($user));
+        }
+
+        AuditLog::record(
+            'Approved the account registration',
+            'users',
+            $user->id,
+            null,
+            ['is_approved' => false],
+            ['is_approved' => true],
+        );
     }
 
     private function changeStatus(User $user, string $status): void

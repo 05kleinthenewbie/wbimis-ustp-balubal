@@ -16,13 +16,13 @@ use Illuminate\Support\Facades\Route;
 Route::name('api.v1.')->prefix('v1')->group(function () {
     Route::prefix('auth')->controller(AuthController::class)->name('auth.')->group(function () {
         Route::post('login', 'login');
-        Route::post('register', 'register');
+        Route::post('register', 'register')->middleware('throttle:6,1');
         Route::post('refresh', 'refresh');
         Route::post('logout', 'logout');
         Route::get('me', 'me');
     });
 
-    Route::middleware('auth:api')->group(function () {
+    Route::middleware(['auth:api', 'approved'])->group(function () {
         Route::get('dashboard', DashboardController::class);
 
         Route::get('requests', [ServiceRequestController::class, 'index']);

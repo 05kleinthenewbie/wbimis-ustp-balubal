@@ -34,10 +34,6 @@ return [
         'sender_name' => env('BREVO_SENDER_NAME', env('APP_NAME', 'Laravel')),
     ],
 
-    'student_verification' => [
-        'trusted_identity_enabled' => (bool) env('STUDENT_TRUSTED_IDENTITY_VERIFICATION', false),
-    ],
-
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),

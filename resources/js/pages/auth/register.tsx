@@ -19,6 +19,7 @@ import {
 import { Spinner } from '@/components/ui/spinner';
 import { login, privacy, terms } from '@/routes';
 import { store } from '@/routes/register';
+import { login as studentLogin } from '@/routes/student';
 
 type Props = {
     passwordRules: string;
@@ -125,7 +126,10 @@ export default function Register({ passwordRules, programs }: Props) {
                                         />
                                         <p className="text-xs text-muted-foreground">
                                             Personal or university email is
-                                            accepted.
+                                            accepted. After email verification,
+                                            sign in to upload your USTP student
+                                            ID and COR for administrator
+                                            approval.
                                         </p>
                                         {isAlertMessage(errors.email ?? '') ? (
                                             <StatusAlert
@@ -712,7 +716,7 @@ export default function Register({ passwordRules, programs }: Props) {
                                 ? 'Already registered? '
                                 : 'Already have an account? '}
                             <TextLink
-                                href={login()}
+                                href={isStudent ? studentLogin() : login()}
                                 data-test="team-invitation-login-link"
                                 className="font-medium text-ustp-navy hover:text-ustp-navy-dark dark:text-white/80 dark:hover:text-white"
                             >

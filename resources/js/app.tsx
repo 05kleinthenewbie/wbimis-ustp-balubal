@@ -20,6 +20,8 @@ createInertiaApp({
     layout: (name) => {
         switch (true) {
             case name === 'welcome':
+            case name === 'approval-pending':
+            case name === 'student/verification':
             case name === 'job-orders/print':
             case name === 'terms':
             case name === 'privacy-policy':

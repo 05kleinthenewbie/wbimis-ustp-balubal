@@ -80,8 +80,9 @@ class CreateNewUser implements CreatesNewUsers
     /**
      * Create the user account once the emailed OTP has been verified.
      *
-     * All registrations are activated immediately after email verification;
-     * there is no document review or approval step.
+     * Accounts are registered with their verified email address but remain
+     * unapproved; the account only becomes usable after an ICT admin
+     * approves it in the pending approvals panel.
      *
      * @param  array<string, string>  $input
      */
@@ -113,6 +114,8 @@ class CreateNewUser implements CreatesNewUsers
                 'id_number' => $input['id_number'] ?? null,
                 ...$details,
                 'status' => 'active',
+                'is_approved' => false,
+                'approval_status' => $input['role'] === 'student' ? 'pending' : null,
                 'email_verified_at' => now(),
             ];
 
@@ -138,7 +141,12 @@ class CreateNewUser implements CreatesNewUsers
         $input = $this->withFullName($input);
         $this->validateInput($input);
 
-        return $this->createVerified($input);
+        $user = $this->createVerified($input);
+        if ($user->isStudent()) {
+            $user->forceFill(['email_verified_at' => null])->save();
+        }
+
+        return $user;
     }
 
     /**
@@ -183,7 +191,11 @@ class CreateNewUser implements CreatesNewUsers
                 'required',
                 'string',
                 'email',
-                'max:255',
+                'max:191',
+                // Only campus email addresses may register. The host has to
+                // be exactly 8.ustp.edu.ph; other domains, look-alike
+                // domains and sub-domains are all rejected.
+                Rule::when(($input['role'] ?? null) !== 'student', 'regex:/^[^\s@]+@8\.ustp\.edu\.ph$/i'),
                 // Rejected (inactive) accounts may register again, so only
                 // pending/active emails block a new registration.
                 Rule::unique(User::class)->where(fn ($query) => $query->whereIn('status', ['pending', 'active'])),
@@ -205,7 +217,7 @@ class CreateNewUser implements CreatesNewUsers
                 'max:100',
                 Rule::when(
                     ($input['role'] ?? null) === 'student',
-                    Rule::in(['BSA', 'BAT', 'BSIT', 'BTLED']),
+                    Rule::in(array_keys(config('student-verification.programs'))),
                 ),
             ],
             // Registrations collect an email address and password only; no
@@ -230,7 +242,9 @@ class CreateNewUser implements CreatesNewUsers
             ];
         }
 
-        Validator::make($input, $rules)->validate();
+        Validator::make($input, $rules, [
+            'email.regex' => 'Registration is only open to email addresses ending in @8.ustp.edu.ph.',
+        ])->validate();
     }
 
     /**

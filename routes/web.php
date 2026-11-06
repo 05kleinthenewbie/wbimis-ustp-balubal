@@ -13,8 +13,10 @@ use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\RegisterOtpController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ServiceRequestController;
+use App\Http\Controllers\StudentApprovalController;
 use App\Http\Controllers\StudentLoginController;
 use App\Http\Controllers\StudentPasswordResetLinkController;
+use App\Http\Controllers\StudentVerificationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserLiabilityController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +31,10 @@ Route::inertia('/terms', 'terms')->name('terms');
 Route::inertia('/privacy-policy', 'privacy-policy')->name('privacy');
 Route::inertia('/data-privacy', 'data-privacy')->name('data-privacy');
 Route::inertia('/acceptable-use', 'acceptable-use')->name('acceptable-use');
+
+Route::inertia('approval-pending', 'approval-pending')
+    ->middleware('auth')
+    ->name('approval.pending');
 
 Route::middleware('guest')->group(function () {
     Route::get('/faculty/login', fn () => Inertia::render('auth/faculty-login', [
@@ -54,7 +60,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/register/otp/resend', [RegisterOtpController::class, 'resend'])->name('register.otp.resend');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'approved'])->group(function () {
+    Route::get('students/approvals', [StudentApprovalController::class, 'index'])->name('students.approvals');
+    Route::patch('students/{user}/decision', [StudentApprovalController::class, 'decide'])->name('students.decision');
+    Route::get('students/{user}/documents/{type}', [StudentApprovalController::class, 'document'])->name('students.document');
     Route::get('push-subscriptions/config', [PushSubscriptionController::class, 'show'])->name('push-subscriptions.show');
     Route::post('push-subscriptions', [PushSubscriptionController::class, 'store'])->middleware('throttle:20,1')->name('push-subscriptions.store');
     Route::delete('push-subscriptions', [PushSubscriptionController::class, 'destroy'])->middleware('throttle:20,1')->name('push-subscriptions.destroy');
@@ -92,8 +101,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
     Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::get('audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
+    Route::get('users/approvals', [UserController::class, 'approvals'])->name('users.approvals');
+    Route::patch('users/{user}/approve', [UserController::class, 'approve'])->name('users.approve');
+    Route::patch('users/{user}/revoke-approval', [UserController::class, 'revokeApproval'])->name('users.revoke-approval');
     Route::resource('users', UserController::class)->only(['index', 'update']);
     Route::post('technicians', [UserController::class, 'storeTechnician'])->name('technicians.store');
 });
 
 require __DIR__.'/settings.php';
+
+Route::middleware('auth')->prefix('student/verification')->name('student.verification.')->group(function () {
+    Route::get('/', [StudentVerificationController::class, 'show'])->name('show');
+    Route::post('/', [StudentVerificationController::class, 'store'])->middleware('throttle:5,1')->name('store');
+    Route::get('documents/{type}', [StudentVerificationController::class, 'document'])->name('document');
+    Route::post('email', [StudentVerificationController::class, 'sendEmail'])->middleware('throttle:3,1')->name('send-email');
+    Route::get('email/{id}/{hash}', [StudentVerificationController::class, 'verifyEmail'])->middleware(['signed', 'throttle:6,1'])->name('verify-email');
+});

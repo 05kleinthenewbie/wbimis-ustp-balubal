@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
                 'department' => 'ICT Office',
                 'status' => 'active',
                 'email_verified_at' => now(),
+                'is_approved' => true,
             ]
         );
 
@@ -44,6 +45,7 @@ class DatabaseSeeder extends Seeder
                 'department' => 'College of Engineering',
                 'status' => 'active',
                 'email_verified_at' => now(),
+                'is_approved' => true,
             ]
         );
 

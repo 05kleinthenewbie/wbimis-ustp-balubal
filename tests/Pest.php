@@ -69,7 +69,7 @@ function registrationPayload(array $overrides = []): array
 {
     return array_merge([
         'name' => 'Test User',
-        'email' => 'test@example.com',
+        'email' => 'test@8.ustp.edu.ph',
         'password' => 'password',
         'password_confirmation' => 'password',
         'role' => 'faculty_staff',
@@ -92,7 +92,7 @@ function studentRegistrationPayload(array $overrides = []): array
 {
     return registrationPayload(array_merge([
         'name' => 'Juan S. Dela Cruz',
-        'email' => 'student@ustp.edu.ph',
+        'email' => 'student@8.ustp.edu.ph',
         'role' => 'student',
         'employment_type' => null,
         'department' => 'BSIT',

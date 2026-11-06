@@ -17,12 +17,12 @@ test('new users can register', function () {
 
     $response->assertRedirect(route('register.otp.show'));
     $this->assertGuest();
-    expect(User::where('email', 'test@example.com')->exists())->toBeFalse();
+    expect(User::where('email', 'test@8.ustp.edu.ph')->exists())->toBeFalse();
 
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
         ->assertRedirect(route('faculty.login'));
 
-    $user = User::where('email', 'test@example.com')->first();
+    $user = User::where('email', 'test@8.ustp.edu.ph')->first();
 
     expect($user)->not->toBeNull()
         ->and($user->status)->toBe('active')

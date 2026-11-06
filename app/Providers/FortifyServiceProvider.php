@@ -133,7 +133,7 @@ class FortifyServiceProvider extends ServiceProvider
         ]));
 
         Fortify::registerView(fn () => Inertia::render('auth/register', [
-            'programs' => ['BSA', 'BAT', 'BSIT', 'BTLED'],
+            'programs' => array_keys(config('student-verification.programs')),
             'passwordRules' => 'minlength:12; required: lower; required: upper; required: digit; required: [!@#$%^&*(),.?":{}|<>_-];',
         ]));
 

@@ -48,17 +48,17 @@ class StudentLoginController extends Controller
             ]);
         }
 
-        if ($user->status === 'pending') {
+        if (! $user->isStudent() && $user->status === 'pending') {
             throw ValidationException::withMessages([
                 'email' => 'Your account is pending ICT Admin approval. Please contact the ICT office.',
             ]);
         }
 
-        if ($user->status === 'rejected') {
+        if (! $user->isStudent() && $user->status === 'rejected') {
             throw ValidationException::withMessages(['email' => 'Your registration needs attention. Please contact the ICT office.']);
         }
 
-        if ($user->status !== 'active') {
+        if ($user->status === 'inactive') {
             throw ValidationException::withMessages([
                 'email' => 'Your account has been deactivated. Please contact the ICT office.',
             ]);
@@ -66,6 +66,13 @@ class StudentLoginController extends Controller
 
         Auth::login($user, $request->boolean('remember'));
         $request->session()->regenerate();
+
+        if ($user->email_verified_at === null) {
+            return redirect()->route('student.verification.show');
+        }
+        if ($user->approval_status !== 'approved') {
+            return redirect()->route('student.verification.show');
+        }
 
         return redirect()->intended(route('dashboard'));
     }
