@@ -91,7 +91,7 @@ export default function Login({
                                     {canResetPassword && (
                                         <TextLink
                                             href={request()}
-                                            className="py-1 text-xs font-medium text-ustp-navy hover:text-ustp-navy-dark sm:py-0 dark:text-white/80 dark:hover:text-white"
+                                            className="py-1 text-sm font-medium text-ustp-navy hover:text-ustp-navy-dark dark:text-white/80 dark:hover:text-white"
                                         >
                                             Forgot password?
                                         </TextLink>

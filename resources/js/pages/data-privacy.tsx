@@ -31,14 +31,8 @@ export default function DataPrivacy() {
                     <li>
                         <strong>Identity & Account Data:</strong> Full name,
                         institutional email address, contact telephone number,
-                        department or academic program, 10-digit Student ID, or
-                        Employee ID.
-                    </li>
-                    <li>
-                        <strong>Verification Documents:</strong> Student ID or
-                        Certificate of Registration (COR) for students, or
-                        Certificate of Employment (COE) / University ID for
-                        faculty and staff members.
+                        department or academic program, and position or
+                        designation.
                     </li>
                     <li>
                         <strong>Operational Records:</strong> Service requests,
@@ -115,8 +109,7 @@ export default function DataPrivacy() {
                     <li>
                         <strong>Access Control:</strong> Strict role-based
                         access control (RBAC) ensuring that only authorized ICT
-                        Administrators inspect uploaded verification documents
-                        and personal records.
+                        Administrators access personal records.
                     </li>
                     <li>
                         <strong>Cryptographic Security:</strong> Passwords are
@@ -126,9 +119,8 @@ export default function DataPrivacy() {
                     <li>
                         <strong>Data Retention:</strong> Active account data and
                         operational logs are maintained for the duration of your
-                        institutional tenure. Inactive or rejected registrations
-                        are purged in accordance with USTP records disposition
-                        schedules.
+                        institutional tenure. Inactive accounts are purged in
+                        accordance with USTP records disposition schedules.
                     </li>
                 </ul>
             </LegalSection>

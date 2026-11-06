@@ -79,13 +79,13 @@ const roles = [
         href: facultyLogin().url,
         registerHref: register().url,
         registrationNote:
-            'Select your employment type and upload your Employee ID or Certificate of Employment for ICT Admin review.',
+            'Select your employment type, department, and position to create your account.',
     },
     {
         icon: Wifi,
         role: 'Students',
         description:
-            'Register with your ID number and upload a student ID or COR, then submit limited service requests, report laboratory incidents, and review any assigned liabilities after approval.',
+            'Register with your email, program, and year level, then submit limited service requests, report laboratory incidents, and review any assigned liabilities.',
         features: [
             'Limited Service Requests',
             'Track Requests',
@@ -95,7 +95,7 @@ const roles = [
         href: studentLogin().url,
         registerHref: register({ query: { role: 'student' } }).url,
         registrationNote:
-            'Enter your name, 10-digit student ID number, and program, then upload either your student ID or Certificate of Registration (COR).',
+            'Enter your name, email, program, and year level to create your account.',
     },
     {
         icon: Shield,
@@ -123,27 +123,21 @@ const roles = [
 const workflowSteps = [
     {
         step: '1',
-        title: 'Register & Upload',
+        title: 'Create Your Account',
         description:
-            'Students upload a student ID or COR. Faculty personnel upload an Employee ID or Certificate of Employment with their registration details.',
+            'Register with your name, email address, and a password. Students choose their program and year level; faculty choose their department.',
     },
     {
         step: '2',
         title: 'Verify Your Email',
         description:
-            'Enter the six-digit code sent to your email to complete account creation. You will return to your sign-in page.',
+            'Enter the six-digit code sent to your email to complete account creation. Your account is activated right away.',
     },
     {
         step: '3',
-        title: 'ICT Admin Review',
-        description:
-            'Your account stays pending while ICT Admin reviews your details and document. Automatic checks support text-based student ID or COR PDFs; photos and scans require manual review.',
-    },
-    {
-        step: '4',
         title: 'Sign In & Get Support',
         description:
-            'Once approved, sign in with your student ID or faculty email and chosen password to access the services available to your role.',
+            'Sign in with your email and password to access the services available to your role.',
     },
 ];
 
@@ -1224,14 +1218,6 @@ export default function Welcome() {
                                             className="transition-colors hover:text-ustp-gold"
                                         >
                                             Registration Flow
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a
-                                            href="#how-it-works"
-                                            className="transition-colors hover:text-ustp-gold"
-                                        >
-                                            Student ID / COR Verification
                                         </a>
                                     </li>
                                     <li>

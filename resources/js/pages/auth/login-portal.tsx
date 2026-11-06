@@ -39,7 +39,7 @@ const options: PortalOption[] = [
     },
     {
         title: 'Student',
-        description: 'Sign in with your student ID.',
+        description: 'Sign in with your email address.',
         icon: GraduationCap,
         iconClassName:
             'bg-green-100 text-green-600 dark:bg-green-950/60 dark:text-green-400',

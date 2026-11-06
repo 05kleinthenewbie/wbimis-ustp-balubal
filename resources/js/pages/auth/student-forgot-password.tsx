@@ -42,7 +42,7 @@ export default function StudentForgotPassword({ status }: Props) {
                                     className="h-11 rounded-lg border-border pl-10 text-sm transition-all focus-visible:border-ustp-navy focus-visible:ring-ustp-navy/20"
                                 />
                             </div>
-                            <p className="text-[11px] text-muted-foreground">
+                            <p className="text-xs text-muted-foreground">
                                 Enter the Gmail address on file with the ICT
                                 office. We will email you a link to set a new
                                 password.

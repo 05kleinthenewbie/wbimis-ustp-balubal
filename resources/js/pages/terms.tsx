@@ -65,10 +65,10 @@ export default function Terms() {
             <LegalSection title="5. Account Suspension">
                 <p>
                     The ICT Administrator may restrict, deactivate, or suspend
-                    accounts that violate these Terms, remain pending beyond the
-                    approval period, or are reported for misuse. You may contact
-                    the ICT Office to request reinstatement or clarification of
-                    any action taken on your account.
+                    accounts that violate these Terms or are reported for
+                    misuse. You may contact the ICT Office to request
+                    reinstatement or clarification of any action taken on your
+                    account.
                 </p>
             </LegalSection>
 

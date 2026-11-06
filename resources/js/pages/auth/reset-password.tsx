@@ -37,7 +37,7 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                                 name="email"
                                 autoComplete="email"
                                 value={email}
-                                className="mt-1 block w-full"
+                                className="mt-1 block h-11 w-full text-sm"
                                 readOnly
                             />
                             <InputError
@@ -54,7 +54,7 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                                 autoComplete="new-password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="mt-1 block w-full"
+                                className="mt-1 block h-11 w-full text-sm"
                                 autoFocus
                                 placeholder="Password"
                                 passwordrules={passwordRules}
@@ -76,7 +76,7 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                                 id="password_confirmation"
                                 name="password_confirmation"
                                 autoComplete="new-password"
-                                className="mt-1 block w-full"
+                                className="mt-1 block h-11 w-full text-sm"
                                 placeholder="Confirm password"
                                 passwordrules={passwordRules}
                             />

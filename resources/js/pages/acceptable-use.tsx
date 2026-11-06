@@ -33,10 +33,8 @@ export default function AcceptableUse() {
                     </li>
                     <li>
                         <strong>Legitimate Identification:</strong> Registering
-                        under false identities, using another individual's
-                        Student ID or Employee ID, or uploading counterfeit
-                        identification or registration documents (Student
-                        ID/COR/COE) is strictly prohibited and subject to
+                        under false identities or providing inaccurate personal
+                        information is strictly prohibited and subject to
                         university disciplinary action.
                     </li>
                     <li>

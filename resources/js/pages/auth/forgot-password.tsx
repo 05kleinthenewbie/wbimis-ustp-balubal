@@ -19,7 +19,10 @@ export default function ForgotPassword({ status }: { status?: string }) {
                 {({ processing, errors }) => (
                     <>
                         <div className="space-y-2">
-                            <Label htmlFor="email" className="text-sm font-medium">
+                            <Label
+                                htmlFor="email"
+                                className="text-sm font-medium"
+                            >
                                 Email
                             </Label>
                             <Input
@@ -54,7 +57,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
             {status && <StatusAlert message={status} className="mt-4" />}
 
-            <div className="-mx-6 -mb-6 mt-6 border-t border-border bg-muted px-6 py-4 text-center text-sm text-accent-foreground">
+            <div className="-mx-4 mt-6 -mb-5 border-t border-border bg-muted px-4 py-4 text-center text-sm text-accent-foreground sm:-mx-8 sm:-mb-8 sm:px-8">
                 Remembered your password?{' '}
                 <TextLink
                     href={login()}
