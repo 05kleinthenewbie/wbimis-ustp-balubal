@@ -30,26 +30,13 @@ use RuntimeException;
  * @property string|null $department
  * @property string|null $id_number
  * @property string|null $employment_type
- * @property string|null $employee_id_number
  * @property string|null $position
  * @property string|null $expertise
- * @property string|null $employment_document_path
- * @property string|null $employment_document_original_name
  * @property string|null $educational_level
  * @property string|null $year_level
  * @property string|null $gender
  * @property Carbon|null $birth_date
  * @property string|null $home_address
- * @property string|null $cor_path
- * @property string|null $cor_original_name
- * @property string|null $cor_verification_status
- * @property string|null $identity_verification_status
- * @property array<string, mixed>|null $cor_verification_details
- * @property Carbon|null $cor_checked_at
- * @property string|null $registration_review_status
- * @property string|null $registration_review_reason
- * @property int|null $registration_reviewed_by
- * @property Carbon|null $registration_reviewed_at
  * @property string|null $two_factor_secret
  * @property string|null $two_factor_recovery_codes
  * @property Carbon|null $two_factor_confirmed_at
@@ -58,8 +45,8 @@ use RuntimeException;
  * @property Carbon|null $updated_at
  * @property bool $is_technician
  */
-#[Fillable(['name', 'email', 'password', 'role_id', 'department', 'employment_type', 'id_number', 'educational_level', 'year_level', 'gender', 'birth_date', 'home_address', 'cor_path', 'cor_original_name', 'proof_type', 'contact_no', 'status', 'avatar', 'employee_id_number', 'position', 'expertise', 'employment_document_path', 'employment_document_original_name', 'is_technician', 'identity_verification_status', 'registration_review_status', 'registration_review_reason', 'registration_reviewed_by', 'registration_reviewed_at'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token', 'cor_path', 'cor_original_name', 'employment_document_path', 'employment_document_original_name'])]
+#[Fillable(['name', 'email', 'password', 'role_id', 'department', 'employment_type', 'id_number', 'educational_level', 'year_level', 'gender', 'birth_date', 'home_address', 'contact_no', 'status', 'avatar', 'position', 'expertise', 'is_technician'])]
+#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<UserFactory> */
@@ -75,9 +62,6 @@ class User extends Authenticatable implements JWTSubject
         return [
             'email_verified_at' => 'datetime',
             'birth_date' => 'date',
-            'cor_verification_details' => 'array',
-            'cor_checked_at' => 'datetime',
-            'registration_reviewed_at' => 'datetime',
             'password' => 'hashed',
             'is_technician' => 'boolean',
         ];
@@ -88,16 +72,10 @@ class User extends Authenticatable implements JWTSubject
      */
     public function purgeAccount(): void
     {
-        $documents = [
-            ['local', $this->getRawOriginal('cor_path')],
-            ['local', $this->getRawOriginal('employment_document_path')],
-            ['public', $this->getRawOriginal('avatar')],
-        ];
+        $avatar = $this->getRawOriginal('avatar');
 
-        foreach ($documents as [$disk, $path]) {
-            if (filled($path)) {
-                Storage::disk($disk)->delete((string) $path);
-            }
+        if (filled($avatar)) {
+            Storage::disk('public')->delete((string) $avatar);
         }
 
         $this->delete();

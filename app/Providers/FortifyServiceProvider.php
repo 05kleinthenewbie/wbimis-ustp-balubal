@@ -7,7 +7,6 @@ use App\Actions\Fortify\ResetUserPassword;
 use App\Http\Responses\LoginResponse;
 use App\Http\Responses\RegisterResponse;
 use App\Http\Responses\VerifyEmailResponse;
-use App\Models\StudentRoster;
 use App\Models\User;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -134,7 +133,7 @@ class FortifyServiceProvider extends ServiceProvider
         ]));
 
         Fortify::registerView(fn () => Inertia::render('auth/register', [
-            'programs' => StudentRoster::PROGRAMS,
+            'programs' => ['BSA', 'BAT', 'BSIT', 'BTLED'],
             'passwordRules' => 'minlength:12; required: lower; required: upper; required: digit; required: [!@#$%^&*(),.?":{}|<>_-];',
         ]));
 

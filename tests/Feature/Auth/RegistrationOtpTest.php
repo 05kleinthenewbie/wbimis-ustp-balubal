@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Role;
-use App\Models\StudentRoster;
 use App\Models\User;
 use App\Services\RegistrationOtpService;
 use Illuminate\Support\Facades\Http;
@@ -158,11 +157,6 @@ test('a student can register with BAT as their department', function () {
 });
 
 test('a student registration with an invalid department is rejected', function () {
-    StudentRoster::create([
-        'id_number' => '2023303709',
-        'name' => 'Juan S. Dela Cruz',
-        'program' => 'BSIT',
-    ]);
     fakeBrevoMail();
 
     $this->post(route('register.store'), studentRegistrationPayload([
@@ -173,11 +167,6 @@ test('a student registration with an invalid department is rejected', function (
 });
 
 test('a student registration without a department is rejected', function () {
-    StudentRoster::create([
-        'id_number' => '2023303709',
-        'name' => 'Juan S. Dela Cruz',
-        'program' => 'BSIT',
-    ]);
     fakeBrevoMail();
 
     $this->post(route('register.store'), studentRegistrationPayload([

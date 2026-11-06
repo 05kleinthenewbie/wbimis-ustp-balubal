@@ -1,7 +1,6 @@
 <?php
 
 use App\Models\Role;
-use App\Models\StudentRoster;
 use App\Models\User;
 
 it('can register and is activated immediately', function () {
@@ -45,11 +44,6 @@ it('rejects a faculty registration without an employment type', function () {
 
 it('can register as a student and log in immediately', function () {
     Role::create(['role_name' => 'student']);
-    StudentRoster::create([
-        'id_number' => '2023303709',
-        'name' => 'New Student',
-        'program' => 'BSIT',
-    ]);
 
     $response = $this->postJson('/api/v1/auth/register', [
         'name' => 'New Student',
@@ -98,11 +92,6 @@ it('accepts a student registration without a roster entry', function () {
 
 it('rejects a student registration without a department', function () {
     Role::create(['role_name' => 'student']);
-    StudentRoster::create([
-        'id_number' => '2023303709',
-        'name' => 'New Student',
-        'program' => 'BSIT',
-    ]);
 
     $response = $this->postJson('/api/v1/auth/register', [
         'name' => 'New Student',
