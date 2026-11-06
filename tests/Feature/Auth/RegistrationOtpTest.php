@@ -4,7 +4,6 @@ use App\Models\Role;
 use App\Models\StudentRoster;
 use App\Models\User;
 use App\Services\RegistrationOtpService;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -55,7 +54,7 @@ test('registering emails an OTP and defers account creation', function () {
     expect(registrationOtpCode())->toHaveLength(6);
 });
 
-test('faculty employment details and private document survive OTP verification and admin review', function () {
+test('faculty employment details survive OTP verification and the account is activated immediately', function () {
     fakeBrevoMail();
 
     $this->post(route('register.store'), registrationPayload())
@@ -67,32 +66,10 @@ test('faculty employment details and private document survive OTP verification a
         ->assertRedirect(route('faculty.login'));
 
     $faculty = User::where('email', 'test@example.com')->firstOrFail();
-    expect($faculty->employee_id_number)->toBe('EMP-1001')
-        ->and($faculty->position)->toBe('Administrative Assistant')
+    expect($faculty->position)->toBe('Administrative Assistant')
         ->and($faculty->contact_no)->toBe('09123456789')
-        ->and($faculty->gender)->toBeNull()
-        ->and($faculty->birth_date)->toBeNull()
-        ->and($faculty->home_address)->toBeNull()
-        ->and($faculty->status)->toBe('pending')
-        ->and($faculty->toArray())->not->toHaveKey('employment_document_path');
-    Storage::disk('local')->assertExists($faculty->employment_document_path);
-
-    $this->post(route('login.store'), ['email' => $faculty->email, 'password' => 'password', 'portal' => 'faculty'])
-        ->assertSessionHasErrors('email');
-    $this->assertGuest();
-
-    $adminRole = Role::firstOrCreate(['role_name' => 'ict_admin']);
-    $admin = User::factory()->create(['role_id' => $adminRole->id]);
-    $this->actingAs($admin)->get(route('users.employment-document', $faculty))
-        ->assertDownload('employment.pdf');
-    $this->get(route('users.index'))->assertInertia(fn (Assert $page) => $page
-        ->where('pendingUsers.0.employment_document_url', route('users.employment-document', $faculty)));
-    $this->put(route('users.update', $faculty), ['status' => 'active'])->assertRedirect();
-    $this->post(route('logout'));
-    $this->post(route('login.store'), ['email' => $faculty->email, 'password' => 'password', 'portal' => 'faculty'])
-        ->assertRedirect(route('dashboard'));
-    $this->assertAuthenticatedAs($faculty);
-    $this->get(route('users.employment-document', $faculty))->assertForbidden();
+        ->and($faculty->status)->toBe('active')
+        ->and($faculty->email_verified_at)->not->toBeNull();
 });
 
 test('faculty registration requires employment details', function (string $field) {
@@ -100,22 +77,7 @@ test('faculty registration requires employment details', function (string $field
     $this->post(route('register.store'), registrationPayload([$field => null]))
         ->assertSessionHasErrors($field);
     Http::assertNothingSent();
-})->with(['employee_id_number', 'position', 'contact_no', 'employment_document']);
-
-test('faculty registration rejects unsupported and oversized employment documents', function () {
-    fakeBrevoMail();
-    foreach ([UploadedFile::fake()->create('employment.txt', 10, 'text/plain'), UploadedFile::fake()->create('employment.pdf', 5121, 'application/pdf')] as $file) {
-        $this->post(route('register.store'), registrationPayload(['employment_document' => $file]))
-            ->assertSessionHasErrors('employment_document');
-    }
-    Http::assertNothingSent();
-});
-
-test('failed OTP email removes the temporary employment document', function () {
-    Http::fake(['api.brevo.com/*' => Http::response('Server error', 500)]);
-    $this->post(route('register.store'), registrationPayload())->assertSessionHasErrors('email');
-    expect(Storage::disk('local')->allFiles('employment-documents'))->toBeEmpty();
-});
+})->with(['position', 'contact_no']);
 
 test('a student registers and is activated immediately', function () {
     Role::firstOrCreate(['role_name' => 'student'], ['description' => 'Students']);
@@ -322,7 +284,7 @@ test('a correct OTP creates the account', function () {
     $user = User::where('email', 'test@example.com')->first();
 
     expect($user)->not->toBeNull()
-        ->and($user->status)->toBe('pending')
+        ->and($user->status)->toBe('active')
         ->and($user->email_verified_at)->not->toBeNull()
         ->and(cache(RegistrationOtpService::key('test@example.com')))->toBeNull()
         ->and(session('registration_otp_email'))->toBeNull();

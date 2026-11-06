@@ -104,16 +104,6 @@ class User extends Authenticatable implements JWTSubject
     }
 
     /**
-     * Resolve the admin-only download URL for the employment document.
-     */
-    protected function employmentDocumentUrl(): Attribute
-    {
-        return Attribute::get(fn (): ?string => filled($this->employment_document_path)
-            ? route('users.employment-document', $this)
-            : null);
-    }
-
-    /**
      * Resolve the public URL of the stored profile photo, or null when
      * the user has not uploaded one. The raw path stays in the database
      * so the file can be deleted with getRawOriginal('avatar').

@@ -248,7 +248,6 @@ test('technician records are not listed as user accounts', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->has('activeUsers', 0)
-            ->has('pendingUsers', 0)
             ->has('deactivatedUsers', 0));
 });
 

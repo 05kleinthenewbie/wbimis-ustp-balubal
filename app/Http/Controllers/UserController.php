@@ -13,12 +13,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class UserController extends Controller
 {
@@ -42,46 +40,19 @@ class UserController extends Controller
         return Inertia::render('users/index', [
             'status' => session('status'),
             'error' => session('error'),
-            'pendingUsers' => User::with('role')
-                ->where('is_technician', false)
-                ->where('status', 'pending')
-                ->latest()
-                ->get()
-                ->each->append(['employment_document_url']),
             'activeUsers' => User::with('role')
                 ->where('is_technician', false)
                 ->where('status', 'active')
                 ->where('id', '!=', Auth::id())
                 ->latest()
-                ->get()
-                ->each->append(['employment_document_url']),
+                ->get(),
             'deactivatedUsers' => User::with('role')
                 ->where('is_technician', false)
                 ->where('status', 'inactive')
                 ->where('id', '!=', Auth::id())
                 ->latest()
-                ->get()
-                ->each->append(['employment_document_url']),
-            'rejectedUsers' => User::with('role')
-                ->where('is_technician', false)
-                ->where('status', 'rejected')
-                ->whereDoesntHave('role', fn ($query) => $query->where('role_name', 'student'))
-                ->latest()
-                ->get()
-                ->each->append(['employment_document_url']),
+                ->get(),
         ]);
-    }
-
-    public function downloadEmploymentDocument(User $user): StreamedResponse
-    {
-        $this->ensureAdmin();
-
-        abort_unless(filled($user->employment_document_path) && Storage::disk('local')->exists((string) $user->employment_document_path), 404);
-
-        return Storage::disk('local')->download(
-            (string) $user->employment_document_path,
-            $user->employment_document_original_name ?: 'employment-document.pdf',
-        );
     }
 
     /**
@@ -126,25 +97,24 @@ class UserController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * Activate or deactivate a user account.
      */
     public function update(Request $request, string $id): RedirectResponse
     {
         $this->ensureAdmin();
 
         $validated = $request->validate([
-            'status' => ['required', 'in:pending,active,inactive,rejected'],
-            'reason' => ['nullable', 'string', 'max:2000', 'required_if:status,rejected'],
+            'status' => ['required', 'in:active,inactive'],
         ]);
 
         $user = User::with('role')->findOrFail($id);
 
-        $this->changeStatus($user, $validated['status'], $validated['reason'] ?? null);
+        $this->changeStatus($user, $validated['status']);
 
         return redirect()->back()->with('status', 'User account updated successfully.');
     }
 
-    private function changeStatus(User $user, string $status, ?string $reason = null): void
+    private function changeStatus(User $user, string $status): void
     {
         if ($user->isTechnician()) {
             throw ValidationException::withMessages([
@@ -154,54 +124,7 @@ class UserController extends Controller
 
         $previousStatus = $user->status;
 
-        if ($previousStatus === 'pending' && $status === 'inactive') {
-            $status = 'rejected';
-        }
-
-        if (($status === 'rejected' && $previousStatus !== 'pending') || ($previousStatus === 'rejected' && $status !== 'pending')) {
-            throw ValidationException::withMessages(['status' => 'Rejected registrations must return to verification before approval.']);
-        }
-
         if ($previousStatus === $status) {
-            return;
-        }
-
-        if ($status === 'rejected') {
-            Notification::create([
-                'user_id' => $user->id,
-                'message' => filled($reason)
-                    ? 'Your account registration needs correction: '.$reason
-                    : 'Your account registration was not approved. Contact the ICT office for review.',
-                'notification_type' => 'account_rejection',
-                'notification_status' => 'unread',
-            ]);
-            if ($user->role?->role_name === 'student') {
-                try {
-                    app(BrevoMailService::class)->sendStudentRegistrationDecisionEmail(
-                        $user->email,
-                        $user->name,
-                        'rejected',
-                        $reason,
-                    );
-                } catch (\Throwable $exception) {
-                    report($exception);
-                }
-            }
-            AuditLog::record(
-                "Rejected and removed registration for {$user->email}",
-                'users',
-                $user->id,
-                null,
-                ['status' => $previousStatus],
-                ['status' => 'rejected'],
-            );
-
-            if ($user->role?->role_name === 'student') {
-                $user->update(['status' => 'rejected']);
-            } else {
-                $user->purgeAccount();
-            }
-
             return;
         }
 
@@ -210,9 +133,7 @@ class UserController extends Controller
         if ($status === 'active') {
             Notification::create([
                 'user_id' => $user->id,
-                'message' => $previousStatus === 'inactive'
-                    ? 'Your account has been reactivated. You can now log in.'
-                    : 'Your account has been approved. You can now log in.',
+                'message' => 'Your account has been reactivated. You can now log in.',
                 'notification_type' => 'account_approval',
                 'link' => '/dashboard',
                 'notification_status' => 'unread',
@@ -234,12 +155,10 @@ class UserController extends Controller
             if ($user->wasChanged('status')) {
                 DB::afterCommit(fn () => UserApproved::dispatch($user));
             }
-        } elseif ($status === 'inactive') {
+        } else {
             Notification::create([
                 'user_id' => $user->id,
-                'message' => $previousStatus === 'active'
-                    ? 'Your account has been deactivated. Please contact the ICT office for more information.'
-                    : 'Your account registration was not approved. Please contact the ICT office for more information.',
+                'message' => 'Your account has been deactivated. Please contact the ICT office for more information.',
                 'notification_type' => 'account_rejection',
                 'link' => '/dashboard',
                 'notification_status' => 'unread',

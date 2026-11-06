@@ -1,8 +1,6 @@
-import { Form, Head, router } from '@inertiajs/react';
-import { GraduationCap, Mail, ScanLine } from 'lucide-react';
-import { useState } from 'react';
+import { Form, Head } from '@inertiajs/react';
+import { GraduationCap, Mail } from 'lucide-react';
 import InputError from '@/components/input-error';
-import { LoginCodeScanner } from '@/components/login-code-scanner';
 import PasswordInput from '@/components/password-input';
 import StatusAlert from '@/components/status-alert';
 import TextLink from '@/components/text-link';
@@ -11,10 +9,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
-import { classifyLoginScan } from '@/lib/student-login-code';
 import { register } from '@/routes';
 import { authenticate } from '@/routes/student';
-import { redeem } from '@/routes/student/login-codes';
 import { request as forgotPassword } from '@/routes/student/password';
 
 type Props = {
@@ -22,68 +18,11 @@ type Props = {
 };
 
 export default function StudentLogin({ status }: Props) {
-    const [scanOpen, setScanOpen] = useState(false);
-    const [scanProcessing, setScanProcessing] = useState(false);
-    const [scanMessage, setScanMessage] = useState('');
-
-    function handleScan(text: string) {
-        const result = classifyLoginScan(text);
-        setScanOpen(false);
-
-        if (result.type !== 'login') {
-            setScanMessage(
-                'This is not a supported login code. Generate a secure code from a signed-in student account, or sign in with your email and password.',
-            );
-
-            return;
-        }
-
-        setScanProcessing(true);
-        setScanMessage('');
-        router.post(
-            redeem.url(),
-            { code: result.code },
-            {
-                onError: (errors) =>
-                    setScanMessage(
-                        errors.code ?? 'Could not sign in with this code.',
-                    ),
-                onFinish: () => setScanProcessing(false),
-            },
-        );
-    }
-
     return (
         <>
             <Head title="Student Sign In" />
 
             {status && <StatusAlert message={status} className="mb-5" />}
-            {scanMessage && (
-                <StatusAlert
-                    message={scanMessage}
-                    variant="warning"
-                    className="mb-5"
-                />
-            )}
-            <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                    setScanMessage('');
-                    setScanOpen(true);
-                }}
-                disabled={scanProcessing}
-                className="mb-5 h-11 w-full"
-                data-test="student-scan-login-button"
-            >
-                {scanProcessing ? <Spinner /> : <ScanLine className="size-4" />}{' '}
-                {scanProcessing ? 'Signing in…' : 'Scan QR / Barcode'}
-            </Button>
-            <LoginCodeScanner
-                open={scanOpen}
-                onOpenChange={setScanOpen}
-                onResult={handleScan}
-            />
 
             <Form
                 {...authenticate.form()}
@@ -132,7 +71,7 @@ export default function StudentLogin({ status }: Props) {
                                     </Label>
                                     <TextLink
                                         href={forgotPassword()}
-                                        className="py-1 text-xs font-medium text-ustp-navy hover:text-ustp-navy-dark sm:py-0 dark:text-white/80 dark:hover:text-white"
+                                        className="py-1 text-sm font-medium text-ustp-navy hover:text-ustp-navy-dark dark:text-white/80 dark:hover:text-white"
                                     >
                                         Forgot password?
                                     </TextLink>
@@ -166,7 +105,7 @@ export default function StudentLogin({ status }: Props) {
                                 type="submit"
                                 size="lg"
                                 className="h-11 w-full rounded-lg bg-ustp-gold text-sm font-semibold text-ustp-navy shadow-sm transition-colors hover:bg-ustp-gold-dark hover:text-white"
-                                disabled={processing || scanProcessing}
+                                disabled={processing}
                                 data-test="student-login-button"
                             >
                                 {processing && <Spinner />}

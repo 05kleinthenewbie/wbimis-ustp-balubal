@@ -10,10 +10,8 @@ use App\Services\BrevoMailService;
 use App\Services\RegistrationOtpService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -51,8 +49,6 @@ class CreateNewUser implements CreatesNewUsers
         $email = (string) $input['email'];
         $this->throttleOtpRequest($email);
 
-        $input = $this->storeEmploymentDocument($input);
-
         $code = $this->registrationOtp->issue($email, $input);
 
         try {
@@ -65,7 +61,6 @@ class CreateNewUser implements CreatesNewUsers
         } catch (RuntimeException|ConnectionException $exception) {
             report($exception);
             $this->registrationOtp->forget($email);
-            $this->deleteEmploymentDocument($input);
 
             throw ValidationException::withMessages([
                 'email' => 'We could not send a verification code to your email address. Please try again.',
@@ -85,9 +80,8 @@ class CreateNewUser implements CreatesNewUsers
     /**
      * Create the user account once the emailed OTP has been verified.
      *
-     * Student registrations are activated immediately after email
-     * verification; there is no document review or approval step.
-     * Faculty/staff accounts still wait for admin approval.
+     * All registrations are activated immediately after email verification;
+     * there is no document review or approval step.
      *
      * @param  array<string, string>  $input
      */
@@ -95,21 +89,17 @@ class CreateNewUser implements CreatesNewUsers
     {
         $this->applyEmploymentDefaults($input);
 
-        $isStudent = ($input['role'] ?? null) === 'student';
-        $studentDetails = $isStudent
+        $details = ($input['role'] ?? null) === 'student'
             ? $this->studentDetails($input)
             : [
-                'employee_id_number' => $input['employee_id_number'] ?? null,
                 'position' => $input['position'] ?? null,
                 'contact_no' => $input['contact_no'] ?? null,
-                'employment_document_path' => $input['employment_document_path'] ?? null,
-                'employment_document_original_name' => $input['employment_document_original_name'] ?? null,
             ];
 
-        return DB::transaction(function () use ($input, $isStudent, $studentDetails) {
+        return DB::transaction(function () use ($input, $details) {
             $role = Role::where('role_name', $input['role'])->firstOrFail();
 
-            $rejected = User::where('email', $input['email'])
+            $revived = User::where('email', $input['email'])
                 ->whereIn('status', ['inactive', 'rejected'])
                 ->first();
 
@@ -121,15 +111,15 @@ class CreateNewUser implements CreatesNewUsers
                 'department' => $input['department'] ?? null,
                 'employment_type' => $input['employment_type'] ?? null,
                 'id_number' => $input['id_number'] ?? null,
-                ...$studentDetails,
-                'status' => $isStudent ? 'active' : 'pending',
-                'email_verified_at' => $isStudent ? now() : null,
+                ...$details,
+                'status' => 'active',
+                'email_verified_at' => now(),
             ];
 
-            if ($rejected !== null) {
-                $rejected->update($attributes);
+            if ($revived !== null) {
+                $revived->update($attributes);
 
-                return $rejected->refresh();
+                return $revived->refresh();
             }
 
             return User::create($attributes);
@@ -218,16 +208,14 @@ class CreateNewUser implements CreatesNewUsers
                     Rule::in(['BSA', 'BAT', 'BSIT', 'BTLED']),
                 ),
             ],
-            // Students register with their email address only; no student ID
-            // number or document is collected.
+            // Registrations collect an email address and password only; no
+            // student ID number, employee ID, or supporting document is collected.
             'password' => $this->passwordRules(),
         ];
 
         if ($requireStudentDetails) {
-            $rules['employee_id_number'] = ['required_if:role,faculty_staff', 'nullable', 'string', 'max:50', Rule::unique(User::class, 'employee_id_number')->ignore(User::where('email', $input['email'] ?? '')->whereIn('status', ['inactive', 'rejected'])->value('id'))];
             $rules['position'] = ['required_if:role,faculty_staff', 'nullable', 'string', 'max:255'];
             $rules['contact_no'] = ['required_if:role,faculty_staff', 'nullable', 'string', 'max:30'];
-            $rules['employment_document'] = ['required_if:role,faculty_staff', 'nullable', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'];
             $rules['educational_level'] = [
                 'required_if:role,student',
                 'nullable',
@@ -262,42 +250,6 @@ class CreateNewUser implements CreatesNewUsers
             'educational_level' => $input['educational_level'] ?? null,
             'year_level' => $input['year_level'] ?? null,
         ];
-    }
-
-    /**
-     * Remove a temporary employment document when registration cannot continue.
-     *
-     * @param  array<string, mixed>  $input
-     */
-    private function deleteEmploymentDocument(array $input): void
-    {
-        if (filled($input['employment_document_path'] ?? null)) {
-            Storage::disk('local')->delete((string) $input['employment_document_path']);
-        }
-    }
-
-    /**
-     * @param  array<string, mixed>  $input
-     * @return array<string, mixed>
-     */
-    private function storeEmploymentDocument(array $input): array
-    {
-        $file = $input['employment_document'] ?? null;
-        unset($input['employment_document']);
-
-        if (($input['role'] ?? null) !== 'faculty_staff' || ! $file instanceof UploadedFile) {
-            return $input;
-        }
-
-        $path = $file->storeAs('employment-documents', Str::uuid()->toString().'.'.$file->extension(), 'local');
-        if (! is_string($path)) {
-            throw ValidationException::withMessages(['employment_document' => 'We could not save your employment document. Please try again.']);
-        }
-
-        $input['employment_document_path'] = $path;
-        $input['employment_document_original_name'] = basename($file->getClientOriginalName());
-
-        return $input;
     }
 
     /**

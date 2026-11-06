@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -76,10 +75,8 @@ function registrationPayload(array $overrides = []): array
         'role' => 'faculty_staff',
         'employment_type' => 'non_teaching',
         'department' => 'Administrative Office',
-        'employee_id_number' => 'EMP-1001',
         'position' => 'Administrative Assistant',
         'contact_no' => '09123456789',
-        'employment_document' => UploadedFile::fake()->create('employment.pdf', 100, 'application/pdf'),
         'terms' => 'on',
     ], $overrides);
 }

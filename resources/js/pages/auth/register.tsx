@@ -1,5 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
-import { GraduationCap, Mail, Upload, User } from 'lucide-react';
+import { GraduationCap, Mail, User } from 'lucide-react';
 import { useState } from 'react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
@@ -123,7 +123,7 @@ export default function Register({ passwordRules, programs }: Props) {
                                             placeholder="example@gmail.com"
                                             className="h-11 rounded-lg border-border text-sm transition-all focus-visible:border-ustp-navy focus-visible:ring-ustp-navy/20"
                                         />
-                                        <p className="text-[10px] text-muted-foreground">
+                                        <p className="text-xs text-muted-foreground">
                                             Personal or university email is
                                             accepted.
                                         </p>
@@ -429,11 +429,6 @@ export default function Register({ passwordRules, programs }: Props) {
                                         </div>
                                         {[
                                             {
-                                                name: 'employee_id_number',
-                                                label: 'Employee ID number',
-                                                placeholder: 'Your employee ID',
-                                            },
-                                            {
                                                 name: 'position',
                                                 label: 'Position / Designation',
                                                 placeholder:
@@ -467,12 +462,9 @@ export default function Register({ passwordRules, programs }: Props) {
                                                     required
                                                     maxLength={
                                                         field.name ===
-                                                        'employee_id_number'
-                                                            ? 50
-                                                            : field.name ===
-                                                                'contact_no'
-                                                              ? 30
-                                                              : 255
+                                                        'contact_no'
+                                                            ? 30
+                                                            : 255
                                                     }
                                                     placeholder={
                                                         field.placeholder
@@ -484,37 +476,6 @@ export default function Register({ passwordRules, programs }: Props) {
                                                 />
                                             </div>
                                         ))}
-                                        <div className="grid gap-2 sm:col-span-2">
-                                            <Label htmlFor="employment_document">
-                                                Employee ID or Certificate of
-                                                Employment
-                                                <span className="ml-1 text-destructive">
-                                                    *
-                                                </span>
-                                            </Label>
-                                            <div className="min-w-0 rounded-xl border border-dashed border-border bg-background p-3 sm:p-4">
-                                                <div className="mb-3 flex items-center gap-3">
-                                                    <Upload className="size-5 text-ustp-navy dark:text-white" />
-                                                    <p className="text-sm text-muted-foreground">
-                                                        PDF, JPG, or PNG · Up to
-                                                        5 MB
-                                                    </p>
-                                                </div>
-                                                <input
-                                                    id="employment_document"
-                                                    name="employment_document"
-                                                    type="file"
-                                                    required
-                                                    accept=".pdf,.jpg,.jpeg,.png"
-                                                    className="block w-full min-w-0 cursor-pointer text-sm text-muted-foreground file:mr-3 file:cursor-pointer file:rounded-lg file:border-0 file:bg-ustp-navy file:px-4 file:py-2.5 file:text-sm file:font-medium file:text-white hover:file:bg-ustp-navy-dark"
-                                                />
-                                            </div>
-                                            <InputError
-                                                message={
-                                                    errors.employment_document
-                                                }
-                                            />
-                                        </div>
                                     </div>
                                 </>
                             )}
@@ -583,14 +544,14 @@ export default function Register({ passwordRules, programs }: Props) {
                                             }
                                         />
                                     </div>
-                                    <label className="flex items-start gap-2 text-[10px] leading-relaxed text-muted-foreground">
+                                    <label className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground">
                                         <input
                                             type="checkbox"
                                             id="terms"
                                             name="terms"
                                             value="on"
                                             required
-                                            className="mt-0.5 size-3.5 shrink-0 accent-primary"
+                                            className="mt-0.5 size-4 shrink-0 accent-primary"
                                         />
                                         <span>
                                             I agree to the{' '}

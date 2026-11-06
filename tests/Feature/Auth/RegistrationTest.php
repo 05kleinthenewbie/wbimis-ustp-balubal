@@ -25,6 +25,6 @@ test('new users can register', function () {
     $user = User::where('email', 'test@example.com')->first();
 
     expect($user)->not->toBeNull()
-        ->and($user->status)->toBe('pending')
+        ->and($user->status)->toBe('active')
         ->and($user->email_verified_at)->not->toBeNull();
 });

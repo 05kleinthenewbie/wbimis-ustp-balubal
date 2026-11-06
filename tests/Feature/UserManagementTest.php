@@ -12,18 +12,16 @@ function mgmtUser(string $roleName, string $status = 'active'): User
     return User::factory()->create(['role_id' => $role->id, 'status' => $status]);
 }
 
-test('the user management page lists pending, active and deactivated users', function () {
+test('the user management page lists active and deactivated users', function () {
     $admin = mgmtUser('ict_admin');
     mgmtUser('faculty_staff');
     mgmtUser('student', 'inactive');
-    User::factory()->create(['status' => 'pending']);
 
     $this->actingAs($admin)
         ->get(route('users.index'))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('users/index')
-            ->has('pendingUsers', 1)
             ->has('activeUsers', 1)
             ->has('deactivatedUsers', 1));
 });
@@ -51,50 +49,6 @@ test('admins can reactivate a deactivated account', function () {
         ->assertRedirect();
 
     $this->assertDatabaseHas('users', ['id' => $user->id, 'status' => 'active']);
-});
-
-test('admins can approve a pending account', function () {
-    $admin = mgmtUser('ict_admin');
-    $user = mgmtUser('faculty_staff', 'pending');
-
-    $this->actingAs($admin)
-        ->put(route('users.update', $user->id), ['status' => 'active'])
-        ->assertRedirect();
-
-    $this->assertDatabaseHas('users', ['id' => $user->id, 'status' => 'active']);
-});
-
-test('rejecting a pending registration removes it from the database', function () {
-    $admin = mgmtUser('ict_admin');
-    $user = mgmtUser('faculty_staff', 'pending');
-
-    $this->actingAs($admin)
-        ->put(route('users.update', $user->id), ['status' => 'inactive'])
-        ->assertRedirect();
-
-    $this->assertDatabaseMissing('users', ['id' => $user->id]);
-    expect(User::where('email', $user->email)->exists())->toBeFalse();
-});
-
-test('rejected registrations are separate from deactivated accounts and must be reviewed again', function () {
-    $admin = mgmtUser('ict_admin');
-    $rejected = mgmtUser('faculty_staff', 'rejected');
-    mgmtUser('faculty_staff', 'inactive');
-    $this->actingAs($admin)->get(route('users.index'))
-        ->assertInertia(fn (Assert $page) => $page->has('rejectedUsers', 1)->has('deactivatedUsers', 1));
-    $this->put(route('users.update', $rejected), ['status' => 'active'])->assertSessionHasErrors('status');
-    expect($rejected->refresh()->status)->toBe('rejected');
-    $this->put(route('users.update', $rejected), ['status' => 'pending'])->assertRedirect();
-    expect($rejected->refresh()->status)->toBe('pending');
-});
-
-test('rejected applicants cannot authenticate through web or API login', function () {
-    $rejected = mgmtUser('faculty_staff', 'rejected');
-    $this->post(route('login.store'), ['email' => $rejected->email, 'password' => 'password'])
-        ->assertSessionHasErrors('email');
-    $this->assertGuest();
-    $this->postJson('/api/v1/auth/login', ['email' => $rejected->email, 'password' => 'password'])
-        ->assertForbidden();
 });
 
 test('non-admins cannot manage user accounts', function () {

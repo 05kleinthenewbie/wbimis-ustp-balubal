@@ -25,7 +25,7 @@ test('rejected accounts can register again', function () {
     $user = User::where('email', 'rejected@example.com')->first();
 
     expect($user->id)->toBe($rejected->id)
-        ->and($user->status)->toBe('pending')
+        ->and($user->status)->toBe('active')
         ->and(User::where('email', 'rejected@example.com')->count())->toBe(1);
 });
 

@@ -356,16 +356,16 @@ it('restricts reports to admins', function () {
         ->assertForbidden();
 });
 
-it('allows admins to approve pending users', function () {
+it('allows admins to deactivate users', function () {
     $admin = apiUser($this->adminRole);
     $token = auth('api')->login($admin);
-    $pending = User::factory()->create(['status' => 'pending']);
+    $target = User::factory()->create(['status' => 'active']);
 
     $this->withHeader('Authorization', "Bearer {$token}")
-        ->putJson("/api/v1/users/{$pending->id}", ['status' => 'active'])
+        ->putJson("/api/v1/users/{$target->id}", ['status' => 'inactive'])
         ->assertOk();
 
-    $this->assertDatabaseHas('users', ['id' => $pending->id, 'status' => 'active']);
+    $this->assertDatabaseHas('users', ['id' => $target->id, 'status' => 'inactive']);
 });
 
 it('restricts audit log to admins', function () {

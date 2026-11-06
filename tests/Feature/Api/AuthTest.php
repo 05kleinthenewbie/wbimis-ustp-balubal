@@ -4,7 +4,7 @@ use App\Models\Role;
 use App\Models\StudentRoster;
 use App\Models\User;
 
-it('can register and waits for approval', function () {
+it('can register and is activated immediately', function () {
     Role::create(['role_name' => 'faculty_staff']);
 
     $payload = [
@@ -22,7 +22,7 @@ it('can register and waits for approval', function () {
     $response->assertCreated()
         ->assertJsonStructure(['message', 'user']);
 
-    $this->assertDatabaseHas('users', ['email' => 'new@ustp.edu.ph', 'status' => 'pending', 'department' => 'Administrative Office']);
+    $this->assertDatabaseHas('users', ['email' => 'new@ustp.edu.ph', 'status' => 'active', 'department' => 'Administrative Office']);
 });
 
 it('rejects a faculty registration without an employment type', function () {
