@@ -8,10 +8,13 @@ use App\Models\Role;
 use App\Models\User;
 use App\Services\BrevoMailService;
 use App\Services\RegistrationOtpService;
+use App\Services\StudentVerification\StudentVerificationService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -26,28 +29,30 @@ class CreateNewUser implements CreatesNewUsers
     public function __construct(
         private RegistrationOtpService $registrationOtp,
         private BrevoMailService $mail,
+        private StudentVerificationService $documents,
     ) {}
 
     /**
-     * Validate the registration request, email a one-time code to the
-     * applicant, and redirect to the OTP verification step. The account
-     * itself is only created once the code has been confirmed.
+     * Validate the registration request, stash any uploaded student
+     * documents for the administrator to review, email a one-time code to
+     * the applicant, and redirect to the OTP verification step. The
+     * account itself is only created once the code has been confirmed.
      *
-     * @param  array<string, string>  $input
+     * @param  array<string, mixed>  $input
      */
     public function create(array $input): User
     {
         $input = $this->withFullName($input);
         $this->validateInput($input, requireStudentDetails: true);
 
-        Validator::make($input, [
-            'terms' => ['accepted'],
-        ], [
-            'terms.accepted' => 'You must agree to the Terms of Service and Privacy Policy to continue.',
-        ])->validate();
+        $cor = $input['cor'] ?? null;
+        $studentId = $input['student_id'] ?? null;
+        unset($input['cor'], $input['student_id']);
 
         $email = (string) $input['email'];
         $this->throttleOtpRequest($email);
+
+        $this->stashRegistrationUploads($email, $cor, $studentId);
 
         $code = $this->registrationOtp->issue($email, $input);
 
@@ -81,10 +86,11 @@ class CreateNewUser implements CreatesNewUsers
      * Create the user account once the emailed OTP has been verified.
      *
      * Accounts are registered with their verified email address but remain
-     * unapproved; the account only becomes usable after an ICT admin
-     * approves it in the pending approvals panel.
+     * unapproved: students stay pending until an ICT admin reviews their
+     * uploaded Certificate of Registration, and faculty/staff stay pending
+     * until an ICT admin approves the account.
      *
-     * @param  array<string, string>  $input
+     * @param  array<string, mixed>  $input
      */
     public function createVerified(array $input): User
     {
@@ -97,7 +103,7 @@ class CreateNewUser implements CreatesNewUsers
                 'contact_no' => $input['contact_no'] ?? null,
             ];
 
-        return DB::transaction(function () use ($input, $details) {
+        $user = DB::transaction(function () use ($input, $details) {
             $role = Role::where('role_name', $input['role'])->firstOrFail();
 
             $revived = User::where('email', $input['email'])
@@ -127,6 +133,10 @@ class CreateNewUser implements CreatesNewUsers
 
             return User::create($attributes);
         });
+
+        $this->documents->adoptRegistrationUploads($user);
+
+        return $user;
     }
 
     /**
@@ -134,12 +144,12 @@ class CreateNewUser implements CreatesNewUsers
      * skipping the email OTP step. Used by API clients that cannot complete
      * the browser-based verification flow.
      *
-     * @param  array<string, string>  $input
+     * @param  array<string, mixed>  $input
      */
     public function createWithoutEmailVerification(array $input): User
     {
         $input = $this->withFullName($input);
-        $this->validateInput($input);
+        $this->validateInput($input, requireStudentDetails: false);
 
         $user = $this->createVerified($input);
         if ($user->isStudent()) {
@@ -147,6 +157,42 @@ class CreateNewUser implements CreatesNewUsers
         }
 
         return $user;
+    }
+
+    /**
+     * Copy the uploaded student documents of a pending registration onto
+     * the private disk so they survive the OTP round-trip. A new pending
+     * registration for the same address replaces any previous files.
+     *
+     * @param  mixed  $cor
+     * @param  mixed  $studentId
+     */
+    private function stashRegistrationUploads(string $email, $cor, $studentId): void
+    {
+        $directory = self::pendingUploadDirectory($email);
+        Storage::disk('local')->deleteDirectory($directory);
+
+        foreach (['cor' => $cor, 'student_id' => $studentId] as $name => $file) {
+            if ($file === null) {
+                continue;
+            }
+
+            $copied = $file->storeAs($directory, $name, 'local');
+            if ($copied === false) {
+                throw ValidationException::withMessages([
+                    'cor' => 'Your documents could not be staged. Please try again.',
+                ]);
+            }
+        }
+    }
+
+    /**
+     * The private-disk directory holding the documents of one pending
+     * registration.
+     */
+    public static function pendingUploadDirectory(string $email): string
+    {
+        return 'student-verification-pending/'.sha1(Str::lower($email));
     }
 
     /**
@@ -169,10 +215,10 @@ class CreateNewUser implements CreatesNewUsers
         ])->validate();
 
         $initial = filled($parts['middle_initial'] ?? null)
-            ? Str::upper(rtrim($parts['middle_initial'], '.')).'.'
+            ? Str::upper(rtrim((string) $parts['middle_initial'], '.')).'.'
             : null;
         $input['name'] = implode(' ', array_filter([
-            trim($parts['first_name']), $initial, trim($parts['last_name']),
+            trim((string) $parts['first_name']), $initial, trim((string) $parts['last_name']),
         ], fn ($part) => $part !== null));
 
         return $input;
@@ -181,7 +227,7 @@ class CreateNewUser implements CreatesNewUsers
     /**
      * Validate the raw registration input.
      *
-     * @param  array<string, string>  $input
+     * @param  array<string, mixed>  $input
      */
     private function validateInput(array $input, bool $requireStudentDetails = false): void
     {
@@ -220,12 +266,22 @@ class CreateNewUser implements CreatesNewUsers
                     Rule::in(array_keys(config('student-verification.programs'))),
                 ),
             ],
-            // Registrations collect an email address and password only; no
-            // student ID number, employee ID, or supporting document is collected.
             'password' => $this->passwordRules(),
+            // Manually-reviewed evidence. Students upload their Certificate
+            // of Registration with the registration form; a student ID
+            // image is optional and both documents must simply exist on the
+            // private disk for the administrator to see.
+            'cor' => [
+                Rule::requiredIf($requireStudentDetails && ($input['role'] ?? null) === 'student'),
+                'nullable',
+                'file',
+                'max:'.config('student-verification.uploads.cor.max_kilobytes'),
+            ],
+            'student_id' => ['nullable', 'file', 'max:'.config('student-verification.uploads.student_id.max_kilobytes')],
         ];
 
         if ($requireStudentDetails) {
+            $rules['terms'] = ['required', 'accepted'];
             $rules['position'] = ['required_if:role,faculty_staff', 'nullable', 'string', 'max:255'];
             $rules['contact_no'] = ['required_if:role,faculty_staff', 'nullable', 'string', 'max:30'];
             $rules['educational_level'] = [
@@ -242,9 +298,42 @@ class CreateNewUser implements CreatesNewUsers
             ];
         }
 
-        Validator::make($input, $rules, [
+        $validator = Validator::make($input, $rules, [
+            'terms.accepted' => 'You must agree to the Terms of Service and Privacy Policy to continue.',
             'email.regex' => 'Registration is only open to email addresses ending in @8.ustp.edu.ph.',
-        ])->validate();
+            'cor.required' => 'Please upload your Certificate of Registration (COR)',
+        ], [
+            'cor' => 'Certificate of Registration',
+            'student_id' => 'student ID image',
+        ]);
+        $validator->after(fn ($validator) => $this->validateUploadSignatures($validator, $input));
+        $validator->validate();
+    }
+
+    /**
+     * The uploaded file content must match its claimed document type;
+     * client-reported MIME types are not trusted.
+     *
+     * @param  array<string, mixed>  $input
+     */
+    private function validateUploadSignatures(\Illuminate\Validation\Validator $validator, array $input): void
+    {
+        foreach (['cor', 'student_id'] as $field) {
+            $file = $input[$field] ?? null;
+
+            if (! $file instanceof UploadedFile || ! $file->isValid()) {
+                continue;
+            }
+
+            $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($file->getRealPath());
+            $accepted = $field === 'cor'
+                ? ['application/pdf']
+                : config('student-verification.uploads.student_id.accepted_mimes');
+
+            if (! in_array($mime, (array) $accepted, true)) {
+                $validator->errors()->add($field, 'The uploaded file content is not a supported document.');
+            }
+        }
     }
 
     /**
@@ -270,16 +359,13 @@ class CreateNewUser implements CreatesNewUsers
      * Students never carry an employment type. Preserve the department or
      * office supplied by both teaching and non-teaching faculty.
      *
-     * @param  array<string, string>  $input
+     * @param  array<string, mixed>  $input
      */
     private function applyEmploymentDefaults(array &$input): void
     {
         if (($input['role'] ?? null) !== 'faculty_staff') {
             $input['employment_type'] = null;
-
-            return;
         }
-
     }
 
     /**

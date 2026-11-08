@@ -1,8 +1,10 @@
 <?php
 
+use App\Actions\Fortify\CreateNewUser;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\RegistrationOtpService;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -78,7 +80,7 @@ test('faculty registration requires employment details', function (string $field
     Http::assertNothingSent();
 })->with(['position', 'contact_no']);
 
-test('a student registers and is activated immediately', function () {
+test('a student registers with their COR and awaits administrator approval', function () {
     Role::firstOrCreate(['role_name' => 'student'], ['description' => 'Students']);
     fakeBrevoMail();
 
@@ -89,7 +91,7 @@ test('a student registers and is activated immediately', function () {
         ->assertRedirect(route('student.login'))
         ->assertSessionHas(
             'status',
-            'Registration successful! Sign in to upload your USTP student ID and Certificate of Registration for administrator review.',
+            'Registration successful! Your Certificate of Registration has been received and is awaiting administrator approval.',
         );
 
     $this->get(route('student.login'))
@@ -102,11 +104,20 @@ test('a student registers and is activated immediately', function () {
     expect($user)->not->toBeNull()
         ->and($user->status)->toBe('active')
         ->and($user->email_verified_at)->not->toBeNull()
+        ->and($user->is_approved)->toBeFalse()
+        ->and($user->approval_status)->toBe('pending')
         ->and($user->role->role_name)->toBe('student')
         ->and($user->department)->toBe('BSIT')
         ->and($user->name)->toBe('Juan S. Dela Cruz')
         ->and($user->educational_level)->toBe('college')
         ->and($user->year_level)->toBe('1');
+
+    $verification = $user->studentVerification;
+
+    expect($verification)->not->toBeNull()
+        ->and($verification->cor_file_path)->not->toBeNull()
+        ->and($verification->student_id_file_path)->not->toBeNull()
+        ->and($user->approval_status)->toBe('pending');
 });
 
 test('a student can log in with email immediately after OTP verification', function () {
@@ -391,4 +402,64 @@ test('registering requires agreeing to the terms and privacy policy', function (
 
     Http::assertNothingSent();
     expect(User::where('email', 'test@8.ustp.edu.ph')->exists())->toBeFalse();
+});
+
+test('student registration requires a Certificate of Registration upload', function () {
+    fakeBrevoMail();
+    Role::firstOrCreate(['role_name' => 'student']);
+
+    $this->post(route('register.store'), studentRegistrationPayload(['cor' => null]))
+        ->assertSessionHasErrors(['cor' => 'Please upload your Certificate of Registration (COR)']);
+
+    Http::assertNothingSent();
+    expect(User::where('email', 'student@8.ustp.edu.ph')->exists())->toBeFalse();
+});
+
+test('a student id upload is optional during registration', function () {
+    fakeBrevoMail();
+    Role::firstOrCreate(['role_name' => 'student']);
+
+    $this->post(route('register.store'), studentRegistrationPayload(['student_id' => null]))
+        ->assertRedirect(route('register.otp.show'));
+
+    $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()]);
+
+    $user = User::where('email', 'student@8.ustp.edu.ph')->sole();
+
+    expect($user->studentVerification->cor_file_path)->not->toBeNull()
+        ->and($user->studentVerification->student_id_file_path)->toBeNull();
+});
+
+test('registration rejects a COR upload that is not a real PDF', function () {
+    fakeBrevoMail();
+    $this->post(route('register.store'), studentRegistrationPayload([
+        'cor' => UploadedFile::fake()->createWithContent('cor.pdf', 'plain text, not a pdf'),
+    ]))->assertSessionHasErrors(['cor' => 'The uploaded file content is not a supported document.']);
+
+    Http::assertNothingSent();
+});
+
+test('registration rejects a student id upload that is not an image', function () {
+    fakeBrevoMail();
+    $this->post(route('register.store'), studentRegistrationPayload([
+        'student_id' => UploadedFile::fake()->createWithContent('id.png', 'plain text, not an image'),
+    ]))->assertSessionHasErrors(['student_id' => 'The uploaded file content is not a supported document.']);
+
+    Http::assertNothingSent();
+});
+
+test('re-registering the same email replaces the staged documents', function () {
+    fakeBrevoMail();
+    Role::firstOrCreate(['role_name' => 'student']);
+    $email = 'restage@8.ustp.edu.ph';
+
+    Storage::disk('local')->put(
+        CreateNewUser::pendingUploadDirectory($email).'/cor',
+        'stale file',
+    );
+
+    $this->post(route('register.store'), studentRegistrationPayload(['email' => $email]));
+
+    expect(Storage::disk('local')->get(CreateNewUser::pendingUploadDirectory($email).'/cor'))
+        ->toBe('%PDF-1.4 test certificate of registration');
 });

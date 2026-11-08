@@ -1,15 +1,27 @@
-import { Form, Head, Link, router } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
+import { useState } from 'react';
 import {
+    bulk,
     decide,
     document,
     index,
 } from '@/actions/App/Http/Controllers/StudentApprovalController';
 import InputError from '@/components/input-error';
-import StudentVerificationResults from '@/components/student-verification-results';
-import type { Application } from '@/components/student-verification-results';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+
+type Application = {
+    id: number;
+    name: string;
+    email: string;
+    email_verified: boolean;
+    approval_status: 'pending' | 'approved' | 'rejected';
+    review_notes: string | null;
+    submitted_at: string | null;
+    has_student_id: boolean;
+    has_cor: boolean;
+};
 
 type Props = {
     applications: {
@@ -17,7 +29,7 @@ type Props = {
         prev_page_url: string | null;
         next_page_url: string | null;
     };
-    filters: { status: string; sort: string };
+    filters: { status: string };
     status?: string;
 };
 
@@ -26,6 +38,17 @@ export default function StudentApprovals({
     filters,
     status,
 }: Props) {
+    const [selected, setSelected] = useState<number[]>([]);
+    const isPending = filters.status === 'pending';
+
+    function toggle(id: number, checked: boolean) {
+        setSelected((current) =>
+            checked
+                ? [...new Set([...current, id])]
+                : current.filter((value) => value !== id),
+        );
+    }
+
     return (
         <div className="grid gap-6 p-6">
             <Head title="Student approvals" />
@@ -39,9 +62,7 @@ export default function StudentApprovals({
                 {['pending', 'approved', 'rejected'].map((value) => (
                     <Link
                         key={value}
-                        href={index({
-                            query: { status: value, sort: filters.sort },
-                        })}
+                        href={index({ query: { status: value } })}
                         className={
                             value === filters.status
                                 ? 'font-semibold underline'
@@ -51,40 +72,108 @@ export default function StudentApprovals({
                         {value}
                     </Link>
                 ))}
-                <label className="ml-auto">
-                    Sort{' '}
-                    <select
-                        value={filters.sort}
-                        onChange={(event) =>
-                            router.get(
-                                index.url({
-                                    query: {
-                                        status: filters.status,
-                                        sort: event.target.value,
-                                    },
-                                }),
-                            )
-                        }
-                        className="rounded border bg-background p-2"
-                    >
-                        <option value="score">Highest score</option>
-                        <option value="newest">Newest submissions</option>
-                    </select>
-                </label>
             </div>
+
+            {isPending && applications.data.length > 0 && (
+                <Form
+                    action={bulk.url()}
+                    method="patch"
+                    onSuccess={() => setSelected([])}
+                    className="flex flex-wrap items-end gap-3 rounded-xl border p-4"
+                >
+                    {({ errors, processing }) => (
+                        <>
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={processing}
+                                onClick={() => {
+                                    setSelected(
+                                        selected.length ===
+                                            applications.data.length
+                                            ? []
+                                            : applications.data.map(
+                                                  (a) => a.id,
+                                              ),
+                                    );
+                                }}
+                            >
+                                {selected.length === applications.data.length
+                                    ? 'Clear selection'
+                                    : 'Select all'}
+                            </Button>
+                            <div className="grid gap-1">
+                                <Label htmlFor="bulk-reason">
+                                    Shared reason (required for rejection)
+                                </Label>
+                                <Textarea
+                                    id="bulk-reason"
+                                    name="reason"
+                                    maxLength={2000}
+                                    className="min-w-64"
+                                />
+                                <InputError message={errors.reason} />
+                                <InputError message={errors.decision} />
+                            </div>
+                            <div className="flex gap-2">
+                                <Button
+                                    type="submit"
+                                    name="decision"
+                                    value="approved"
+                                    disabled={
+                                        processing || selected.length === 0
+                                    }
+                                >
+                                    Approve selected ({selected.length})
+                                </Button>
+                                <Button
+                                    type="submit"
+                                    name="decision"
+                                    value="rejected"
+                                    variant="destructive"
+                                    disabled={
+                                        processing || selected.length === 0
+                                    }
+                                >
+                                    Reject selected
+                                </Button>
+                            </div>
+                            {selected.map((id) => (
+                                <input
+                                    key={id}
+                                    type="hidden"
+                                    name="ids[]"
+                                    value={id}
+                                />
+                            ))}
+                        </>
+                    )}
+                </Form>
+            )}
+
             {applications.data.length === 0 && (
                 <p>No applications in this queue.</p>
             )}
             {applications.data.map((application) => (
                 <details key={application.id} className="rounded-xl border p-5">
-                    <summary className="cursor-pointer">
-                        <span className="font-semibold">
-                            {application.name}
-                        </span>{' '}
-                        · {application.email} ·{' '}
-                        {application.student_number ?? 'No student number'} ·{' '}
-                        {application.course_code ?? 'No program'} ·{' '}
-                        {application.score}/40 · {application.approval_status}
+                    <summary className="flex cursor-pointer items-center gap-3">
+                        <input
+                            type="checkbox"
+                            checked={selected.includes(application.id)}
+                            disabled={!isPending}
+                            onChange={(event) =>
+                                toggle(application.id, event.target.checked)
+                            }
+                            className="size-4 accent-ustp-navy"
+                            aria-label={`Select ${application.name}`}
+                        />
+                        <span>
+                            <span className="font-semibold">
+                                {application.name}
+                            </span>{' '}
+                            · {application.email}
+                        </span>
                         <span className="block text-sm text-muted-foreground">
                             Submitted:{' '}
                             {application.submitted_at
@@ -92,11 +181,24 @@ export default function StudentApprovals({
                                       application.submitted_at,
                                   ).toLocaleString()
                                 : 'Documents not submitted'}
+                            {application.has_cor ? '' : ' · No COR uploaded'}
+                            {application.has_student_id
+                                ? ''
+                                : ' · No student ID uploaded'}
                         </span>
                     </summary>
-                    <div className="mt-5 grid gap-5 lg:grid-cols-2">
-                        <StudentVerificationResults application={application} />
-                        <div className="grid content-start gap-4">
+                    <div className="mt-5 grid gap-4">
+                        {application.review_notes && (
+                            <div className="rounded-lg bg-muted p-4">
+                                <h3 className="font-medium">
+                                    Reviewer feedback
+                                </h3>
+                                <p className="text-sm whitespace-pre-wrap">
+                                    {application.review_notes}
+                                </p>
+                            </div>
+                        )}
+                        <div className="grid gap-3">
                             {application.has_student_id && (
                                 <a
                                     href={document.url({
@@ -105,16 +207,9 @@ export default function StudentApprovals({
                                     })}
                                     target="_blank"
                                     rel="noreferrer"
+                                    className="underline"
                                 >
-                                    <img
-                                        src={document.url({
-                                            user: application.id,
-                                            type: 'student_id',
-                                        })}
-                                        className="max-h-64 rounded border object-contain"
-                                        alt="Uploaded student ID"
-                                    />
-                                    Open student ID
+                                    Preview student ID
                                 </a>
                             )}
                             {application.has_cor && (
@@ -127,59 +222,52 @@ export default function StudentApprovals({
                                     rel="noreferrer"
                                     className="underline"
                                 >
-                                    Preview COR PDF
+                                    Preview COR document
                                 </a>
                             )}
-                            <Form
-                                {...decide.form(application.id)}
-                                className="grid gap-3"
-                            >
-                                {({ errors, processing }) => (
-                                    <>
-                                        <Label
-                                            htmlFor={`reason-${application.id}`}
-                                        >
-                                            Decision feedback (required for
-                                            rejection or revocation)
-                                        </Label>
-                                        <Textarea
-                                            id={`reason-${application.id}`}
-                                            name="reason"
-                                            maxLength={2000}
-                                        />
-                                        <InputError message={errors.reason} />
-                                        <InputError message={errors.decision} />
-                                        <div className="flex gap-3">
-                                            <Button
-                                                type="submit"
-                                                name="decision"
-                                                value="approved"
-                                                disabled={
-                                                    processing ||
-                                                    !application.has_student_id ||
-                                                    !application.has_cor ||
-                                                    !application.email_verified
-                                                }
-                                            >
-                                                Approve
-                                            </Button>
-                                            <Button
-                                                type="submit"
-                                                name="decision"
-                                                value="rejected"
-                                                variant="destructive"
-                                                disabled={processing}
-                                            >
-                                                {application.approval_status ===
-                                                'approved'
-                                                    ? 'Revoke approval'
-                                                    : 'Reject'}
-                                            </Button>
-                                        </div>
-                                    </>
-                                )}
-                            </Form>
                         </div>
+                        <Form
+                            {...decide.form(application.id)}
+                            className="grid gap-3"
+                        >
+                            {({ errors, processing }) => (
+                                <>
+                                    <Label htmlFor={`reason-${application.id}`}>
+                                        Decision feedback (required for
+                                        rejection)
+                                    </Label>
+                                    <Textarea
+                                        id={`reason-${application.id}`}
+                                        name="reason"
+                                        maxLength={2000}
+                                    />
+                                    <InputError message={errors.reason} />
+                                    <InputError message={errors.decision} />
+                                    <div className="flex gap-3">
+                                        <Button
+                                            type="submit"
+                                            name="decision"
+                                            value="approved"
+                                            disabled={processing}
+                                        >
+                                            Approve
+                                        </Button>
+                                        <Button
+                                            type="submit"
+                                            name="decision"
+                                            value="rejected"
+                                            variant="destructive"
+                                            disabled={processing}
+                                        >
+                                            {application.approval_status ===
+                                            'approved'
+                                                ? 'Revoke approval'
+                                                : 'Reject'}
+                                        </Button>
+                                    </div>
+                                </>
+                            )}
+                        </Form>
                     </div>
                 </details>
             ))}

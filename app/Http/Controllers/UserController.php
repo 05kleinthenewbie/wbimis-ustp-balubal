@@ -158,6 +158,88 @@ class UserController extends Controller
     }
 
     /**
+     * Approve or reject several pending faculty/staff accounts at once.
+     */
+    public function bulk(Request $request): RedirectResponse
+    {
+        $this->ensureAdmin();
+
+        $data = $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['integer', 'distinct'],
+            'decision' => ['required', 'in:approved,rejected'],
+        ]);
+
+        $accounts = User::query()->with('role')
+            ->where('is_technician', false)
+            ->whereDoesntHave('role', fn ($query) => $query->where('role_name', 'student'))
+            ->whereIn('users.id', $data['ids'])
+            ->when($data['decision'] === 'approved', fn ($query) => $query->where('is_approved', false))
+            ->when($data['decision'] === 'rejected', fn ($query) => $query->where('status', 'active'))
+            ->when($data['decision'] === 'rejected', fn ($query) => $query->whereDoesntHave('role', fn ($q) => $q->where('role_name', 'ict_admin')))
+            ->get();
+
+        foreach ($accounts as $user) {
+            if ($data['decision'] === 'approved') {
+                $this->approveAccount($user);
+            } else {
+                $this->rejectAccount($user);
+            }
+        }
+
+        return redirect()->route('users.approvals')->with(
+            'status',
+            count($accounts).' account(s) '.$data['decision'].'.',
+        );
+    }
+
+    /**
+     * Reject a pending faculty/staff registration. The account cannot log
+     * in and the email address becomes available for a new registration.
+     */
+    private function rejectAccount(User $user): void
+    {
+        if ($user->isAdministrator()) {
+            throw ValidationException::withMessages([
+                'reject' => 'Administrator accounts cannot be rejected.',
+            ]);
+        }
+
+        if ($user->isStudent()) {
+            throw ValidationException::withMessages(['reject' => 'Use Student Approvals to decide a student application with a reason.']);
+        }
+
+        if ($user->isTechnician()) {
+            throw ValidationException::withMessages([
+                'reject' => 'Technician records are not login accounts and do not need approval.',
+            ]);
+        }
+
+        if ($user->status === 'rejected') {
+            return;
+        }
+
+        $user->update(['status' => 'rejected', 'is_approved' => false]);
+
+        Notification::create([
+            'user_id' => $user->id,
+            'message' => 'Your account registration was rejected. Please contact the ICT office for more information.',
+            'notification_type' => 'account_rejection',
+            'link' => '/dashboard',
+            'notification_status' => 'unread',
+        ]);
+
+        AuditLog::record(
+            'Rejected the account registration',
+            'users',
+            $user->id,
+            null,
+            ['status' => 'active'],
+            ['status' => 'rejected'],
+        );
+    }
+
+    /**
      * Revoke an account approval. The change takes effect immediately,
      * including for any currently logged-in session.
      */

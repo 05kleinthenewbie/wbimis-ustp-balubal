@@ -126,10 +126,8 @@ export default function Register({ passwordRules, programs }: Props) {
                                         />
                                         <p className="text-xs text-muted-foreground">
                                             Personal or university email is
-                                            accepted. After email verification,
-                                            sign in to upload your USTP student
-                                            ID and COR for administrator
-                                            approval.
+                                            accepted. Verify the code we send
+                                            you to finish creating your account.
                                         </p>
                                         {isAlertMessage(errors.email ?? '') ? (
                                             <StatusAlert
@@ -240,6 +238,54 @@ export default function Register({ passwordRules, programs }: Props) {
                                         <InputError
                                             message={errors.year_level}
                                         />
+                                    </div>
+                                    <div className="grid gap-4 rounded-2xl border border-border bg-muted/20 p-4">
+                                        <div className="space-y-1">
+                                            <h3 className="font-semibold text-foreground">
+                                                Enrollment documents
+                                            </h3>
+                                            <p className="text-xs text-muted-foreground">
+                                                Upload your Certificate of
+                                                Registration (COR). The ICT
+                                                office will review your
+                                                documents manually before
+                                                approving your account.
+                                            </p>
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="cor">
+                                                Certificate of Registration
+                                                (PDF)
+                                                <span className="ml-1 text-destructive">
+                                                    *
+                                                </span>
+                                            </Label>
+                                            <Input
+                                                id="cor"
+                                                name="cor"
+                                                type="file"
+                                                accept="application/pdf"
+                                                required
+                                            />
+                                            <InputError message={errors.cor} />
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label
+                                                htmlFor="student_id"
+                                                className="font-medium text-foreground"
+                                            >
+                                                USTP Student ID image (optional)
+                                            </Label>
+                                            <Input
+                                                id="student_id"
+                                                name="student_id"
+                                                type="file"
+                                                accept="image/png,image/jpeg,image/webp"
+                                            />
+                                            <InputError
+                                                message={errors.student_id}
+                                            />
+                                        </div>
                                     </div>
                                 </>
                             ) : (
@@ -688,7 +734,7 @@ export default function Register({ passwordRules, programs }: Props) {
                                 {processing && <Spinner />}
                                 {isStudent
                                     ? 'Submit Registration'
-                                    : 'Continue to email verification'}
+                                    : 'Continue to email verification'}{' '}
                             </Button>
                         </div>
 

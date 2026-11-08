@@ -76,7 +76,7 @@ class RegisterOtpController extends Controller
             : 'Registration successful! Your account is pending administrator approval. You will be able to log in once an ICT admin approves your account.';
 
         if ($isStudent) {
-            $status = 'Registration successful! Sign in to upload your USTP student ID and Certificate of Registration for administrator review.';
+            $status = 'Registration successful! Your Certificate of Registration has been received and is awaiting administrator approval.';
         }
 
         return redirect()

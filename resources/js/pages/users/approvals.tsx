@@ -1,6 +1,12 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import { ArrowUpRight, CheckCircle2, Clock3, UserCheck } from 'lucide-react';
 import { useState } from 'react';
+import {
+    approve,
+    bulk,
+    index,
+} from '@/actions/App/Http/Controllers/UserController';
+import InputError from '@/components/input-error';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useInitials } from '@/hooks/use-initials';
@@ -28,12 +34,21 @@ const roleLabels: Record<string, string> = {
 
 export default function UserApprovals({ status, error, pendingUsers }: Props) {
     const getInitials = useInitials();
+    const [selected, setSelected] = useState<number[]>([]);
     const [processingId, setProcessingId] = useState<number | null>(null);
+
+    function toggle(id: number, checked: boolean) {
+        setSelected((current) =>
+            checked
+                ? [...new Set([...current, id])]
+                : current.filter((value) => value !== id),
+        );
+    }
 
     function approveUser(user: PendingUser) {
         setProcessingId(user.id);
         router.patch(
-            `/users/${user.id}/approve`,
+            approve.url(user.id),
             {},
             {
                 preserveScroll: true,
@@ -71,7 +86,7 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
                                     Pending Approvals
                                 </p>
                                 <p className="text-xs text-slate-500">
-                                    {pendingUsers.length} verified account
+                                    {pendingUsers.length} account
                                     {pendingUsers.length !== 1 ? 's' : ''}{' '}
                                     awaiting approval
                                 </p>
@@ -79,7 +94,7 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
                         </div>
 
                         <Link
-                            href="/users"
+                            href={index.url()}
                             className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50"
                         >
                             <UserCheck className="size-3.5" />
@@ -90,9 +105,10 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
                     <div className="grid grid-cols-1 items-center gap-1 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-700 sm:flex sm:gap-2">
                         <CheckCircle2 className="size-4 shrink-0 text-amber-600" />
                         <span>
-                            Only accounts whose email address has been verified
-                            appear here. Approving grants the account access to
-                            the application; approving also notifies the user.
+                            Approving grants the account access to the
+                            application; rejecting blocks the registration until
+                            the applicant registers again. Approving notifies
+                            the user.
                         </span>
                     </div>
 
@@ -112,11 +128,96 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
                         </div>
                     ) : (
                         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                            <Form
+                                action={bulk.url()}
+                                method="patch"
+                                options={{ preserveScroll: true }}
+                                onSuccess={() => setSelected([])}
+                                className="space-y-3"
+                            >
+                                {({ processing, errors }) => (
+                                    <>
+                                        <div className="flex flex-wrap items-center gap-3 border-b border-slate-100 bg-slate-50/50 px-5 py-3">
+                                            <span className="text-xs font-semibold text-slate-500">
+                                                {selected.length} selected
+                                            </span>
+                                            <InputError
+                                                message={
+                                                    errors.ids ??
+                                                    errors.decision ??
+                                                    errors.approve
+                                                }
+                                            />
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                disabled={processing}
+                                                onClick={() =>
+                                                    setSelected(
+                                                        selected.length ===
+                                                            pendingUsers.length
+                                                            ? []
+                                                            : pendingUsers.map(
+                                                                  (user) =>
+                                                                      user.id,
+                                                              ),
+                                                    )
+                                                }
+                                            >
+                                                {selected.length ===
+                                                pendingUsers.length
+                                                    ? 'Clear selection'
+                                                    : 'Select all'}
+                                            </Button>
+                                            <div className="ml-auto flex gap-2">
+                                                <Button
+                                                    type="submit"
+                                                    size="sm"
+                                                    name="decision"
+                                                    value="approved"
+                                                    disabled={
+                                                        processing ||
+                                                        selected.length === 0
+                                                    }
+                                                    className="h-8 bg-emerald-600 px-3 text-xs font-semibold text-white hover:bg-emerald-700"
+                                                >
+                                                    <CheckCircle2 className="size-3.5" />
+                                                    Approve selected
+                                                </Button>
+                                                <Button
+                                                    type="submit"
+                                                    size="sm"
+                                                    name="decision"
+                                                    value="rejected"
+                                                    disabled={
+                                                        processing ||
+                                                        selected.length === 0
+                                                    }
+                                                    className="h-8 border border-rose-200 px-3 text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                                                >
+                                                    Reject selected
+                                                </Button>
+                                            </div>
+                                            {selected.map((id) => (
+                                                <input
+                                                    key={id}
+                                                    type="hidden"
+                                                    name="ids[]"
+                                                    value={id}
+                                                />
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </Form>
+
                             <div className="overflow-x-auto">
                                 <table className="w-full min-w-180 text-sm">
                                     <thead>
                                         <tr className="border-b border-slate-200 bg-slate-50">
                                             {[
+                                                '',
                                                 'Name',
                                                 'Email',
                                                 'Role',
@@ -124,8 +225,8 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
                                                 'Actions',
                                             ].map((heading, index) => (
                                                 <th
-                                                    key={heading}
-                                                    className={`px-5 py-3.5 text-left text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase ${index === 4 ? 'text-right' : ''}`}
+                                                    key={heading || 'select'}
+                                                    className={`px-5 py-3.5 text-left text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase ${index === 5 ? 'text-right' : ''}`}
                                                 >
                                                     {heading}
                                                 </th>
@@ -139,6 +240,24 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
                                                 key={user.id}
                                                 className="border-b border-slate-200 transition-colors last:border-0 hover:bg-slate-50"
                                             >
+                                                <td className="px-5 py-4">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selected.includes(
+                                                            user.id,
+                                                        )}
+                                                        onChange={(event) =>
+                                                            toggle(
+                                                                user.id,
+                                                                event.target
+                                                                    .checked,
+                                                            )
+                                                        }
+                                                        className="size-4 accent-ustp-navy"
+                                                        aria-label={`Select ${user.name}`}
+                                                    />
+                                                </td>
+
                                                 <td className="px-5 py-4">
                                                     <div className="flex items-center gap-3">
                                                         <Avatar className="size-8 shrink-0 rounded-lg">
@@ -204,7 +323,7 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
                                                         </Button>
 
                                                         <Link
-                                                            href="/users"
+                                                            href={index.url()}
                                                             aria-label={`View user details for ${user.name}`}
                                                             className="inline-flex size-8 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-slate-100 hover:text-ustp-gold"
                                                         >

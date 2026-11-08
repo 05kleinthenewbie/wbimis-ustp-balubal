@@ -62,6 +62,7 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware(['auth', 'verified', 'approved'])->group(function () {
     Route::get('students/approvals', [StudentApprovalController::class, 'index'])->name('students.approvals');
+    Route::patch('students/approvals/bulk-decision', [StudentApprovalController::class, 'bulk'])->name('students.bulk-decision');
     Route::patch('students/{user}/decision', [StudentApprovalController::class, 'decide'])->name('students.decision');
     Route::get('students/{user}/documents/{type}', [StudentApprovalController::class, 'document'])->name('students.document');
     Route::get('push-subscriptions/config', [PushSubscriptionController::class, 'show'])->name('push-subscriptions.show');
@@ -102,6 +103,7 @@ Route::middleware(['auth', 'verified', 'approved'])->group(function () {
     Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     Route::get('audit-log', [AuditLogController::class, 'index'])->name('audit-log.index');
     Route::get('users/approvals', [UserController::class, 'approvals'])->name('users.approvals');
+    Route::patch('users/approvals/bulk-decision', [UserController::class, 'bulk'])->name('users.bulk-decision');
     Route::patch('users/{user}/approve', [UserController::class, 'approve'])->name('users.approve');
     Route::patch('users/{user}/revoke-approval', [UserController::class, 'revokeApproval'])->name('users.revoke-approval');
     Route::resource('users', UserController::class)->only(['index', 'update']);

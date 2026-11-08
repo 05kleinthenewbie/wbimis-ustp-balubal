@@ -57,7 +57,7 @@ it('can register as a student and is blocked until approved', function () {
 
     $response->assertCreated()
         ->assertJsonStructure(['message', 'user'])
-        ->assertJsonPath('message', 'Account created. Sign in to verify your email and submit your student ID and COR for review.');
+        ->assertJsonPath('message', 'Account created. Sign in to verify your email and upload your Certificate of Registration (COR) for review.');
 
     $this->assertDatabaseHas('users', [
         'email' => 'student@8.ustp.edu.ph',

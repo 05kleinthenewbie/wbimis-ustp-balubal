@@ -75,7 +75,7 @@ class AuthController extends ApiController
         ]));
 
         return response()->json([
-            'message' => $user->isStudent() ? 'Account created. Sign in to verify your email and submit your student ID and COR for review.' : ($user->is_approved
+            'message' => $user->isStudent() ? 'Account created. Sign in to verify your email and upload your Certificate of Registration (COR) for review.' : ($user->is_approved
                 ? 'Account created successfully. You can now log in.'
                 : 'Account created successfully. Please wait for admin approval before logging in.'),
             'user' => $user->load('role'),

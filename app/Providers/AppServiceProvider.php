@@ -7,9 +7,6 @@ use App\Listeners\Auth\SendAccountApprovedEmailViaBrevo;
 use App\Listeners\Auth\SendWelcomeEmailViaBrevo;
 use App\Models\Notification;
 use App\Observers\NotificationObserver;
-use App\Services\StudentVerification\CorParser;
-use App\Services\StudentVerification\ProgramCatalog;
-use App\Services\StudentVerification\QrPayloadParser;
 use Carbon\CarbonImmutable;
 use GuzzleHttp\Client;
 use Illuminate\Auth\Events\Logout;
@@ -28,9 +25,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->bind(ProgramCatalog::class, fn () => new ProgramCatalog(config('student-verification.programs')));
-        $this->app->bind(QrPayloadParser::class, fn () => new QrPayloadParser(trim(config('student-verification.student_number_pattern'), '^$')));
-        $this->app->bind(CorParser::class, fn ($app) => new CorParser($app->make(ProgramCatalog::class), config('student-verification.student_number_pattern')));
         $this->app->bind(WebPush::class, fn (): WebPush => new WebPush([
             'VAPID' => [
                 'subject' => config('services.webpush.subject'),

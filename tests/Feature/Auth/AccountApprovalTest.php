@@ -152,3 +152,90 @@ test('unapproved accounts cannot use protected api endpoints', function () {
         ->assertForbidden()
         ->assertJsonPath('message', 'Your account is pending administrator approval.');
 });
+
+test('an administrator can approve pending accounts in bulk', function () {
+    Notification::fake();
+    $decision = User::factory()->pendingApproval()->create(['role_id' => $this->facultyRole->id]);
+    $untouched = User::factory()->pendingApproval()->create(['role_id' => $this->facultyRole->id]);
+
+    $this->actingAs($this->admin)
+        ->patch(route('users.bulk-decision'), [
+            'ids' => [$decision->id, $untouched->id],
+            'decision' => 'approved',
+        ])
+        ->assertRedirect(route('users.approvals'))
+        ->assertSessionHas('status', '2 account(s) approved.');
+
+    expect($decision->fresh()->is_approved)->toBeTrue()
+        ->and($untouched->fresh()->is_approved)->toBeTrue();
+
+    $this->assertDatabaseHas('audit_logs', [
+        'record_id' => $decision->id,
+        'action_taken' => 'Approved the account registration',
+    ]);
+
+    $this->actingAs($decision->refresh())->get(route('dashboard'))->assertOk();
+});
+
+test('rejected faculty accounts cannot access protected pages', function () {
+    $rejected = User::factory()->create(['role_id' => $this->facultyRole->id, 'email' => 'bulk-reject@8.ustp.edu.ph']);
+
+    $this->actingAs($this->admin)
+        ->patch(route('users.bulk-decision'), [
+            'ids' => [$rejected->id],
+            'decision' => 'rejected',
+        ])
+        ->assertRedirect(route('users.approvals'))
+        ->assertSessionHas('status', '1 account(s) rejected.');
+
+    $this->actingAs($rejected->refresh())
+        ->get(route('dashboard'))
+        ->assertRedirect(route('approval.pending'));
+
+    $this->assertDatabaseHas('notifications', [
+        'user_id' => $rejected->id,
+        'notification_type' => 'account_rejection',
+    ]);
+});
+
+test('an administrator can reject pending accounts in bulk', function () {
+    $rejected = User::factory()->pendingApproval()->create(['role_id' => $this->facultyRole->id, 'email' => 'bulk-reject@8.ustp.edu.ph']);
+    $untouched = User::factory()->pendingApproval()->create(['role_id' => $this->facultyRole->id, 'email' => 'bulk-untouched@8.ustp.edu.ph']);
+
+    $this->actingAs($this->admin)
+        ->patch(route('users.bulk-decision'), [
+            'ids' => [$rejected->id, $untouched->id],
+            'decision' => 'rejected',
+        ])
+        ->assertRedirect(route('users.approvals'))
+        ->assertSessionHas('status', '2 account(s) rejected.');
+
+    expect($rejected->fresh()->status)->toBe('rejected')
+        ->and($rejected->fresh()->is_approved)->toBeFalse()
+        ->and($untouched->fresh()->status)->toBe('rejected');
+});
+
+test('bulk rejection does not touch administrator accounts', function () {
+    $this->actingAs($this->admin)
+        ->patch(route('users.bulk-decision'), [
+            'ids' => [$this->admin->id],
+            'decision' => 'rejected',
+        ])
+        ->assertSessionHasNoErrors()
+        ->assertSessionHas('status', '0 account(s) rejected.');
+
+    expect($this->admin->fresh()->status)->toBe('active');
+});
+
+test('only administrators can use the bulk decision endpoint', function () {
+    $user = User::factory()->create(['role_id' => $this->facultyRole->id]);
+
+    $this->actingAs($user)
+        ->patch(route('users.bulk-decision'), [
+            'ids' => [$user->id],
+            'decision' => 'approved',
+        ])
+        ->assertForbidden();
+
+    expect($user->fresh()->is_approved)->toBeTrue();
+});

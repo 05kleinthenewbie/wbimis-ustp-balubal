@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /*
@@ -17,6 +19,7 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
+    ->beforeEach(fn () => Storage::fake('local'))
     ->in('Feature');
 
 /*
@@ -60,6 +63,24 @@ function fakeBrevoMail(): void
 }
 
 /**
+ * A valid PDF suitable for the Certificate of Registration upload field.
+ */
+function fakeCorUpload(string $content = '%PDF-1.4 test certificate of registration'): UploadedFile
+{
+    return UploadedFile::fake()->createWithContent('cor.pdf', $content);
+}
+
+/**
+ * A valid student ID image.
+ */
+function fakeStudentIdUpload(): UploadedFile
+{
+    $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==');
+
+    return UploadedFile::fake()->createWithContent('student-id.png', $png);
+}
+
+/**
  * A payload accepted by the web registration flow.
  *
  * @param  array<string, mixed>  $overrides
@@ -98,6 +119,8 @@ function studentRegistrationPayload(array $overrides = []): array
         'department' => 'BSIT',
         'educational_level' => 'college',
         'year_level' => '1',
+        'cor' => fakeCorUpload(),
+        'student_id' => fakeStudentIdUpload(),
     ], $overrides));
 }
 
