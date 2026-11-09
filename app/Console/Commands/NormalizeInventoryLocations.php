@@ -19,7 +19,7 @@ class NormalizeInventoryLocations extends Command
     {
         $updated = 0;
 
-        foreach (InventoryItem::query()->whereNotNull('location')->lazyById() as $item) {
+        foreach (InventoryItem::query()->whereHas('currentAssignment.location', fn ($query) => $query->whereNotNull('location'))->lazyById() as $item) {
             $location = $normalizer->normalize($item->location);
 
             if ($location === $item->location) {

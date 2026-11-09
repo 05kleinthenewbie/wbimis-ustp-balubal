@@ -125,7 +125,7 @@ class UserController extends Controller
         $pendingUsers = User::query()
             ->with('role')
             ->where('is_technician', false)
-            ->where('is_approved', false)
+            ->where('approval_status', 'pending')
             ->whereDoesntHave('role', fn ($query) => $query->where('role_name', 'student'))
             ->whereNotNull('email_verified_at')
             ->whereNotIn('status', ['inactive', 'rejected'])
@@ -174,7 +174,7 @@ class UserController extends Controller
             ->where('is_technician', false)
             ->whereDoesntHave('role', fn ($query) => $query->where('role_name', 'student'))
             ->whereIn('users.id', $data['ids'])
-            ->when($data['decision'] === 'approved', fn ($query) => $query->where('is_approved', false))
+            ->when($data['decision'] === 'approved', fn ($query) => $query->where('approval_status', 'pending'))
             ->when($data['decision'] === 'rejected', fn ($query) => $query->where('status', 'active'))
             ->when($data['decision'] === 'rejected', fn ($query) => $query->whereDoesntHave('role', fn ($q) => $q->where('role_name', 'ict_admin')))
             ->get();
@@ -219,7 +219,7 @@ class UserController extends Controller
             return;
         }
 
-        $user->update(['status' => 'rejected', 'is_approved' => false]);
+        $user->update(['status' => 'rejected', 'approval_status' => 'rejected']);
 
         Notification::create([
             'user_id' => $user->id,
@@ -342,7 +342,7 @@ class UserController extends Controller
             }
         }
 
-        if ($user->wasChanged('is_approved')) {
+        if ($user->wasChanged('approval_status')) {
             DB::afterCommit(fn () => UserApproved::dispatch($user));
         }
 

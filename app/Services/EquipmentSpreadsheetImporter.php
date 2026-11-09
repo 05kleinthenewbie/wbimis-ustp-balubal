@@ -97,7 +97,7 @@ class EquipmentSpreadsheetImporter
                                         unset($item[$field]);
                                     }
                                 }
-                                InventoryItem::query()->where('property_no', $property)->update($item);
+                                InventoryItem::query()->where('property_no', $property)->firstOrFail()->update($item);
                             }
 
                             $updated++;

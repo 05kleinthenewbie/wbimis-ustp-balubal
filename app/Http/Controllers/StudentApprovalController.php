@@ -76,7 +76,7 @@ class StudentApprovalController extends Controller
         DB::transaction(function () use ($user, $reviewer, $decision, $reason): void {
             $locked = User::lockForUpdate()->findOrFail($user->id);
             $previous = $locked->approval_status;
-            $locked->forceFill(['approval_status' => $decision, 'is_approved' => $decision === 'approved'])->save();
+            $locked->forceFill(['approval_status' => $decision])->save();
 
             $verification = StudentVerification::firstOrNew(['user_id' => $locked->id]);
             $verification->user_id = $locked->id;

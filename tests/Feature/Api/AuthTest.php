@@ -8,7 +8,7 @@ it('can register and is activated immediately', function () {
 
     $payload = [
         'name' => 'New Faculty',
-        'email' => 'new@8.ustp.edu.ph',
+        'email' => 'new@ustp.edu.ph',
         'password' => 'password123',
         'password_confirmation' => 'password123',
         'role' => 'faculty_staff',
@@ -21,7 +21,8 @@ it('can register and is activated immediately', function () {
     $response->assertCreated()
         ->assertJsonStructure(['message', 'user']);
 
-    $this->assertDatabaseHas('users', ['email' => 'new@8.ustp.edu.ph', 'status' => 'active', 'department' => 'Administrative Office']);
+    $this->assertDatabaseHas('users', ['email' => 'new@ustp.edu.ph', 'status' => 'active']);
+    expect(User::where('email', 'new@ustp.edu.ph')->sole()->facultyProfile->department->name)->toBe('Administrative Office');
 });
 
 it('rejects a faculty registration without an employment type', function () {
@@ -29,7 +30,7 @@ it('rejects a faculty registration without an employment type', function () {
 
     $response = $this->postJson('/api/v1/auth/register', [
         'name' => 'New Faculty',
-        'email' => 'new@8.ustp.edu.ph',
+        'email' => 'new@ustp.edu.ph',
         'password' => 'password123',
         'password_confirmation' => 'password123',
         'role' => 'faculty_staff',
@@ -39,7 +40,7 @@ it('rejects a faculty registration without an employment type', function () {
     $response->assertUnprocessable()
         ->assertJsonValidationErrors(['employment_type']);
 
-    $this->assertDatabaseMissing('users', ['email' => 'new@8.ustp.edu.ph']);
+    $this->assertDatabaseMissing('users', ['email' => 'new@ustp.edu.ph']);
 });
 
 it('can register as a student and is blocked until approved', function () {
@@ -55,6 +56,10 @@ it('can register as a student and is blocked until approved', function () {
         'id_number' => '2023303709',
     ]);
 
+    $student = User::where('email', 'student@8.ustp.edu.ph')->sole();
+    $this->assertDatabaseHas('student_profiles', ['user_id' => $student->id, 'id_number' => '2023303709']);
+    expect($student->studentProfile->program->code)->toBe('BSIT');
+
     $response->assertCreated()
         ->assertJsonStructure(['message', 'user'])
         ->assertJsonPath('message', 'Account created. Sign in to verify your email and upload your Certificate of Registration (COR) for review.');
@@ -62,8 +67,6 @@ it('can register as a student and is blocked until approved', function () {
     $this->assertDatabaseHas('users', [
         'email' => 'student@8.ustp.edu.ph',
         'status' => 'active',
-        'department' => 'BSIT',
-        'id_number' => '2023303709',
     ]);
 
     $login = $this->postJson('/api/v1/auth/login', [
@@ -88,7 +91,7 @@ it('accepts a student registration without a roster entry', function () {
 
     $response->assertCreated();
 
-    $this->assertDatabaseHas('users', ['email' => 'student@8.ustp.edu.ph', 'id_number' => '9999999999']);
+    $this->assertDatabaseHas('student_profiles', ['user_id' => User::where('email', 'student@8.ustp.edu.ph')->sole()->id, 'id_number' => '9999999999']);
 });
 
 it('rejects a student registration without a department', function () {

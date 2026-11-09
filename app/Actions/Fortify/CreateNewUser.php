@@ -46,13 +46,12 @@ class CreateNewUser implements CreatesNewUsers
         $this->validateInput($input, requireStudentDetails: true);
 
         $cor = $input['cor'] ?? null;
-        $studentId = $input['student_id'] ?? null;
         unset($input['cor'], $input['student_id']);
 
         $email = (string) $input['email'];
         $this->throttleOtpRequest($email);
 
-        $this->stashRegistrationUploads($email, $cor, $studentId);
+        $this->stashRegistrationUploads($email, $cor);
 
         $code = $this->registrationOtp->issue($email, $input);
 
@@ -121,7 +120,7 @@ class CreateNewUser implements CreatesNewUsers
                 ...$details,
                 'status' => 'active',
                 'is_approved' => false,
-                'approval_status' => $input['role'] === 'student' ? 'pending' : null,
+                'approval_status' => 'pending',
                 'email_verified_at' => now(),
             ];
 
@@ -160,29 +159,23 @@ class CreateNewUser implements CreatesNewUsers
     }
 
     /**
-     * Copy the uploaded student documents of a pending registration onto
-     * the private disk so they survive the OTP round-trip. A new pending
+     * Copy the COR of a pending registration onto the private disk so it
+     * survives the OTP round-trip. A new pending
      * registration for the same address replaces any previous files.
-     *
-     * @param  mixed  $cor
-     * @param  mixed  $studentId
      */
-    private function stashRegistrationUploads(string $email, $cor, $studentId): void
+    private function stashRegistrationUploads(string $email, ?UploadedFile $cor): void
     {
         $directory = self::pendingUploadDirectory($email);
         Storage::disk('local')->deleteDirectory($directory);
 
-        foreach (['cor' => $cor, 'student_id' => $studentId] as $name => $file) {
-            if ($file === null) {
-                continue;
-            }
+        if ($cor === null) {
+            return;
+        }
 
-            $copied = $file->storeAs($directory, $name, 'local');
-            if ($copied === false) {
-                throw ValidationException::withMessages([
-                    'cor' => 'Your documents could not be staged. Please try again.',
-                ]);
-            }
+        if ($cor->storeAs($directory, 'cor', 'local') === false) {
+            throw ValidationException::withMessages([
+                'cor' => 'Your documents could not be staged. Please try again.',
+            ]);
         }
     }
 
@@ -231,6 +224,10 @@ class CreateNewUser implements CreatesNewUsers
      */
     private function validateInput(array $input, bool $requireStudentDetails = false): void
     {
+        $returningUser = User::where('email', $input['email'] ?? '')
+            ->whereIn('status', ['inactive', 'rejected'])
+            ->first();
+
         $rules = [
             'name' => $this->nameRules(),
             'email' => [
@@ -239,9 +236,9 @@ class CreateNewUser implements CreatesNewUsers
                 'email',
                 'max:191',
                 // Only campus email addresses may register. The host has to
-                // be exactly 8.ustp.edu.ph; other domains, look-alike
+                // be exactly ustp.edu.ph; other domains, look-alike
                 // domains and sub-domains are all rejected.
-                Rule::when(($input['role'] ?? null) !== 'student', 'regex:/^[^\s@]+@8\.ustp\.edu\.ph$/i'),
+                Rule::when(($input['role'] ?? null) !== 'student', 'regex:/^[^\s@]+@ustp\.edu\.ph$/i'),
                 // Rejected (inactive) accounts may register again, so only
                 // pending/active emails block a new registration.
                 Rule::unique(User::class)->where(fn ($query) => $query->whereIn('status', ['pending', 'active'])),
@@ -269,15 +266,22 @@ class CreateNewUser implements CreatesNewUsers
             'password' => $this->passwordRules(),
             // Manually-reviewed evidence. Students upload their Certificate
             // of Registration with the registration form; a student ID
-            // image is optional and both documents must simply exist on the
-            // private disk for the administrator to see.
+            // number is collected separately for manual administrator review.
             'cor' => [
                 Rule::requiredIf($requireStudentDetails && ($input['role'] ?? null) === 'student'),
                 'nullable',
                 'file',
                 'max:'.config('student-verification.uploads.cor.max_kilobytes'),
             ],
-            'student_id' => ['nullable', 'file', 'max:'.config('student-verification.uploads.student_id.max_kilobytes')],
+            'student_id' => ['prohibited'],
+            'id_number' => [
+                Rule::requiredIf($requireStudentDetails && ($input['role'] ?? null) === 'student'),
+                'nullable',
+                'string',
+                'max:20',
+                'regex:/^[0-9]+$/',
+                Rule::unique('student_profiles', 'id_number')->ignore($returningUser?->id, 'user_id'),
+            ],
         ];
 
         if ($requireStudentDetails) {
@@ -300,11 +304,11 @@ class CreateNewUser implements CreatesNewUsers
 
         $validator = Validator::make($input, $rules, [
             'terms.accepted' => 'You must agree to the Terms of Service and Privacy Policy to continue.',
-            'email.regex' => 'Registration is only open to email addresses ending in @8.ustp.edu.ph.',
+            'email.regex' => 'Registration is only open to email addresses ending in @ustp.edu.ph.',
             'cor.required' => 'Please upload your Certificate of Registration (COR)',
         ], [
             'cor' => 'Certificate of Registration',
-            'student_id' => 'student ID image',
+            'id_number' => 'student ID number',
         ]);
         $validator->after(fn ($validator) => $this->validateUploadSignatures($validator, $input));
         $validator->validate();
@@ -318,21 +322,16 @@ class CreateNewUser implements CreatesNewUsers
      */
     private function validateUploadSignatures(\Illuminate\Validation\Validator $validator, array $input): void
     {
-        foreach (['cor', 'student_id'] as $field) {
-            $file = $input[$field] ?? null;
+        $file = $input['cor'] ?? null;
 
-            if (! $file instanceof UploadedFile || ! $file->isValid()) {
-                continue;
-            }
+        if (! $file instanceof UploadedFile || ! $file->isValid()) {
+            return;
+        }
 
-            $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($file->getRealPath());
-            $accepted = $field === 'cor'
-                ? ['application/pdf']
-                : config('student-verification.uploads.student_id.accepted_mimes');
+        $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($file->getRealPath());
 
-            if (! in_array($mime, (array) $accepted, true)) {
-                $validator->errors()->add($field, 'The uploaded file content is not a supported document.');
-            }
+        if ($mime !== 'application/pdf') {
+            $validator->errors()->add('cor', 'The uploaded file content is not a supported document.');
         }
     }
 

@@ -12,12 +12,14 @@ import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
+import { authenticate } from '@/routes/student';
+import { request as studentForgotPassword } from '@/routes/student/password';
 
 type Props = {
     status?: string;
     canResetPassword: boolean;
     showRegister?: boolean;
-    portal?: 'admin' | 'faculty';
+    portal?: 'admin' | 'faculty' | 'student';
     title?: string;
 };
 
@@ -28,6 +30,8 @@ export default function Login({
     portal,
     title = 'Sign in',
 }: Props) {
+    const isStudent = portal === 'student';
+
     return (
         <>
             <Head title={title} />
@@ -35,13 +39,13 @@ export default function Login({
             {status && <StatusAlert message={status} className="mb-5" />}
 
             <Form
-                {...store.form()}
+                {...(isStudent ? authenticate.form() : store.form())}
                 resetOnSuccess={['password']}
                 className="flex flex-col gap-5"
             >
                 {({ processing, errors }) => (
                     <>
-                        {portal && (
+                        {portal && !isStudent && (
                             <input type="hidden" name="portal" value={portal} />
                         )}
 
@@ -63,7 +67,11 @@ export default function Login({
                                         autoFocus
                                         autoComplete="username"
                                         aria-invalid={Boolean(errors.email)}
-                                        placeholder="name.id@ustp.edu.ph"
+                                        placeholder={
+                                            isStudent
+                                                ? 'name@example.com'
+                                                : 'name.id@ustp.edu.ph'
+                                        }
                                         className="h-11 rounded-lg border-border bg-background pl-10 text-sm transition-colors focus-visible:border-ustp-navy focus-visible:ring-ustp-navy/20"
                                     />
                                 </div>
@@ -90,7 +98,11 @@ export default function Login({
                                     </Label>
                                     {canResetPassword && (
                                         <TextLink
-                                            href={request()}
+                                            href={
+                                                isStudent
+                                                    ? studentForgotPassword()
+                                                    : request()
+                                            }
                                             className="py-1 text-sm font-medium text-ustp-navy hover:text-ustp-navy-dark dark:text-white/80 dark:hover:text-white"
                                         >
                                             Forgot password?
@@ -131,7 +143,11 @@ export default function Login({
                                 size="lg"
                                 className="h-11 w-full rounded-lg bg-ustp-gold text-sm font-semibold text-ustp-navy shadow-sm transition-colors hover:bg-ustp-gold-dark hover:text-white"
                                 disabled={processing}
-                                data-test="login-button"
+                                data-test={
+                                    isStudent
+                                        ? 'student-login-button'
+                                        : 'login-button'
+                                }
                             >
                                 {processing && <Spinner />}
                                 {processing ? 'Signing in…' : 'Sign in'}
@@ -145,11 +161,17 @@ export default function Login({
                             <div className="border-t border-border pt-5 text-center text-sm leading-relaxed text-muted-foreground">
                                 Don't have an account?{' '}
                                 <TextLink
-                                    href={register()}
+                                    href={
+                                        isStudent
+                                            ? register({
+                                                  query: { role: 'student' },
+                                              })
+                                            : register()
+                                    }
                                     data-test="register-link"
                                     className="font-medium text-ustp-navy hover:text-ustp-navy-dark dark:text-white/80 dark:hover:text-white"
                                 >
-                                    Register as Faculty
+                                    Create account
                                 </TextLink>
                             </div>
                         )}

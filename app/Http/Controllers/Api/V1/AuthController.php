@@ -24,7 +24,7 @@ class AuthController extends ApiController
         $login = trim($credentials['email']);
 
         $user = preg_match('/^\d{10}$/', $login) === 1
-            ? User::where('id_number', $login)->first()
+            ? User::whereHas('studentProfile', fn ($query) => $query->where('id_number', $login))->first()
             : User::where('email', $login)->first();
 
         if (! $user || ! Hash::check($credentials['password'], $user->password)) {

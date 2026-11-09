@@ -90,7 +90,7 @@ function registrationPayload(array $overrides = []): array
 {
     return array_merge([
         'name' => 'Test User',
-        'email' => 'test@8.ustp.edu.ph',
+        'email' => 'test@ustp.edu.ph',
         'password' => 'password',
         'password_confirmation' => 'password',
         'role' => 'faculty_staff',
@@ -120,7 +120,7 @@ function studentRegistrationPayload(array $overrides = []): array
         'educational_level' => 'college',
         'year_level' => '1',
         'cor' => fakeCorUpload(),
-        'student_id' => fakeStudentIdUpload(),
+        'id_number' => '2023303709',
     ], $overrides));
 }
 

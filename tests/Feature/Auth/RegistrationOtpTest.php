@@ -49,7 +49,7 @@ test('registering emails an OTP and defers account creation', function () {
 
     $response->assertRedirect(route('register.otp.show'));
     $this->assertGuest();
-    expect(User::where('email', 'test@8.ustp.edu.ph')->exists())->toBeFalse();
+    expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeFalse();
 
     Http::assertSentCount(1);
     expect(registrationOtpCode())->toHaveLength(6);
@@ -61,12 +61,12 @@ test('faculty employment details survive OTP verification and the account is act
     $this->post(route('register.store'), registrationPayload())
         ->assertRedirect(route('register.otp.show'));
 
-    expect(User::where('email', 'test@8.ustp.edu.ph')->exists())->toBeFalse();
+    expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeFalse();
 
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
         ->assertRedirect(route('faculty.login'));
 
-    $faculty = User::where('email', 'test@8.ustp.edu.ph')->firstOrFail();
+    $faculty = User::where('email', 'test@ustp.edu.ph')->firstOrFail();
     expect($faculty->position)->toBe('Administrative Assistant')
         ->and($faculty->contact_no)->toBe('09123456789')
         ->and($faculty->status)->toBe('active')
@@ -116,7 +116,8 @@ test('a student registers with their COR and awaits administrator approval', fun
 
     expect($verification)->not->toBeNull()
         ->and($verification->cor_file_path)->not->toBeNull()
-        ->and($verification->student_id_file_path)->not->toBeNull()
+        ->and($verification->student_id_file_path)->toBeNull()
+        ->and($user->id_number)->toBe('2023303709')
         ->and($user->approval_status)->toBe('pending');
 });
 
@@ -136,7 +137,7 @@ test('a student can log in with email immediately after OTP verification', funct
     $this->assertAuthenticatedAs($student);
 });
 
-test('a student can register directly without an id number', function () {
+test('a student can register with their id number without a roster entry', function () {
     Role::firstOrCreate(['role_name' => 'student']);
     fakeBrevoMail();
 
@@ -195,7 +196,7 @@ test('a non-teaching faculty registration requires a department', function () {
     ]))->assertSessionHasErrors('department');
 
     Http::assertNothingSent();
-    expect(User::where('email', 'test@8.ustp.edu.ph')->exists())->toBeFalse();
+    expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeFalse();
 });
 
 test('a faculty registration without an employment type is rejected', function () {
@@ -206,7 +207,7 @@ test('a faculty registration without an employment type is rejected', function (
     ]))->assertSessionHasErrors('employment_type');
 
     Http::assertNothingSent();
-    expect(User::where('email', 'test@8.ustp.edu.ph')->exists())->toBeFalse();
+    expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeFalse();
 });
 
 test('a teaching faculty registration requires a department', function () {
@@ -218,7 +219,7 @@ test('a teaching faculty registration requires a department', function () {
     ]))->assertSessionHasErrors('department');
 
     Http::assertNothingSent();
-    expect(User::where('email', 'test@8.ustp.edu.ph')->exists())->toBeFalse();
+    expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeFalse();
 });
 
 test('a teaching faculty registration is stored with their department', function () {
@@ -232,7 +233,7 @@ test('a teaching faculty registration is stored with their department', function
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
         ->assertRedirect(route('faculty.login'));
 
-    $user = User::where('email', 'test@8.ustp.edu.ph')->first();
+    $user = User::where('email', 'test@ustp.edu.ph')->first();
 
     expect($user->employment_type)->toBe('teaching')
         ->and($user->department)->toBe('Department of Information Technology');
@@ -249,7 +250,7 @@ test('a non-teaching faculty registration stores their department', function () 
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
         ->assertRedirect(route('faculty.login'));
 
-    $user = User::where('email', 'test@8.ustp.edu.ph')->first();
+    $user = User::where('email', 'test@ustp.edu.ph')->first();
 
     expect($user->employment_type)->toBe('non_teaching')
         ->and($user->department)->toBe('CITC');
@@ -264,7 +265,7 @@ test('the OTP verification page renders', function () {
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('auth/register-otp')
-            ->where('email', 'test@8.ustp.edu.ph'));
+            ->where('email', 'test@ustp.edu.ph'));
 });
 
 test('the OTP page redirects to registration without a pending session', function () {
@@ -281,12 +282,12 @@ test('a correct OTP creates the account', function () {
         ->assertRedirect(route('faculty.login'))
         ->assertSessionHas('status');
 
-    $user = User::where('email', 'test@8.ustp.edu.ph')->first();
+    $user = User::where('email', 'test@ustp.edu.ph')->first();
 
     expect($user)->not->toBeNull()
         ->and($user->status)->toBe('active')
         ->and($user->email_verified_at)->not->toBeNull()
-        ->and(cache(RegistrationOtpService::key('test@8.ustp.edu.ph')))->toBeNull()
+        ->and(cache(RegistrationOtpService::key('test@ustp.edu.ph')))->toBeNull()
         ->and(session('registration_otp_email'))->toBeNull();
 });
 
@@ -299,12 +300,12 @@ test('an incorrect OTP is rejected but the account can still be created', functi
     $this->post(route('register.otp.verify'), ['code' => '000000'])
         ->assertSessionHasErrors('code');
 
-    expect(User::where('email', 'test@8.ustp.edu.ph')->exists())->toBeFalse();
+    expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeFalse();
 
     $this->post(route('register.otp.verify'), ['code' => $code])
         ->assertRedirect(route('faculty.login'));
 
-    expect(User::where('email', 'test@8.ustp.edu.ph')->exists())->toBeTrue();
+    expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeTrue();
 });
 
 test('an expired OTP cannot be verified', function () {
@@ -318,7 +319,7 @@ test('an expired OTP cannot be verified', function () {
     $this->post(route('register.otp.verify'), ['code' => $code])
         ->assertSessionHasErrors('email');
 
-    expect(User::where('email', 'test@8.ustp.edu.ph')->exists())->toBeFalse();
+    expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeFalse();
 });
 
 test('too many incorrect attempts invalidate the OTP', function () {
@@ -335,7 +336,7 @@ test('too many incorrect attempts invalidate the OTP', function () {
     $this->post(route('register.otp.verify'), ['code' => $code])
         ->assertSessionHasErrors('email');
 
-    expect(User::where('email', 'test@8.ustp.edu.ph')->exists())->toBeFalse();
+    expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeFalse();
 });
 
 test('resending issues a new code that replaces the old one', function () {
@@ -379,7 +380,7 @@ test('a failed OTP send reports an error and creates nothing', function () {
     $this->post(route('register.store'), registrationPayload())
         ->assertSessionHasErrors('email');
 
-    expect(User::where('email', 'test@8.ustp.edu.ph')->exists())->toBeFalse();
+    expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeFalse();
 });
 
 test('registration validation failures do not send an OTP', function () {
@@ -390,7 +391,7 @@ test('registration validation failures do not send an OTP', function () {
     ]))->assertSessionHasErrors('password');
 
     Http::assertNothingSent();
-    expect(User::where('email', 'test@8.ustp.edu.ph')->exists())->toBeFalse();
+    expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeFalse();
 });
 
 test('registering requires agreeing to the terms and privacy policy', function () {
@@ -401,7 +402,7 @@ test('registering requires agreeing to the terms and privacy policy', function (
     ]))->assertSessionHasErrors('terms');
 
     Http::assertNothingSent();
-    expect(User::where('email', 'test@8.ustp.edu.ph')->exists())->toBeFalse();
+    expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeFalse();
 });
 
 test('student registration requires a Certificate of Registration upload', function () {
@@ -415,11 +416,11 @@ test('student registration requires a Certificate of Registration upload', funct
     expect(User::where('email', 'student@8.ustp.edu.ph')->exists())->toBeFalse();
 });
 
-test('a student id upload is optional during registration', function () {
+test('student registration stores the ID number after OTP verification', function () {
     fakeBrevoMail();
     Role::firstOrCreate(['role_name' => 'student']);
 
-    $this->post(route('register.store'), studentRegistrationPayload(['student_id' => null]))
+    $this->post(route('register.store'), studentRegistrationPayload(['id_number' => '2023000123']))
         ->assertRedirect(route('register.otp.show'));
 
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()]);
@@ -427,6 +428,7 @@ test('a student id upload is optional during registration', function () {
     $user = User::where('email', 'student@8.ustp.edu.ph')->sole();
 
     expect($user->studentVerification->cor_file_path)->not->toBeNull()
+        ->and($user->id_number)->toBe('2023000123')
         ->and($user->studentVerification->student_id_file_path)->toBeNull();
 });
 
@@ -439,11 +441,30 @@ test('registration rejects a COR upload that is not a real PDF', function () {
     Http::assertNothingSent();
 });
 
-test('registration rejects a student id upload that is not an image', function () {
+test('registration no longer accepts student ID attachments', function () {
     fakeBrevoMail();
     $this->post(route('register.store'), studentRegistrationPayload([
-        'student_id' => UploadedFile::fake()->createWithContent('id.png', 'plain text, not an image'),
-    ]))->assertSessionHasErrors(['student_id' => 'The uploaded file content is not a supported document.']);
+        'student_id' => fakeStudentIdUpload(),
+    ]))->assertSessionHasErrors('student_id');
+
+    Http::assertNothingSent();
+});
+
+test('student registration validates the ID number', function (?string $idNumber) {
+    fakeBrevoMail();
+
+    $this->post(route('register.store'), studentRegistrationPayload(['id_number' => $idNumber]))
+        ->assertSessionHasErrors('id_number');
+
+    Http::assertNothingSent();
+})->with([null, '', 'student-123', '123456789012345678901']);
+
+test('student registration rejects an ID number already assigned to another account', function () {
+    fakeBrevoMail();
+    User::factory()->create(['id_number' => '2023303709']);
+
+    $this->post(route('register.store'), studentRegistrationPayload())
+        ->assertSessionHasErrors('id_number');
 
     Http::assertNothingSent();
 });

@@ -58,7 +58,7 @@ test('registration stages documents before the OTP and replaces stale copies', f
 });
 
 test('pending and rejected student sessions cannot access protected functionality', function (string $state) {
-    $this->student->forceFill(['approval_status' => $state, 'is_approved' => true])->save();
+    $this->student->forceFill(['approval_status' => $state])->save();
     $this->actingAs($this->student)->get(route('dashboard'))->assertRedirect(route('student.verification.show'));
     $this->get(route('student.verification.show'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('student/verification'));
 })->with(['pending', 'rejected']);
@@ -325,12 +325,12 @@ test('staged registration uploads are pruned when abandoned', function () {
     Storage::disk('local')->assertMissing($directory.'/cor.pdf');
 });
 
-test('existing approved students survive the additive approval migration', function () {
+test('student approvals use a single canonical status', function () {
     $approved = User::factory()->create(['role_id' => $this->studentRole->id]);
-    $migration = require database_path('migrations/2026_11_06_170000_add_approval_status_to_users_table.php');
-    $migration->down();
-    $migration->up();
     expect($approved->fresh()->approval_status)->toBe('approved')->and($this->student->fresh()->approval_status)->toBe('pending');
+    expect(Schema::hasColumn('users', 'is_approved'))->toBeFalse()
+        ->and($approved->fresh()->is_approved)->toBeTrue()
+        ->and($this->student->fresh()->is_approved)->toBeFalse();
     expect(Schema::hasTable('student_verification_logs'))->toBeTrue();
 });
 

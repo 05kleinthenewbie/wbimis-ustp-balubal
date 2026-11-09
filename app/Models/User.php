@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Concerns\HasNormalizedAttributes;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Services\BrevoMailService;
 use App\Services\StudentVerification\StudentVerificationService;
@@ -54,7 +55,83 @@ use RuntimeException;
 class User extends Authenticatable implements JWTSubject
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, HasNormalizedAttributes, Notifiable;
+
+    protected $with = ['role', 'studentProfile.program', 'facultyProfile.department'];
+
+    protected $appends = ['is_approved'];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $user): void {
+            if ($user->isDirty('role_id')) {
+                $user->unsetRelation('role');
+            }
+        });
+        static::created(function (self $user): void {
+            $user->setRelation('studentProfile', null);
+            $user->setRelation('facultyProfile', null);
+        });
+    }
+
+    protected function normalizedAttributeNames(): array
+    {
+        return ['department', 'id_number', 'educational_level', 'year_level', 'employment_type', 'position'];
+    }
+
+    protected function readNormalizedAttribute(string $key): mixed
+    {
+        return match ($key) {
+            'department' => $this->isStudent() ? $this->studentProfile?->program?->code : $this->facultyProfile?->department?->name,
+            'id_number', 'educational_level', 'year_level' => $this->studentProfile?->getAttribute($key),
+            default => $this->facultyProfile?->getAttribute($key),
+        };
+    }
+
+    protected function persistNormalizedAttributes(array $changes): void
+    {
+        $student = array_intersect_key($changes, array_flip(['id_number', 'educational_level', 'year_level']));
+        $faculty = array_intersect_key($changes, array_flip(['employment_type', 'position']));
+        if (array_key_exists('department', $changes)) {
+            $name = $changes['department'];
+            if ($this->isStudent()) {
+                $student['program_id'] = filled($name)
+                    ? Program::firstOrCreate(['code' => $name], ['name' => $name])->id : null;
+            } else {
+                $faculty['department_id'] = filled($name) ? Department::firstOrCreate(['name' => $name])->id : null;
+            }
+        }
+        if ($student !== []) {
+            $this->studentProfile()->updateOrCreate([], $student);
+        }
+        if ($faculty !== []) {
+            $this->facultyProfile()->updateOrCreate([], $faculty);
+        }
+        $this->unsetRelation('studentProfile');
+        $this->unsetRelation('facultyProfile');
+        $this->load('studentProfile.program', 'facultyProfile.department');
+    }
+
+    /** @return HasOne<StudentProfile, $this> */
+    public function studentProfile(): HasOne
+    {
+        return $this->hasOne(StudentProfile::class);
+    }
+
+    /** @return HasOne<FacultyProfile, $this> */
+    public function facultyProfile(): HasOne
+    {
+        return $this->hasOne(FacultyProfile::class);
+    }
+
+    /** @return Attribute<bool, bool> */
+    protected function isApproved(): Attribute
+    {
+        return Attribute::make(
+            get: fn (): bool => $this->approval_status === 'approved',
+            set: fn (bool $value): array => ['approval_status' => $value ? 'approved' : ($this->approval_status === 'rejected' ? 'rejected' : 'pending')],
+        );
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -68,7 +145,6 @@ class User extends Authenticatable implements JWTSubject
             'birth_date' => 'date',
             'password' => 'hashed',
             'is_technician' => 'boolean',
-            'is_approved' => 'boolean',
         ];
     }
 
@@ -93,10 +169,12 @@ class User extends Authenticatable implements JWTSubject
      * Resolve the public URL of the stored profile photo, or null when
      * the user has not uploaded one. The raw path stays in the database
      * so the file can be deleted with getRawOriginal('avatar').
+     *
+     * @return Attribute<string|null, never>
      */
     protected function avatar(): Attribute
     {
-        return Attribute::get(fn (?string $value): ?string => filled($value)
+        return new Attribute(get: fn (?string $value): ?string => filled($value)
             ? Storage::disk('public')->url($value)
             : null);
     }
@@ -175,6 +253,8 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * Get the role assigned to this user.
+     *
+     * @return BelongsTo<Role, $this>
      */
     public function role(): BelongsTo
     {
@@ -183,6 +263,8 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * Get all service requests submitted by this user.
+     *
+     * @return HasMany<ServiceRequest, $this>
      */
     public function serviceRequests(): HasMany
     {
@@ -191,6 +273,8 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * Get all job orders assigned to this user (as technician).
+     *
+     * @return HasMany<JobOrder, $this>
      */
     public function assignedJobOrders(): HasMany
     {
@@ -199,6 +283,8 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * Get all bookings made by this user.
+     *
+     * @return HasMany<Booking, $this>
      */
     public function bookings(): HasMany
     {
@@ -207,6 +293,8 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * Get all bookings this user has approved (as admin).
+     *
+     * @return HasMany<Booking, $this>
      */
     public function approvedBookings(): HasMany
     {
@@ -215,6 +303,8 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * Get all incidents reported by this user.
+     *
+     * @return HasMany<IncidentReport, $this>
      */
     public function incidentReports(): HasMany
     {
@@ -223,6 +313,8 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * Get all liability records assigned to this user.
+     *
+     * @return HasMany<UserLiability, $this>
      */
     public function userLiabilities(): HasMany
     {
@@ -233,6 +325,8 @@ class User extends Authenticatable implements JWTSubject
      * Get all system notifications for this user.
      * Named differently from notifications() to avoid conflicting
      * with Laravel's built-in Notifiable trait relationship.
+     *
+     * @return HasMany<Notification, $this>
      */
     public function systemNotifications(): HasMany
     {
@@ -241,6 +335,8 @@ class User extends Authenticatable implements JWTSubject
 
     /**
      * Get all audit log entries created by this user (as admin).
+     *
+     * @return HasMany<AuditLog, $this>
      */
     public function auditLogs(): HasMany
     {
@@ -252,6 +348,7 @@ class User extends Authenticatable implements JWTSubject
         return $this->getKey();
     }
 
+    /** @return array<string, mixed> */
     public function getJWTCustomClaims(): array
     {
         return [];

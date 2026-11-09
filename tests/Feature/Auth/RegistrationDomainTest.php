@@ -8,7 +8,7 @@ beforeEach(function () {
     Role::firstOrCreate(['role_name' => 'faculty_staff'], ['description' => 'Faculty and staff']);
 });
 
-test('registration is restricted to the 8.ustp.edu.ph email domain', function (string $email) {
+test('faculty registration is restricted to the ustp.edu.ph email domain', function (string $email) {
     fakeBrevoMail();
 
     $this->post(route('register.store'), registrationPayload(['email' => $email]))
@@ -18,18 +18,18 @@ test('registration is restricted to the 8.ustp.edu.ph email domain', function (s
     Http::assertNothingSent();
 })->with([
     'outsider@gmail.com',
-    'person@ustp.edu.ph',
-    'sub.domains@mail.8.ustp.edu.ph',
-    'lookalike@8ustp.edu.ph',
-    'spoofed@8.ustp.edu.ph.evil.com',
-    'trailing dot@8.ustp.edu.ph.',
+    'person@8.ustp.edu.ph',
+    'sub.domains@mail.ustp.edu.ph',
+    'lookalike@fakeustp.edu.ph',
+    'spoofed@ustp.edu.ph.evil.com',
+    'trailing dot@ustp.edu.ph.',
 ]);
 
 test('the campus email domain is accepted case-insensitively', function () {
     fakeBrevoMail();
 
     $this->post(route('register.store'), registrationPayload([
-        'email' => 'Test.User@8.USTP.EDU.PH',
+        'email' => 'Test.User@USTP.EDU.PH',
     ]))->assertRedirect(route('register.otp.show'));
 });
 
@@ -40,7 +40,7 @@ test('campus registrations start unapproved but email-verified after the OTP flo
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
         ->assertRedirect(route('faculty.login'));
 
-    $user = User::where('email', 'test@8.ustp.edu.ph')->firstOrFail();
+    $user = User::where('email', 'test@ustp.edu.ph')->firstOrFail();
 
     expect($user->status)->toBe('active')
         ->and($user->is_approved)->toBeFalse()
@@ -56,16 +56,16 @@ test('registration payloads cannot self-approve the account', function () {
 
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()]);
 
-    expect(User::where('email', 'test@8.ustp.edu.ph')->sole()->is_approved)->toBeFalse();
+    expect(User::where('email', 'test@ustp.edu.ph')->sole()->is_approved)->toBeFalse();
 });
 
 test('accounts cannot register twice with the same campus email', function () {
     fakeBrevoMail();
-    User::factory()->create(['email' => 'taken@8.ustp.edu.ph']);
+    User::factory()->create(['email' => 'taken@ustp.edu.ph']);
 
     $this->post(route('register.store'), registrationPayload([
-        'email' => 'taken@8.ustp.edu.ph',
+        'email' => 'taken@ustp.edu.ph',
     ]))->assertSessionHasErrors('email');
 
-    expect(User::where('email', 'taken@8.ustp.edu.ph')->count())->toBe(1);
+    expect(User::where('email', 'taken@ustp.edu.ph')->count())->toBe(1);
 });

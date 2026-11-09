@@ -45,17 +45,11 @@ class InventoryItemController extends ApiController
         }
 
         if ($campus = $request->input('campus')) {
-            $query->where(function ($q) use ($campus) {
-                $q->where('campus', $campus)
-                    ->orWhere('building', $campus)
-                    ->orWhere('room', $campus)
-                    ->orWhere('specific_location', $campus)
-                    ->orWhere('location', 'like', "%{$campus}%");
-            });
+            $query->forLocation($campus);
         }
 
         if ($endUser = $request->input('end_user')) {
-            $query->where('end_user', 'like', "%{$endUser}%");
+            $query->forCustodian($endUser);
         }
 
         return response()->json([

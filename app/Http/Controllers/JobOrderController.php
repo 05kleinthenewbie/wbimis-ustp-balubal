@@ -79,7 +79,7 @@ class JobOrderController extends Controller
         $technicians = User::query()
             ->whereHas('role', fn ($query) => $query->where('role_name', 'ict_admin'))
             ->orderBy('name')
-            ->get(['id', 'name', 'department', 'expertise', 'contact_no']);
+            ->get(['id', 'name', 'expertise', 'contact_no']);
 
         $assigned = $jobOrders->whereNotNull('assigned_to')->groupBy('assigned_to');
 

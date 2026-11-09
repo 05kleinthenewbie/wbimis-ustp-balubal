@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AssetCustodian;
+use App\Models\AssetLocation;
 use App\Models\AuditLog;
 use App\Models\InventoryItem;
 use App\Models\User;
@@ -47,7 +49,7 @@ class InventoryItemController extends Controller
         $documentType = $request->input('document_type');
 
         if (in_array($documentType, ['ICS', 'PAR'], true)) {
-            $query->where('document_type', $documentType);
+            $query->forDocumentType($documentType);
         } else {
             $documentType = 'all';
         }
@@ -91,18 +93,11 @@ class InventoryItemController extends Controller
         }
 
         if ($campus = $request->input('campus')) {
-            $query->where(function ($q) use ($campus) {
-                $q->where('location', 'like', "%{$campus}%")
-                    ->orWhere('building', $campus)
-                    ->orWhere('room', $campus)
-                    ->orWhere('specific_location', $campus);
-            });
+            $query->forLocation($campus);
         }
 
         if ($endUser = $request->input('end_user')) {
-            $query->where(function ($q) use ($endUser) {
-                $q->where('end_user', 'like', "%{$endUser}%");
-            });
+            $query->forCustodian($endUser);
         }
 
         $items = $query->get();
@@ -133,14 +128,14 @@ class InventoryItemController extends Controller
                 ->unique()
                 ->sort()
                 ->values(),
-            'campuses' => InventoryItem::whereNotNull('location')
+            'campuses' => AssetLocation::whereNotNull('location')
                 ->distinct()
                 ->pluck('location')
                 ->sort()
                 ->values(),
-            'endUsers' => InventoryItem::whereNotNull('end_user')
+            'endUsers' => AssetCustodian::whereNotNull('name')
                 ->distinct()
-                ->pluck('end_user')
+                ->pluck('name')
                 ->sort()
                 ->values(),
         ];
@@ -199,9 +194,6 @@ class InventoryItemController extends Controller
                 'category',
                 'brand',
                 'model',
-                'end_user',
-                'department',
-                'campus',
                 'status',
                 'condition',
                 'purchase_date',
@@ -226,7 +218,7 @@ class InventoryItemController extends Controller
         return Inertia::render('inventory/create', [
             'users' => User::where('status', 'active')
                 ->orderBy('name')
-                ->get(['id', 'name', 'department']),
+                ->get(['id', 'name']),
             'categoryGroups' => InventoryItem::CATEGORY_GROUPS,
             'expirationTypes' => InventoryItem::EXPIRATION_TYPES,
         ]);
@@ -277,7 +269,7 @@ class InventoryItemController extends Controller
             'item' => InventoryItem::findOrFail($id),
             'users' => User::where('status', 'active')
                 ->orderBy('name')
-                ->get(['id', 'name', 'department']),
+                ->get(['id', 'name']),
             'categoryGroups' => InventoryItem::CATEGORY_GROUPS,
             'expirationTypes' => InventoryItem::EXPIRATION_TYPES,
         ]);

@@ -50,7 +50,7 @@ final class StudentVerificationService
         $verification->save();
 
         // Fresh documents need a fresh review.
-        $user->forceFill(['approval_status' => 'pending', 'is_approved' => false])->save();
+        $user->forceFill(['approval_status' => 'pending'])->save();
 
         foreach ($replaced as $path) {
             $this->deleteDocument($path);
