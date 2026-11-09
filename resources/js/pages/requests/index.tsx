@@ -100,34 +100,6 @@ export default function RequestsIndex({ requests }: Props) {
         return matchesSearch && matchesStatus;
     });
 
-    const statusTabs = [
-        { key: 'all', label: 'All', count: stats.total },
-        {
-            key: 'pending',
-            label: 'Pending',
-            count: stats.pending,
-            color: 'text-amber-600',
-        },
-        {
-            key: 'approved',
-            label: 'Approved',
-            count: stats.approved,
-            color: 'text-sky-600',
-        },
-        {
-            key: 'completed',
-            label: 'Completed',
-            count: stats.completed,
-            color: 'text-emerald-600',
-        },
-        {
-            key: 'rejected',
-            label: 'Rejected',
-            count: stats.rejected,
-            color: 'text-red-600',
-        },
-    ];
-
     const hasActiveFilter = statusFilter !== 'all' || search;
 
     return (
@@ -149,9 +121,14 @@ export default function RequestsIndex({ requests }: Props) {
                     </div>
 
                     {/* Stats Cards */}
-                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+                    <div
+                        role="group"
+                        aria-label="Request status filters"
+                        className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5"
+                    >
                         {[
                             {
+                                key: 'all',
                                 label: 'Total Requests',
                                 value: stats.total,
                                 icon: FileText,
@@ -159,6 +136,7 @@ export default function RequestsIndex({ requests }: Props) {
                                 bg: 'bg-ustp-navy/5',
                             },
                             {
+                                key: 'pending',
                                 label: 'Pending',
                                 value: stats.pending,
                                 icon: Clock3,
@@ -166,6 +144,7 @@ export default function RequestsIndex({ requests }: Props) {
                                 bg: 'bg-amber-50',
                             },
                             {
+                                key: 'approved',
                                 label: 'Approved',
                                 value: stats.approved,
                                 icon: CheckCircle2,
@@ -173,59 +152,50 @@ export default function RequestsIndex({ requests }: Props) {
                                 bg: 'bg-sky-50',
                             },
                             {
+                                key: 'completed',
                                 label: 'Completed',
                                 value: stats.completed,
                                 icon: CheckCircle2,
                                 color: 'text-emerald-600',
                                 bg: 'bg-emerald-50',
                             },
+                            {
+                                key: 'rejected',
+                                label: 'Rejected',
+                                value: stats.rejected,
+                                icon: XCircle,
+                                color: 'text-red-600',
+                                bg: 'bg-red-50',
+                            },
                         ].map((card) => (
-                            <div
-                                key={card.label}
-                                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className={`flex size-10 items-center justify-center rounded-xl ${card.bg}`}
-                                    >
-                                        <card.icon
-                                            className={`size-5 ${card.color}`}
-                                        />
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-semibold text-slate-800">
-                                            {card.value}
-                                        </p>
-                                        <p className="text-[11px] text-slate-400">
-                                            {card.label}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Status Tabs */}
-                    <div className="flex flex-wrap items-center gap-2">
-                        {statusTabs.map((tab) => (
                             <button
-                                key={tab.key}
-                                onClick={() => setStatusFilter(tab.key)}
-                                className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
-                                    statusFilter === tab.key
-                                        ? 'bg-ustp-navy text-white shadow-sm'
-                                        : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                                key={card.key}
+                                type="button"
+                                aria-pressed={statusFilter === card.key}
+                                onClick={() => setStatusFilter(card.key)}
+                                className={`cursor-pointer rounded-xl border bg-white p-3 text-left shadow-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ustp-navy ${
+                                    statusFilter === card.key
+                                        ? 'border-ustp-navy ring-1 ring-ustp-navy'
+                                        : 'border-slate-200 hover:border-slate-400'
                                 }`}
                             >
-                                {tab.label}
-                                <span
-                                    className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] ${
-                                        statusFilter === tab.key
-                                            ? 'bg-white/20 text-white'
-                                            : 'bg-slate-100 text-slate-500'
-                                    }`}
-                                >
-                                    {tab.count}
+                                <span className="flex items-center gap-2.5">
+                                    <span
+                                        className={`flex size-8 shrink-0 items-center justify-center rounded-lg ${card.bg}`}
+                                    >
+                                        <card.icon
+                                            className={`size-4 ${card.color}`}
+                                            aria-hidden="true"
+                                        />
+                                    </span>
+                                    <span>
+                                        <span className="block text-xl font-semibold text-slate-800">
+                                            {card.value}
+                                        </span>
+                                        <span className="block text-[11px] text-slate-400">
+                                            {card.label}
+                                        </span>
+                                    </span>
                                 </span>
                             </button>
                         ))}

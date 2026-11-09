@@ -13,41 +13,65 @@ shared hosting.
 - [ ] A Brevo account with a **verified sender email/domain** (required for the
       registration OTP and password-reset emails to actually send).
 
-## 1. Build assets locally
+## 1. Clone the repository outside the web root
 
-Do not run Composer on the shared server — build everything locally and upload.
+The main domain's document root is fixed at `public_html`, so keep the Laravel
+application itself outside that directory:
 
 ```bash
-composer install --no-dev --optimize-autoloader
+cd "$HOME"
+git clone https://github.com/05kleinthenewbie/wbimis-ustp-balubal.git wbimis
+```
+
+Do not put `.env`, `vendor/`, `storage/`, or the rest of the application inside
+`public_html`.
+
+## 2. Install PHP dependencies on the server
+
+The cPanel Terminal has PHP 8.4 but may not have Composer on its PATH. If
+`composer --version` is unavailable, install a user-local Composer PHAR:
+
+```bash
+cd "$HOME"
+php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
+php composer-setup.php --filename=composer.phar
+php -r "unlink('composer-setup.php');"
+cd "$HOME/wbimis"
+php "$HOME/composer.phar" install --no-dev --optimize-autoloader
+```
+
+## 3. Build the frontend locally
+
+The server Terminal does not have Node/npm, so run this on your computer in the
+repository and upload the resulting `public/build/` directory:
+
+```bash
 npm ci
 npm run build
 ```
 
-This produces `vendor/` and `public/build/`.
+Upload `public/build/` into both `$HOME/wbimis/public/build/` (for Laravel's
+Vite manifest lookup) and `$HOME/public_html/build/` (for browsers to download
+the assets).
 
-## 2. Upload to the server
+## 4. Populate `public_html`
 
-Via cPanel File Manager or SFTP, upload everything **except**:
+Copy the **contents** of `$HOME/wbimis/public/` into `$HOME/public_html/`
+(including `.htaccess` and `index.php`). Edit `$HOME/public_html/index.php` so
+its three application paths point to the sibling `wbimis` directory:
 
-- `.git/`, `.github/`, `.claude/`
-- `node_modules/`
-- `tests/`, `phpstan.neon`, `phpunit.xml`
-- `.env` (create it on the server instead)
-- `public/hot`, `public/fonts-manifest.dev.json`
-- `test.php`, `serve_err.log`, `serve_out.log`, `*.docx`, `*.md`
+```php
+__DIR__.'/../wbimis/storage/framework/maintenance.php'
+__DIR__.'/../wbimis/vendor/autoload.php'
+__DIR__.'/../wbimis/bootstrap/app.php'
+```
 
-## 3. Point the document root at `public/`
+Because the main domain's document root cannot be changed, this keeps private
+Laravel files outside the web root while serving only `public/` contents.
 
-cPanel → *Domains* → set the domain's document root to the project's
-`public/` directory. This is the most important step.
+## 5. Configure `.env`
 
-> If the control panel only lets you use `public_html/`, keep the whole project
-> inside `public_html/` and rely on the root-level `index.php` + `.htaccess`
-> front-controller shim.
-
-## 4. Configure `.env`
-
-Copy `.env.example` to `.env` on the server and set:
+Create `$HOME/wbimis/.env` (do not place it in `public_html`) and set:
 
 ```
 APP_ENV=production
@@ -77,17 +101,17 @@ VAPID_PRIVATE_KEY=...
 JWT_SECRET=...                  # mobile API
 ```
 
-## 5. Upload `.user.ini`
+## 6. Upload `.user.ini`
 
-Place `deploy/namecheap/.user.ini` in the web-accessible document root (same
-directory as `index.php`). It raises the default 128M memory limit.
+Place `deploy/namecheap/.user.ini` in `$HOME/public_html/` (same directory as
+`index.php`). It raises the default 128M memory limit.
 
-## 6. Run one-time setup (cPanel → Terminal)
+## 7. Run one-time setup (cPanel → Terminal)
 
 Enable SSH first: cPanel → *Exclusive for Namecheap Customers* → *Manage Shell*.
 
 ```bash
-cd /home/USER/app
+cd "$HOME/wbimis"
 php artisan key:generate
 php artisan migrate --force
 php artisan storage:link
@@ -95,19 +119,30 @@ php artisan push:vapid            # copy the VAPID keys into .env
 php artisan config:cache route:cache view:cache
 ```
 
-## 7. Cron jobs (cPanel → Advanced → Cron Jobs)
+The `storage:link` command links the app's own `public/storage`. Since the
+domain serves `$HOME/public_html`, also create a link there (only if it does
+not already exist):
+
+```bash
+ln -s "$HOME/wbimis/storage/app/public" "$HOME/public_html/storage"
+```
+
+## 8. Cron jobs (cPanel → Advanced → Cron Jobs)
 
 Namecheap enforces a **5-minute minimum** interval. Add two jobs:
 
 ```
 # Scheduler (SLA checks, booking cleanup)
-*/5 * * * * /usr/local/bin/php /home/USER/app/artisan schedule:run >> /dev/null 2>&1
+*/5 * * * * php /home/CPANEL_USER/wbimis/artisan schedule:run >> /dev/null 2>&1
 
 # Queue worker (non-urgent emails + push notifications)
-*/5 * * * * /usr/local/bin/php /home/USER/app/artisan queue:work --stop-when-empty --max-time=280 --sleep=3 >> /dev/null 2>&1
+*/5 * * * * php /home/CPANEL_USER/wbimis/artisan queue:work --stop-when-empty --max-time=280 --sleep=3 >> /dev/null 2>&1
 ```
 
-## 8. Enable SSL
+Replace `CPANEL_USER` with your cPanel username. Confirm the CLI PHP version
+with `php -v`; your current Terminal reports PHP 8.4.27.
+
+## 9. Enable SSL
 
 cPanel → *SSL/TLS Status* → issue the free Let's Encrypt certificate. Set
 `SESSION_SECURE_COOKIE=true` after it is active (web push also requires HTTPS).

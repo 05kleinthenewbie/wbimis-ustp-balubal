@@ -42,7 +42,7 @@ trait ProfileValidationRules
             'required',
             'string',
             'email',
-            'max:255',
+            'max:191',
             $userId === null
                 ? Rule::unique(User::class)
                 : Rule::unique(User::class)->ignore($userId),

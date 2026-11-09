@@ -421,6 +421,8 @@ export default function Dashboard({
               : 'Good evening';
 
     const activePeriod: Period = period ?? 'month';
+    const isStudentUser: boolean =
+        (user?.role?.role_name as string | undefined) === 'student';
 
     // ── Quick actions (Faculty/Staff only) ──
     const quickActions = !isAdmin
@@ -449,7 +451,10 @@ export default function Dashboard({
                   icon: BookOpen,
                   color: 'bg-white border border-slate-200 text-slate-700 hover:border-slate-300 hover:bg-slate-50',
               },
-          ]
+          ].filter(
+              (action) =>
+                  !(isStudentUser && action.href === '/bookings/create'),
+          )
         : [];
 
     const adminCards =

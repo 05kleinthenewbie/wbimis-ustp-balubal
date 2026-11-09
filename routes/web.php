@@ -105,6 +105,7 @@ Route::middleware(['auth', 'verified', 'approved'])->group(function () {
     Route::get('users/approvals', [UserController::class, 'approvals'])->name('users.approvals');
     Route::patch('users/approvals/bulk-decision', [UserController::class, 'bulk'])->name('users.bulk-decision');
     Route::patch('users/{user}/approve', [UserController::class, 'approve'])->name('users.approve');
+    Route::patch('users/{user}/reject', [UserController::class, 'reject'])->name('users.reject');
     Route::patch('users/{user}/revoke-approval', [UserController::class, 'revokeApproval'])->name('users.revoke-approval');
     Route::resource('users', UserController::class)->only(['index', 'update']);
     Route::post('technicians', [UserController::class, 'storeTechnician'])->name('technicians.store');

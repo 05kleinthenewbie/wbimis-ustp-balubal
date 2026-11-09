@@ -40,6 +40,7 @@ return [
         ],
         'cor' => [
             'max_kilobytes' => 15360,
+            'accepted_mimes' => ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
         ],
     ],
 

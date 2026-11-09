@@ -85,7 +85,7 @@ const roles = [
         icon: Wifi,
         role: 'Students',
         description:
-            'Register with your email, program, and year level, then submit limited service requests, report laboratory incidents, and review any assigned liabilities.',
+            'Register with your program and year level, upload your Certificate of Registration, and wait for ICT Admin approval. Then submit limited service requests, report laboratory incidents, and review any assigned liabilities.',
         features: [
             'Limited Service Requests',
             'Track Requests',
@@ -95,7 +95,7 @@ const roles = [
         href: studentLogin().url,
         registerHref: register({ query: { role: 'student' } }).url,
         registrationNote:
-            'Enter your name, email, program, and year level to create your account.',
+            'Enter your details, program, year level, and student ID, then upload your Certificate of Registration.',
     },
     {
         icon: Shield,
@@ -125,16 +125,22 @@ const workflowSteps = [
         step: '1',
         title: 'Create Your Account',
         description:
-            'Register with your name, email address, and a password. Students choose their program and year level; faculty choose their department.',
+            'Register with your name, email address, and password. Students upload their Certificate of Registration and enter their student ID; faculty choose their department, position, and employment type.',
     },
     {
         step: '2',
         title: 'Verify Your Email',
         description:
-            'Enter the six-digit code sent to your email to complete account creation. Your account is activated right away.',
+            'Enter the six-digit code sent to your email address to confirm that the account belongs to you.',
     },
     {
         step: '3',
+        title: 'Wait for ICT Admin Approval',
+        description:
+            'The ICT office reviews your registration, including the uploaded COR for students. Sign-in unlocks as soon as your account is approved.',
+    },
+    {
+        step: '4',
         title: 'Sign In & Get Support',
         description:
             'Sign in with your email and password to access the services available to your role.',
@@ -372,12 +378,6 @@ export default function Welcome() {
                     <div className="relative mx-auto w-full max-w-7xl px-6 py-20 lg:py-28">
                         <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-12">
                             <div>
-                                <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-ustp-gold/30 bg-ustp-gold/10 px-4 py-1.5">
-                                    <span className="size-1.5 rounded-full bg-ustp-gold" />
-                                    <span className="text-xs font-medium tracking-wider text-ustp-gold uppercase">
-                                        USTP Balubal ICT Portal
-                                    </span>
-                                </div>
                                 <h1 className="font-serif text-3xl leading-tight font-bold text-white sm:text-5xl lg:text-[3.4rem]">
                                     Web-Based ICT Management and Information
                                     System
@@ -507,9 +507,6 @@ export default function Welcome() {
                 <section id="about" className="scroll-mt-24 bg-ustp-gray/40">
                     <div className="mx-auto max-w-7xl px-6 py-20">
                         <div className="mb-12 text-center">
-                            <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-ustp-gold/10 px-3 py-1 text-[11px] font-bold tracking-[0.18em] text-ustp-gold-dark uppercase">
-                                About the System
-                            </span>
                             <h2 className="font-serif text-2xl font-bold text-ustp-navy sm:text-3xl">
                                 One platform for USTP Balubal ICT operations
                             </h2>
@@ -705,9 +702,6 @@ export default function Welcome() {
                 <section id="modules" className="scroll-mt-24 bg-white">
                     <div className="mx-auto max-w-7xl px-6 py-20">
                         <div className="mb-12 text-center">
-                            <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-ustp-gold/10 px-3 py-1 text-[11px] font-bold tracking-[0.18em] text-ustp-gold-dark uppercase">
-                                Core Modules
-                            </span>
                             <h2 className="font-serif text-2xl font-bold text-ustp-navy sm:text-3xl">
                                 System Modules
                             </h2>
@@ -821,9 +815,6 @@ export default function Welcome() {
                 >
                     <div className="mx-auto max-w-7xl px-6 py-20">
                         <div className="mb-12 text-center">
-                            <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-bold tracking-[0.18em] text-ustp-gold-dark uppercase shadow-sm">
-                                Account Registration
-                            </span>
                             <h2 className="font-serif text-2xl font-bold text-ustp-navy sm:text-3xl">
                                 From Registration to ICT Support
                             </h2>
@@ -862,9 +853,6 @@ export default function Welcome() {
                 <section id="roles" className="scroll-mt-24 bg-white">
                     <div className="mx-auto max-w-7xl px-6 py-20">
                         <div className="mb-12 text-center">
-                            <span className="mb-3 inline-flex items-center gap-2 rounded-full bg-ustp-gold/10 px-3 py-1 text-[11px] font-bold tracking-[0.18em] text-ustp-gold-dark uppercase">
-                                Access Levels
-                            </span>
                             <h2 className="font-serif text-2xl font-bold text-ustp-navy sm:text-3xl">
                                 Built for Every Role
                             </h2>
@@ -943,9 +931,6 @@ export default function Welcome() {
                             <div className="pointer-events-none absolute -top-24 -right-16 size-64 rounded-full bg-ustp-gold/10 blur-3xl" />
                             <div className="pointer-events-none absolute -bottom-24 -left-16 size-64 rounded-full bg-ustp-light-blue/10 blur-3xl" />
                             <div className="relative">
-                                <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-ustp-gold/30 bg-ustp-gold/10 px-3 py-1 text-[11px] font-bold tracking-[0.18em] text-ustp-gold uppercase">
-                                    Get Started
-                                </span>
                                 <h2 className="font-serif text-2xl font-bold text-white sm:text-3xl">
                                     Ready to streamline your ICT services?
                                 </h2>

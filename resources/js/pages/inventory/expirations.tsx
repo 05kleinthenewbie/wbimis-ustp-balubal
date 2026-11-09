@@ -98,11 +98,29 @@ const stateBadge: Record<
     },
 };
 
-const tabs: { key: TabKey; label: string }[] = [
-    { key: 'soon', label: 'Expiring Soon' },
-    { key: 'expired', label: 'Expired' },
-    { key: 'all', label: 'All Tracked' },
-];
+const summaryCards = [
+    {
+        key: 'expired',
+        label: 'Expired',
+        description: 'Needs renewal or disposal review',
+        icon: AlertTriangle,
+        iconClass: 'bg-red-400/10 text-red-500',
+    },
+    {
+        key: 'soon',
+        label: 'Expiring Soon',
+        description: 'Within the next 30 days',
+        icon: CalendarClock,
+        iconClass: 'bg-amber-400/10 text-amber-600',
+    },
+    {
+        key: 'all',
+        label: 'Items Tracked',
+        description: 'With an expiration date set',
+        icon: CheckCircle2,
+        iconClass: 'bg-emerald-400/10 text-emerald-500',
+    },
+] as const;
 
 const legacyCategoryAliases: Record<string, string> = {
     Desktop: 'Desktop Computers',
@@ -140,7 +158,7 @@ export default function InventoryExpirations({
     categoryGroups,
     expirationTypes,
 }: Props) {
-    const [tab, setTab] = useState<TabKey>('soon');
+    const [tab, setTab] = useState<TabKey>('expired');
     const [search, setSearch] = useState('');
     const [category, setCategory] = useState('all');
     const [expirationType, setExpirationType] = useState('all');
@@ -223,89 +241,44 @@ export default function InventoryExpirations({
                         </Button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                            <div className="mb-3 flex items-center justify-between">
-                                <p className="text-xs text-slate-400">
-                                    Expiring Soon
-                                </p>
-                                <div className="flex size-8 items-center justify-center rounded-lg bg-amber-400/10 text-amber-600">
-                                    <CalendarClock className="size-4" />
-                                </div>
-                            </div>
-                            <p className="text-2xl font-semibold text-slate-800">
-                                {counts.soon}
-                            </p>
-                            <p className="mt-1 text-[11px] text-slate-400">
-                                Within the next 30 days
-                            </p>
-                        </div>
-
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                            <div className="mb-3 flex items-center justify-between">
-                                <p className="text-xs text-slate-400">
-                                    Expired
-                                </p>
-                                <div className="flex size-8 items-center justify-center rounded-lg bg-red-400/10 text-red-500">
-                                    <AlertTriangle className="size-4" />
-                                </div>
-                            </div>
-                            <p className="text-2xl font-semibold text-slate-800">
-                                {counts.expired}
-                            </p>
-                            <p className="mt-1 text-[11px] text-slate-400">
-                                Needs renewal or disposal review
-                            </p>
-                        </div>
-
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                            <div className="mb-3 flex items-center justify-between">
-                                <p className="text-xs text-slate-400">
-                                    Items Tracked
-                                </p>
-                                <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-400/10 text-emerald-500">
-                                    <CheckCircle2 className="size-4" />
-                                </div>
-                            </div>
-                            <p className="text-2xl font-semibold text-slate-800">
-                                {counts.all}
-                            </p>
-                            <p className="mt-1 text-[11px] text-slate-400">
-                                With an expiration date set
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Tabs */}
-                    <div className="flex flex-wrap gap-2">
-                        {tabs.map((t) => {
-                            const count =
-                                t.key === 'soon'
-                                    ? counts.soon
-                                    : t.key === 'expired'
-                                      ? counts.expired
-                                      : counts.all;
+                    <div
+                        role="group"
+                        aria-label="Expiration filters"
+                        className="grid grid-cols-1 gap-4 sm:grid-cols-3"
+                    >
+                        {summaryCards.map((card) => {
+                            const Icon = card.icon;
 
                             return (
                                 <button
-                                    key={t.key}
+                                    key={card.key}
                                     type="button"
-                                    onClick={() => setTab(t.key)}
-                                    className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition-colors ${
-                                        tab === t.key
-                                            ? 'border-ustp-navy bg-ustp-navy text-white'
-                                            : 'border-slate-300 bg-white text-slate-600 hover:border-slate-400 hover:text-slate-800'
+                                    aria-pressed={tab === card.key}
+                                    onClick={() => setTab(card.key)}
+                                    className={`cursor-pointer rounded-2xl border bg-white p-4 text-left shadow-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ustp-navy ${
+                                        tab === card.key
+                                            ? 'border-ustp-navy ring-1 ring-ustp-navy'
+                                            : 'border-slate-200 hover:border-slate-400'
                                     }`}
                                 >
-                                    {t.label}
-                                    <span
-                                        className={`rounded-full px-1.5 py-0.5 text-[11px] ${
-                                            tab === t.key
-                                                ? 'bg-white/15 text-white'
-                                                : 'bg-slate-100 text-slate-500'
-                                        }`}
-                                    >
-                                        {count}
+                                    <span className="mb-3 flex items-center justify-between">
+                                        <span className="text-xs text-slate-400">
+                                            {card.label}
+                                        </span>
+                                        <span
+                                            className={`flex size-8 items-center justify-center rounded-lg ${card.iconClass}`}
+                                        >
+                                            <Icon
+                                                className="size-4"
+                                                aria-hidden="true"
+                                            />
+                                        </span>
+                                    </span>
+                                    <span className="block text-2xl font-semibold text-slate-800">
+                                        {counts[card.key]}
+                                    </span>
+                                    <span className="mt-1 block text-[11px] text-slate-400">
+                                        {card.description}
                                     </span>
                                 </button>
                             );
@@ -476,7 +449,8 @@ export default function InventoryExpirations({
                                     No items match this view.
                                 </p>
                                 <p className="text-xs text-slate-400">
-                                    Switch tabs or adjust the filters above.
+                                    Select a summary card or adjust the filters
+                                    above.
                                 </p>
                             </div>
                         )}

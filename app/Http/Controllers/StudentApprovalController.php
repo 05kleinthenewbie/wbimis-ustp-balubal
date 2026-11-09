@@ -2,13 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AuditLog;
-use App\Models\StudentVerification;
 use App\Models\User;
-use App\Services\BrevoMailService;
+use App\Services\StudentApprovalService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -73,27 +70,7 @@ class StudentApprovalController extends Controller
      */
     private function applyDecision(User $user, User $reviewer, string $decision, ?string $reason): void
     {
-        DB::transaction(function () use ($user, $reviewer, $decision, $reason): void {
-            $locked = User::lockForUpdate()->findOrFail($user->id);
-            $previous = $locked->approval_status;
-            $locked->forceFill(['approval_status' => $decision])->save();
-
-            $verification = StudentVerification::firstOrNew(['user_id' => $locked->id]);
-            $verification->user_id = $locked->id;
-            $verification->forceFill([
-                'reviewed_by' => $reviewer->id,
-                'reviewed_at' => now(),
-                'review_notes' => $reason,
-            ])->save();
-
-            AuditLog::record('Student application '.$decision, 'users', $locked->id, null, ['approval_status' => $previous], ['approval_status' => $decision]);
-        });
-
-        try {
-            app(BrevoMailService::class)->sendStudentRegistrationDecisionEmail($user->email, $user->name, $decision, $reason);
-        } catch (\Throwable) {
-            // The recorded decision remains authoritative if mail delivery fails.
-        }
+        app(StudentApprovalService::class)->decide($user, $reviewer, $decision, $reason);
     }
 
     public function document(Request $request, User $user, string $type): BinaryFileResponse

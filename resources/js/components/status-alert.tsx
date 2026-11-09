@@ -2,7 +2,7 @@ import { AlertTriangle, CheckCircle2, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ALERT_PATTERN =
-    /\bpending\b|deactivat|not approved|roster|expired|contact the ICT|try again|too many/i;
+    /\bpending\b|awaiting|deactivat|not approved|roster|expired|contact the ICT|try again|too many|review|reject|unverified/i;
 
 export function isAlertMessage(message: string): boolean {
     return ALERT_PATTERN.test(message);
@@ -21,8 +21,7 @@ const variantStyles: Record<Exclude<StatusAlertVariant, 'auto'>, string> = {
         'border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/30 dark:bg-amber-950/50 dark:text-amber-300',
     success:
         'border-green-200 bg-green-50 text-green-700 dark:border-green-900 dark:bg-green-950 dark:text-green-400',
-    error:
-        'border-red-300 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-950/50 dark:text-red-400',
+    error: 'border-red-300 bg-red-50 text-red-700 dark:border-red-500/30 dark:bg-red-950/50 dark:text-red-400',
 };
 
 const variantIcons = {

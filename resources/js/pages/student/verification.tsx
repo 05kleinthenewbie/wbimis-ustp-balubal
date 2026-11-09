@@ -124,11 +124,11 @@ export default function Verification({
                                 : 'Upload your documents'}
                         </h2>
                         <p className="text-sm text-muted-foreground">
-                            Provide your Certificate of Registration (COR) PDF
-                            (up to 15 MB) and, optionally, a clear USTP student
-                            ID image (PNG, JPEG or WebP, up to 8 MB). Submitting
-                            replaces the previous documents and returns the
-                            application to pending review.
+                            Provide your Certificate of Registration (COR) as a
+                            PDF, PNG, or JPEG (up to 15 MB) and, optionally, a
+                            clear USTP student ID image (PNG, JPEG or WebP, up
+                            to 8 MB). Submitting replaces the previous documents
+                            and returns the application to pending review.
                         </p>
                         <Form
                             {...store.form()}
@@ -139,13 +139,14 @@ export default function Verification({
                                 <>
                                     <div className="grid gap-2">
                                         <Label htmlFor="cor">
-                                            Certificate of Registration PDF
+                                            Certificate of Registration (PDF or
+                                            image)
                                         </Label>
                                         <Input
                                             id="cor"
                                             name="cor"
                                             type="file"
-                                            accept="application/pdf"
+                                            accept="application/pdf,image/png,image/jpeg,image/webp"
                                         />
                                         <InputError message={errors.cor} />
                                     </div>

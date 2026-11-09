@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Home } from 'lucide-react';
 import ustpLogo from '@/assets/ustp-logo.png';
 import { Button } from '@/components/ui/button';
 import { home } from '@/routes';
@@ -10,13 +10,10 @@ export default function AuthSimpleLayout({
     title,
     description,
     wide = false,
-    icon,
-    iconClassName = 'bg-ustp-navy/5 text-ustp-navy dark:bg-white/10 dark:text-white',
     backHref,
     backLabel = 'Go back',
     backTestId,
 }: AuthLayoutProps) {
-    const Icon = icon;
     const resolvedBackHref = backHref ?? home().url;
 
     return (
@@ -66,7 +63,7 @@ export default function AuthSimpleLayout({
                 <div className="h-1 bg-ustp-gold" />
 
                 <div className="bg-background px-4 py-5 sm:px-8 sm:py-8 [@media(max-width:639px)]:[&_input:not([type=checkbox]):not([type=hidden]):not([type=file])]:text-base [@media(max-width:639px)]:[&_input[type=date]]:min-w-0">
-                    <div className="mb-2 flex sm:mb-4">
+                    <div className="mb-2 flex items-center justify-between sm:mb-4">
                         <Button
                             type="button"
                             variant="ghost"
@@ -85,18 +82,21 @@ export default function AuthSimpleLayout({
                         >
                             <ArrowLeft className="size-4" />
                         </Button>
+
+                        <Button
+                            asChild
+                            variant="ghost"
+                            size="sm"
+                            className="-mr-2 h-8 gap-1.5 px-2.5 text-xs font-medium text-muted-foreground hover:text-ustp-navy dark:hover:text-white"
+                        >
+                            <Link href={home()} data-test="auth-home-button">
+                                <Home className="size-3.5" />
+                                Home
+                            </Link>
+                        </Button>
                     </div>
 
                     <div className="mb-6 space-y-2 text-center sm:mb-8">
-                        {Icon && (
-                            <div className="mb-3 flex justify-center">
-                                <div
-                                    className={`flex size-12 items-center justify-center rounded-xl ${iconClassName}`}
-                                >
-                                    <Icon className="size-6" />
-                                </div>
-                            </div>
-                        )}
                         <h2 className="text-2xl leading-tight font-semibold tracking-tight text-balance text-foreground sm:text-[28px]">
                             {title}
                         </h2>

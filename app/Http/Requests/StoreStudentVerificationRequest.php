@@ -22,7 +22,7 @@ class StoreStudentVerificationRequest extends FormRequest
                     continue;
                 }
                 $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($file->getRealPath());
-                $accepted = $field === 'cor' ? ['application/pdf'] : config('student-verification.uploads.student_id.accepted_mimes');
+                $accepted = config("student-verification.uploads.{$field}.accepted_mimes");
                 if (! in_array($mime, (array) $accepted, true)) {
                     $validator->errors()->add($field, 'The uploaded file content is not a supported document.');
                 }
@@ -57,7 +57,7 @@ class StoreStudentVerificationRequest extends FormRequest
                 'max:'.config('student-verification.uploads.student_id.max_kilobytes'),
             ],
             'cor' => [
-                'nullable', 'file', 'mimetypes:application/pdf',
+                'nullable', 'file', 'mimetypes:'.implode(',', config('student-verification.uploads.cor.accepted_mimes')),
                 'max:'.config('student-verification.uploads.cor.max_kilobytes'),
             ],
         ];

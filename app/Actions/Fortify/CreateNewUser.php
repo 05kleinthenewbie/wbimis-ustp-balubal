@@ -74,10 +74,7 @@ class CreateNewUser implements CreatesNewUsers
         session()->put('registration_otp_email', $email);
 
         throw new HttpResponseException(
-            redirect()->route('register.otp.show')->with(
-                'status',
-                "We sent a 6-digit verification code to {$email}. Enter it below to finish creating your account.",
-            ),
+            redirect()->route('register.otp.show'),
         );
     }
 
@@ -271,6 +268,7 @@ class CreateNewUser implements CreatesNewUsers
                 Rule::requiredIf($requireStudentDetails && ($input['role'] ?? null) === 'student'),
                 'nullable',
                 'file',
+                'mimetypes:'.implode(',', config('student-verification.uploads.cor.accepted_mimes')),
                 'max:'.config('student-verification.uploads.cor.max_kilobytes'),
             ],
             'student_id' => ['prohibited'],
@@ -330,7 +328,7 @@ class CreateNewUser implements CreatesNewUsers
 
         $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($file->getRealPath());
 
-        if ($mime !== 'application/pdf') {
+        if (! in_array($mime, (array) config('student-verification.uploads.cor.accepted_mimes'), true)) {
             $validator->errors()->add('cor', 'The uploaded file content is not a supported document.');
         }
     }

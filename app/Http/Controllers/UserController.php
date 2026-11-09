@@ -8,6 +8,7 @@ use App\Models\Notification;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\BrevoMailService;
+use App\Services\StudentApprovalService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,6 +41,13 @@ class UserController extends Controller
         return Inertia::render('users/index', [
             'status' => session('status'),
             'error' => session('error'),
+            'pendingCount' => User::query()
+                ->where('is_technician', false)
+                ->where('approval_status', 'pending')
+                ->whereNotNull('email_verified_at')
+                ->whereNotIn('status', ['inactive', 'rejected'])
+                ->where('id', '!=', Auth::id())
+                ->count(),
             'activeUsers' => User::with('role')
                 ->where('is_technician', false)
                 ->where('status', 'active')
@@ -115,23 +123,36 @@ class UserController extends Controller
     }
 
     /**
-     * Show the pending account approvals panel: registered users whose
-     * email has been verified but whose account still awaits approval.
+     * Show the pending account approvals panel: registered accounts whose
+     * email has been verified but which still await an administrator's
+     * decision. Student applications are listed alongside faculty and staff
+     * so the COR can be reviewed from the same queue.
      */
     public function approvals(): Response
     {
         $this->ensureAdmin();
 
         $pendingUsers = User::query()
-            ->with('role')
+            ->with(['role', 'studentVerification'])
             ->where('is_technician', false)
             ->where('approval_status', 'pending')
-            ->whereDoesntHave('role', fn ($query) => $query->where('role_name', 'student'))
             ->whereNotNull('email_verified_at')
             ->whereNotIn('status', ['inactive', 'rejected'])
             ->where('id', '!=', Auth::id())
             ->latest()
-            ->get();
+            ->get()
+            ->map(fn (User $user): array => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'department' => $user->department,
+                'role' => $user->role?->only(['role_name']),
+                'created_at' => $user->created_at?->toIso8601String(),
+                'is_student' => $user->isStudent(),
+                'has_cor' => filled($user->studentVerification?->cor_file_path),
+                'has_student_id' => filled($user->studentVerification?->student_id_file_path),
+                'review_notes' => $user->studentVerification?->review_notes,
+            ]);
 
         return Inertia::render('users/approvals', [
             'status' => session('status'),
@@ -141,13 +162,23 @@ class UserController extends Controller
     }
 
     /**
-     * Approve a pending account so it can access the application.
+     * Approve a pending account so it can access the application. Student
+     * applications are decided through the shared student review service.
      */
     public function approve(Request $request, string $id): RedirectResponse
     {
         $this->ensureAdmin();
 
         $user = User::with('role')->findOrFail($id);
+
+        if ($user->isStudent()) {
+            app(StudentApprovalService::class)->decide($user, $request->user(), 'approved');
+
+            return redirect()->route('users.approvals')->with(
+                'status',
+                $user->name.'\'s student application has been approved.',
+            );
+        }
 
         $this->approveAccount($user);
 
@@ -158,7 +189,39 @@ class UserController extends Controller
     }
 
     /**
-     * Approve or reject several pending faculty/staff accounts at once.
+     * Reject a single pending account. Student rejections require a reason
+     * that is stored on the application and emailed to the applicant.
+     */
+    public function reject(Request $request, string $id): RedirectResponse
+    {
+        $this->ensureAdmin();
+
+        $user = User::with('role')->findOrFail($id);
+
+        if ($user->isStudent()) {
+            $data = $request->validate([
+                'reason' => ['required', 'string', 'max:2000'],
+            ]);
+
+            app(StudentApprovalService::class)->decide($user, $request->user(), 'rejected', $data['reason']);
+
+            return redirect()->route('users.approvals')->with(
+                'status',
+                $user->name.'\'s student application has been rejected.',
+            );
+        }
+
+        $this->rejectAccount($user);
+
+        return redirect()->route('users.approvals')->with(
+            'status',
+            $user->name.'\'s account has been rejected.',
+        );
+    }
+
+    /**
+     * Approve or reject several pending accounts at once. Student
+     * applications share the same reason field for rejection.
      */
     public function bulk(Request $request): RedirectResponse
     {
@@ -168,18 +231,32 @@ class UserController extends Controller
             'ids' => ['required', 'array', 'min:1'],
             'ids.*' => ['integer', 'distinct'],
             'decision' => ['required', 'in:approved,rejected'],
+            'reason' => ['nullable', 'string', 'max:2000'],
         ]);
 
         $accounts = User::query()->with('role')
             ->where('is_technician', false)
-            ->whereDoesntHave('role', fn ($query) => $query->where('role_name', 'student'))
+            ->whereDoesntHave('role', fn ($query) => $query->where('role_name', 'ict_admin'))
             ->whereIn('users.id', $data['ids'])
             ->when($data['decision'] === 'approved', fn ($query) => $query->where('approval_status', 'pending'))
             ->when($data['decision'] === 'rejected', fn ($query) => $query->where('status', 'active'))
-            ->when($data['decision'] === 'rejected', fn ($query) => $query->whereDoesntHave('role', fn ($q) => $q->where('role_name', 'ict_admin')))
             ->get();
 
+        $reason = $data['reason'] ?? null;
+
         foreach ($accounts as $user) {
+            if ($user->isStudent()) {
+                if ($data['decision'] === 'rejected' && blank($reason)) {
+                    throw ValidationException::withMessages([
+                        'reason' => 'A reason is required to reject a student application.',
+                    ]);
+                }
+
+                app(StudentApprovalService::class)->decide($user, $request->user(), $data['decision'], $reason);
+
+                continue;
+            }
+
             if ($data['decision'] === 'approved') {
                 $this->approveAccount($user);
             } else {

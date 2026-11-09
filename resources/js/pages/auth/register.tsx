@@ -465,13 +465,13 @@ export default function Register({ passwordRules, programs }: Props) {
                                         htmlFor="cor"
                                         className={labelClassName}
                                     >
-                                        COR (PDF)
+                                        COR (PDF, PNG, or JPEG)
                                     </Label>
                                     <Input
                                         id="cor"
                                         name="cor"
                                         type="file"
-                                        accept="application/pdf"
+                                        accept="application/pdf,image/png,image/jpeg,image/webp"
                                         required
                                         aria-invalid={Boolean(errors.cor)}
                                         className={fieldClassName}

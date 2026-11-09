@@ -1,7 +1,5 @@
 import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import {
-    BadgeCheck,
-    CalendarDays,
     Camera,
     CheckCircle2,
     Loader2,
@@ -137,14 +135,6 @@ export default function Profile({
         });
     };
 
-    const memberSince = new Date(auth.user.created_at).toLocaleDateString(
-        'en-US',
-        {
-            month: 'long',
-            year: 'numeric',
-        },
-    );
-
     return (
         <>
             <Head title="Profile settings" />
@@ -156,23 +146,14 @@ export default function Profile({
                     <div className="flex flex-col gap-4 p-6 sm:flex-row sm:items-start sm:justify-between">
                         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-start">
                             <label
-                                className={cn(
-                                    'group relative -mt-14 block size-20 shrink-0 overflow-hidden rounded-2xl shadow-lg ring-4 ring-white transition-shadow',
-                                    editing
-                                        ? 'cursor-pointer focus-within:ring-ustp-gold hover:shadow-xl'
-                                        : 'cursor-default',
-                                )}
-                                title={
-                                    editing
-                                        ? 'Upload a new profile photo'
-                                        : undefined
-                                }
+                                className="group relative -mt-14 block size-20 shrink-0 cursor-pointer overflow-hidden rounded-2xl shadow-lg ring-4 ring-white transition-shadow focus-within:ring-ustp-gold hover:shadow-xl"
+                                title="Upload a new profile photo"
                             >
                                 <input
                                     type="file"
                                     accept={AVATAR_TYPES.join(',')}
                                     className="sr-only"
-                                    disabled={!editing || avatarUploading}
+                                    disabled={avatarUploading}
                                     onChange={handleAvatarSelect}
                                 />
 
@@ -195,8 +176,7 @@ export default function Profile({
                                 <span
                                     className={cn(
                                         'absolute inset-0 flex items-center justify-center bg-slate-900/0 text-white/0 transition-colors',
-                                        editing &&
-                                            !avatarUploading &&
+                                        !avatarUploading &&
                                             'group-hover:bg-slate-900/50 group-hover:text-white',
                                         avatarUploading &&
                                             'bg-slate-900/60 text-white',
@@ -232,32 +212,16 @@ export default function Profile({
                                 </p>
 
                                 <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                                    <span
-                                        className={cn(
-                                            'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1',
-                                            isVerified
-                                                ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20'
-                                                : 'bg-amber-50 text-amber-700 ring-amber-500/30',
-                                        )}
-                                    >
-                                        <BadgeCheck className="size-3.5" />
-                                        {isVerified
-                                            ? 'Email verified'
-                                            : 'Email unverified'}
-                                    </span>
-
-                                    {editing &&
-                                        auth.user.avatar &&
-                                        !avatarUploading && (
-                                            <button
-                                                type="button"
-                                                onClick={handleAvatarRemove}
-                                                className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
-                                            >
-                                                <Trash2 className="size-3" />
-                                                Remove photo
-                                            </button>
-                                        )}
+                                    {auth.user.avatar && !avatarUploading && (
+                                        <button
+                                            type="button"
+                                            onClick={handleAvatarRemove}
+                                            className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600"
+                                        >
+                                            <Trash2 className="size-3" />
+                                            Remove photo
+                                        </button>
+                                    )}
                                 </div>
 
                                 {avatarError && (
@@ -272,11 +236,6 @@ export default function Profile({
                         </div>
 
                         <div className="flex shrink-0 flex-col items-start gap-3 sm:items-end">
-                            <p className="flex items-center gap-1.5 text-xs text-slate-400">
-                                <CalendarDays className="size-3.5" />
-                                Member since {memberSince}
-                            </p>
-
                             {!editing && (
                                 <Button
                                     type="button"
@@ -383,11 +342,6 @@ export default function Profile({
                                             ref={nameInputRef}
                                         />
 
-                                        <p className="text-xs text-slate-400">
-                                            Shown across your requests and job
-                                            orders
-                                        </p>
-
                                         <InputError
                                             className="mt-1"
                                             message={errors.name}
@@ -414,10 +368,6 @@ export default function Profile({
                                             disabled={!editing}
                                         />
 
-                                        <p className="text-xs text-slate-400">
-                                            Used for sign-in and notifications
-                                        </p>
-
                                         <InputError
                                             className="mt-1"
                                             message={errors.email}
@@ -441,23 +391,11 @@ export default function Profile({
                                             readOnly
                                             disabled
                                         />
-
-                                        <p className="text-xs text-slate-400">
-                                            {isStudent
-                                                ? 'From the ICT student list'
-                                                : 'Assigned by the ICT office'}
-                                        </p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 px-6 py-5 sm:px-8">
-                                <p className="text-xs text-slate-400">
-                                    {editing
-                                        ? 'Changes apply everywhere in your account'
-                                        : 'Click \u201cEdit profile\u201d to update your information'}
-                                </p>
-
+                            <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 px-6 py-5 sm:px-8">
                                 <div className="flex items-center gap-3">
                                     {recentlySuccessful && (
                                         <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600">

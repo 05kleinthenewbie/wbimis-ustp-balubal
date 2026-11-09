@@ -16,7 +16,6 @@ type Props = {
 };
 
 export default function RegisterOtp({
-    email,
     status,
     studentRegistration = false,
 }: Props) {
@@ -28,12 +27,6 @@ export default function RegisterOtp({
                 <div className="flex size-14 items-center justify-center rounded-full bg-ustp-gold/15 text-ustp-gold-dark dark:text-ustp-gold">
                     <MailCheck className="size-7" />
                 </div>
-                <p className="text-sm text-muted-foreground">
-                    We sent a 6-digit verification code to
-                    <span className="block font-medium text-foreground">
-                        {email}
-                    </span>
-                </p>
             </div>
 
             {status && <StatusAlert message={status} className="mb-4" />}

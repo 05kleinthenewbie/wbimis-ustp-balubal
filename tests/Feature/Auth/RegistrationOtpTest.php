@@ -91,7 +91,7 @@ test('a student registers with their COR and awaits administrator approval', fun
         ->assertRedirect(route('student.login'))
         ->assertSessionHas(
             'status',
-            'Registration successful! Your Certificate of Registration has been received and is awaiting administrator approval.',
+            'Registration successful. Your COR is awaiting ICT Admin approval.',
         );
 
     $this->get(route('student.login'))
@@ -121,7 +121,7 @@ test('a student registers with their COR and awaits administrator approval', fun
         ->and($user->approval_status)->toBe('pending');
 });
 
-test('a student can log in with email immediately after OTP verification', function () {
+test('a student must wait for administrator approval before signing in', function () {
     Role::firstOrCreate(['role_name' => 'student'], ['description' => 'Students']);
     fakeBrevoMail();
 
@@ -131,10 +131,17 @@ test('a student can log in with email immediately after OTP verification', funct
     $this->post(route('student.authenticate'), [
         'email' => 'student@8.ustp.edu.ph',
         'password' => 'password',
-    ])->assertRedirect(route('student.verification.show'));
+    ])->assertSessionHasErrors('email');
+    $this->assertGuest();
 
     $student = User::where('email', 'student@8.ustp.edu.ph')->firstOrFail();
-    $this->assertAuthenticatedAs($student);
+    $student->forceFill(['approval_status' => 'approved'])->save();
+
+    $this->post(route('student.authenticate'), [
+        'email' => 'student@8.ustp.edu.ph',
+        'password' => 'password',
+    ])->assertRedirect(route('dashboard'));
+    $this->assertAuthenticatedAs($student->fresh());
 });
 
 test('a student can register with their id number without a roster entry', function () {
@@ -439,6 +446,14 @@ test('registration rejects a COR upload that is not a real PDF', function () {
     ]))->assertSessionHasErrors(['cor' => 'The uploaded file content is not a supported document.']);
 
     Http::assertNothingSent();
+});
+
+test('registration accepts a COR image upload', function () {
+    fakeBrevoMail();
+
+    $this->post(route('register.store'), studentRegistrationPayload([
+        'cor' => fakeCorImageUpload(),
+    ]))->assertSessionHasNoErrors()->assertRedirect(route('register.otp.show'));
 });
 
 test('registration no longer accepts student ID attachments', function () {

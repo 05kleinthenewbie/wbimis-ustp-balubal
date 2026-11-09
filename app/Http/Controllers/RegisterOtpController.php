@@ -72,11 +72,11 @@ class RegisterOtpController extends Controller
 
         $isStudent = $user->role?->role_name === 'student';
         $status = $user->is_approved
-            ? 'Registration successful! You can now log in to your account.'
-            : 'Registration successful! Your account is pending administrator approval. You will be able to log in once an ICT admin approves your account.';
+            ? 'Registration successful. You can now sign in.'
+            : 'Registration successful. Your account is awaiting ICT Admin approval.';
 
         if ($isStudent) {
-            $status = 'Registration successful! Your Certificate of Registration has been received and is awaiting administrator approval.';
+            $status = 'Registration successful. Your COR is awaiting ICT Admin approval.';
         }
 
         return redirect()
@@ -130,7 +130,7 @@ class RegisterOtpController extends Controller
 
         return redirect()->route('register.otp.show')->with(
             'status',
-            "A new verification code has been sent to {$email}.",
+            'A new verification code has been sent.',
         );
     }
 

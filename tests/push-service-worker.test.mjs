@@ -31,6 +31,7 @@ function worker() {
         ),
         { self, URL },
     );
+
     return { handlers, shown, opened, self };
 }
 

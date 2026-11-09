@@ -24,7 +24,6 @@ import {
     Palette,
     UserRound,
 } from 'lucide-react';
-import { index as studentApprovals } from '@/actions/App/Http/Controllers/StudentApprovalController';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -53,11 +52,6 @@ export function AppSidebar() {
     const unreadCount = Number(unreadNotificationsCount ?? 0);
 
     const adminNavItems: NavItem[] = [
-        {
-            title: 'Student Approvals',
-            href: studentApprovals.url(),
-            icon: UserCheck,
-        },
         { title: 'Dashboard', href: dashboardUrl, icon: LayoutGrid },
         {
             title: 'Service Requests',
@@ -150,11 +144,18 @@ export function AppSidebar() {
         },
         { title: 'Audit Log', href: '/audit-log', icon: History },
         { title: 'Reports', href: '/reports', icon: BarChart3 },
-        { title: 'User Management', href: '/users', icon: Users },
         {
-            title: 'Pending Approvals',
-            href: '/users/approvals',
-            icon: UserCheck,
+            title: 'User Management',
+            href: '/users',
+            icon: Users,
+            children: [
+                { title: 'All Users', href: '/users', icon: Users },
+                {
+                    title: 'Pending Approvals',
+                    href: '/users/approvals',
+                    icon: UserCheck,
+                },
+            ],
         },
     ];
 

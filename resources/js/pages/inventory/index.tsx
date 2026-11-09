@@ -24,6 +24,8 @@ import {
     Lock,
     CalendarClock,
     ArrowUpRight,
+    ChevronLeft,
+    ChevronRight,
     User as UserIcon,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -438,8 +440,11 @@ export default function InventoryIndex({
     const [documentType, setDocumentType] = useState(
         filters.document_type ?? 'all',
     );
+    const [page, setPage] = useState(1);
 
     function applyFilters(overrides: Partial<Filters> = {}) {
+        setPage(1);
+
         const next = {
             search: overrides.search ?? search,
             category: overrides.category ?? category,
@@ -492,6 +497,16 @@ export default function InventoryIndex({
     );
 
     const totalCount = items.length;
+
+    const pageSize = 20;
+    const pageCount = Math.max(1, Math.ceil(totalCount / pageSize));
+    const currentPage = Math.min(page, pageCount);
+    const firstItem = totalCount === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+    const lastItem = Math.min(currentPage * pageSize, totalCount);
+    const visibleItems = items.slice(
+        (currentPage - 1) * pageSize,
+        currentPage * pageSize,
+    );
 
     const hasActiveFilters =
         search ||
@@ -990,7 +1005,7 @@ export default function InventoryIndex({
                                     </thead>
 
                                     <tbody>
-                                        {items.map((item) => {
+                                        {visibleItems.map((item) => {
                                             const cc =
                                                 conditionConfig[
                                                     item.condition
@@ -1225,16 +1240,49 @@ export default function InventoryIndex({
                             </div>
 
                             {/* Table footer */}
-                            <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-5 py-3">
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-5 py-3">
                                 <p className="text-[11px] text-slate-400">
-                                    Showing {totalCount}{' '}
-                                    {totalCount === 1 ? 'record' : 'records'} of{' '}
-                                    {stats.total}
+                                    Showing {firstItem}–{lastItem} of{' '}
+                                    {totalCount}{' '}
+                                    {totalCount === 1 ? 'record' : 'records'}
                                 </p>
 
-                                <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                                    <span className="size-1 rounded-full bg-ustp-gold" />
-                                    Inventory Management
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={currentPage === 1}
+                                        onClick={() =>
+                                            setPage((value) =>
+                                                Math.max(1, value - 1),
+                                            )
+                                        }
+                                        className="h-7 px-2.5 text-[11px]"
+                                    >
+                                        <ChevronLeft className="size-3.5" />
+                                        Prev
+                                    </Button>
+
+                                    <span className="text-[11px] text-slate-500">
+                                        Page {currentPage} of {pageCount}
+                                    </span>
+
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={currentPage === pageCount}
+                                        onClick={() =>
+                                            setPage((value) =>
+                                                Math.min(pageCount, value + 1),
+                                            )
+                                        }
+                                        className="h-7 px-2.5 text-[11px]"
+                                    >
+                                        Next
+                                        <ChevronRight className="size-3.5" />
+                                    </Button>
                                 </div>
                             </div>
                         </div>

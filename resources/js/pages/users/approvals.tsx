@@ -1,14 +1,32 @@
 import { Form, Head, Link, router } from '@inertiajs/react';
-import { ArrowUpRight, CheckCircle2, Clock3, UserCheck } from 'lucide-react';
+import {
+    ArrowUpRight,
+    CheckCircle2,
+    Clock3,
+    FileText,
+    UserCheck,
+    XCircle,
+} from 'lucide-react';
 import { useState } from 'react';
+import { document } from '@/actions/App/Http/Controllers/StudentApprovalController';
 import {
     approve,
     bulk,
     index,
+    reject,
 } from '@/actions/App/Http/Controllers/UserController';
 import InputError from '@/components/input-error';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { useInitials } from '@/hooks/use-initials';
 
 type PendingUser = {
@@ -18,6 +36,10 @@ type PendingUser = {
     department: string | null;
     role: { role_name: string } | null;
     created_at: string;
+    is_student: boolean;
+    has_cor: boolean;
+    has_student_id: boolean;
+    review_notes: string | null;
 };
 
 type Props = {
@@ -36,6 +58,9 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
     const getInitials = useInitials();
     const [selected, setSelected] = useState<number[]>([]);
     const [processingId, setProcessingId] = useState<number | null>(null);
+    const [rejecting, setRejecting] = useState<PendingUser | null>(null);
+    const [rejectReason, setRejectReason] = useState('');
+    const [rejectProcessing, setRejectProcessing] = useState(false);
 
     function toggle(id: number, checked: boolean) {
         setSelected((current) =>
@@ -56,6 +81,30 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
             },
         );
     }
+
+    function openReject(user: PendingUser) {
+        setRejecting(user);
+        setRejectReason('');
+    }
+
+    function submitReject() {
+        if (rejecting === null) {
+            return;
+        }
+
+        setRejectProcessing(true);
+        router.patch(
+            reject.url(rejecting.id),
+            { reason: rejectReason },
+            {
+                preserveScroll: true,
+                onSuccess: () => setRejecting(null),
+                onFinish: () => setRejectProcessing(false),
+            },
+        );
+    }
+
+    const rejectNeedsReason = rejecting?.is_student === true;
 
     return (
         <>
@@ -107,8 +156,9 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
                         <span>
                             Approving grants the account access to the
                             application; rejecting blocks the registration until
-                            the applicant registers again. Approving notifies
-                            the user.
+                            the applicant registers again. Student applications
+                            require a rejection reason and can be reviewed from
+                            the uploaded COR.
                         </span>
                     </div>
 
@@ -145,7 +195,8 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
                                                 message={
                                                     errors.ids ??
                                                     errors.decision ??
-                                                    errors.approve
+                                                    errors.approve ??
+                                                    errors.reason
                                                 }
                                             />
                                             <Button
@@ -170,7 +221,20 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
                                                     ? 'Clear selection'
                                                     : 'Select all'}
                                             </Button>
-                                            <div className="ml-auto flex gap-2">
+                                            <div className="ml-auto flex flex-wrap items-center gap-2">
+                                                <Label
+                                                    htmlFor="bulk-reason"
+                                                    className="text-xs text-slate-500"
+                                                >
+                                                    Shared reason
+                                                </Label>
+                                                <Textarea
+                                                    id="bulk-reason"
+                                                    name="reason"
+                                                    maxLength={2000}
+                                                    placeholder="Required when rejecting students"
+                                                    className="h-8 min-h-8 min-w-56 py-1.5 text-xs"
+                                                />
                                                 <Button
                                                     type="submit"
                                                     size="sm"
@@ -305,6 +369,23 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
 
                                                 <td className="px-5 py-4 text-right">
                                                     <div className="flex items-center justify-end gap-2">
+                                                        {user.has_cor && (
+                                                            <a
+                                                                href={document.url(
+                                                                    {
+                                                                        user: user.id,
+                                                                        type: 'cor',
+                                                                    },
+                                                                )}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-slate-200 px-3 text-xs font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                                            >
+                                                                <FileText className="size-3.5" />
+                                                                View COR
+                                                            </a>
+                                                        )}
+
                                                         <Button
                                                             size="sm"
                                                             disabled={
@@ -320,6 +401,22 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
                                                         >
                                                             <CheckCircle2 className="size-3.5" />
                                                             Approve
+                                                        </Button>
+
+                                                        <Button
+                                                            size="sm"
+                                                            variant="outline"
+                                                            disabled={
+                                                                processingId ===
+                                                                user.id
+                                                            }
+                                                            onClick={() =>
+                                                                openReject(user)
+                                                            }
+                                                            className="h-8 border border-rose-200 px-3 text-xs font-semibold text-rose-600 hover:bg-rose-50"
+                                                        >
+                                                            <XCircle className="size-3.5" />
+                                                            Reject
                                                         </Button>
 
                                                         <Link
@@ -340,6 +437,68 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
                     )}
                 </div>
             </div>
+
+            <Dialog
+                open={rejecting !== null}
+                onOpenChange={(open) => {
+                    if (!open) {
+                        setRejecting(null);
+                    }
+                }}
+            >
+                <DialogContent className="gap-4 sm:max-w-md">
+                    <DialogTitle>Reject application</DialogTitle>
+                    <DialogDescription>
+                        {rejecting?.is_student
+                            ? 'Provide a reason. It is stored on the application and emailed to the student.'
+                            : 'The account will be blocked from signing in until it registers again.'}
+                    </DialogDescription>
+
+                    <div className="grid gap-1.5">
+                        <Label htmlFor="reject-reason">
+                            Reason{' '}
+                            {rejectNeedsReason ? (
+                                <span className="text-rose-500">*</span>
+                            ) : (
+                                <span className="text-slate-400">
+                                    (optional)
+                                </span>
+                            )}
+                        </Label>
+                        <Textarea
+                            id="reject-reason"
+                            value={rejectReason}
+                            onChange={(event) =>
+                                setRejectReason(event.target.value)
+                            }
+                            maxLength={2000}
+                            placeholder="Explain why this application is rejected"
+                        />
+                    </div>
+
+                    <DialogFooter>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setRejecting(null)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="button"
+                            onClick={submitReject}
+                            disabled={
+                                rejectProcessing ||
+                                (rejectNeedsReason && rejectReason.trim() === '')
+                            }
+                            className="bg-rose-600 text-white hover:bg-rose-700"
+                        >
+                            <XCircle className="size-4" />
+                            Reject application
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

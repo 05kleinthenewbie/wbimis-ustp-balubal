@@ -63,9 +63,24 @@ test('pending and rejected student sessions cannot access protected functionalit
     $this->get(route('student.verification.show'))->assertOk()->assertInertia(fn (Assert $page) => $page->component('student/verification'));
 })->with(['pending', 'rejected']);
 
-test('pending students can sign in to verification', function () {
-    $this->post(route('student.authenticate'), ['email' => $this->student->email, 'password' => 'password'])->assertRedirect(route('student.verification.show'));
-    $this->assertAuthenticatedAs($this->student);
+test('pending students cannot sign in until an administrator approves them', function () {
+    $this->post(route('student.authenticate'), ['email' => $this->student->email, 'password' => 'password'])
+        ->assertSessionHasErrors('email');
+    $this->assertGuest();
+
+    $this->student->forceFill(['approval_status' => 'approved'])->save();
+
+    $this->post(route('student.authenticate'), ['email' => $this->student->email, 'password' => 'password'])
+        ->assertRedirect(route('dashboard'));
+    $this->assertAuthenticatedAs($this->student->fresh());
+});
+
+test('rejected students cannot sign in', function () {
+    $this->student->forceFill(['approval_status' => 'rejected'])->save();
+
+    $this->post(route('student.authenticate'), ['email' => $this->student->email, 'password' => 'password'])
+        ->assertSessionHasErrors('email');
+    $this->assertGuest();
 });
 
 test('students upload documents for review and cannot forge decision state', function () {
@@ -121,6 +136,17 @@ test('replacing documents keeps untouched files and swaps the rest', function ()
 test('at least one document must be submitted', function () {
     $this->actingAs($this->student)->post(route('student.verification.store'), [])
         ->assertSessionHasErrors('cor');
+});
+
+test('students can submit a COR image for review', function () {
+    $this->actingAs($this->student)->post(route('student.verification.store'), [
+        'cor' => fakeCorImageUpload(),
+    ])->assertSessionHasNoErrors();
+
+    $verification = $this->student->fresh()->studentVerification;
+
+    expect($verification->cor_file_path)->not->toBeNull()
+        ->and($verification->user->approval_status)->toBe('pending');
 });
 
 test('replacing a COR removes the old copy and preserves the new upload', function () {
@@ -200,9 +226,48 @@ test('non-administrators cannot use the bulk decision endpoint', function () {
     expect($this->student->fresh()->approval_status)->toBe('pending');
 });
 
-test('generic approval endpoint cannot bypass student review', function () {
-    $this->actingAs($this->admin)->patch(route('users.approve', $this->student))->assertSessionHasErrors('approve');
-    expect($this->student->fresh()->is_approved)->toBeFalse();
+test('student approvals through user management record the review decision', function () {
+    $this->actingAs($this->admin)
+        ->patch(route('users.approve', $this->student))
+        ->assertRedirect(route('users.approvals'));
+
+    $student = $this->student->fresh();
+
+    expect($student->approval_status)->toBe('approved')
+        ->and($student->studentVerification->reviewed_by)->toBe($this->admin->id)
+        ->and($student->studentVerification->reviewed_at)->not->toBeNull();
+});
+
+test('the user management approvals queue lists pending students with their COR', function () {
+    $this->student->studentVerification()->create([
+        'cor_file_path' => 'student-verifications/'.$this->student->id.'/cor.pdf',
+    ]);
+
+    $this->actingAs($this->admin)
+        ->get(route('users.approvals'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('users/approvals')
+            ->where('pendingUsers', fn ($users) => collect($users)->contains(
+                fn ($user) => $user['id'] === $this->student->id
+                    && $user['is_student'] === true
+                    && $user['has_cor'] === true,
+            )));
+});
+
+test('rejecting a student from user management requires and stores a reason', function () {
+    $this->actingAs($this->admin)
+        ->patch(route('users.reject', $this->student))
+        ->assertSessionHasErrors('reason');
+
+    expect($this->student->fresh()->approval_status)->toBe('pending');
+
+    $this->actingAs($this->admin)
+        ->patch(route('users.reject', $this->student), ['reason' => 'The COR is unreadable.'])
+        ->assertRedirect(route('users.approvals'));
+
+    expect($this->student->fresh()->approval_status)->toBe('rejected')
+        ->and($this->student->fresh()->studentVerification->review_notes)->toBe('The COR is unreadable.');
 });
 
 test('rejection requires feedback and resubmission returns an application to pending', function () {
