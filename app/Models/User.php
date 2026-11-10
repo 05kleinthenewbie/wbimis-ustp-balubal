@@ -83,15 +83,27 @@ class User extends Authenticatable implements JWTSubject
     {
         return match ($key) {
             'department' => $this->isStudent() ? $this->studentProfile?->program?->code : $this->facultyProfile?->department?->name,
-            'id_number', 'educational_level', 'year_level' => $this->studentProfile?->getAttribute($key),
+            'id_number' => $this->isStudent()
+                ? $this->studentProfile?->id_number
+                : $this->facultyProfile?->id_number,
+            'educational_level', 'year_level' => $this->studentProfile?->getAttribute($key),
             default => $this->facultyProfile?->getAttribute($key),
         };
     }
 
     protected function persistNormalizedAttributes(array $changes): void
     {
-        $student = array_intersect_key($changes, array_flip(['id_number', 'educational_level', 'year_level']));
+        $student = array_intersect_key($changes, array_flip(['educational_level', 'year_level']));
         $faculty = array_intersect_key($changes, array_flip(['employment_type', 'position']));
+
+        if (array_key_exists('id_number', $changes)) {
+            if ($this->isStudent()) {
+                $student['id_number'] = $changes['id_number'];
+            } else {
+                $faculty['id_number'] = $changes['id_number'];
+            }
+        }
+
         if (array_key_exists('department', $changes)) {
             $name = $changes['department'];
             if ($this->isStudent()) {

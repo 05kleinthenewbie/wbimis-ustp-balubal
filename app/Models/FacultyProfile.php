@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class FacultyProfile extends Model
 {
-    protected $fillable = ['department_id', 'employment_type', 'position'];
+    protected $fillable = ['department_id', 'id_number', 'employment_type', 'position'];
 
     /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo

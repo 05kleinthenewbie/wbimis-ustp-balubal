@@ -146,7 +146,7 @@ export default function Verification({
                                             id="cor"
                                             name="cor"
                                             type="file"
-                                            accept="application/pdf,image/png,image/jpeg,image/webp"
+                                            accept=".pdf,.png,.jpg,.jpeg,.webp"
                                         />
                                         <InputError message={errors.cor} />
                                     </div>

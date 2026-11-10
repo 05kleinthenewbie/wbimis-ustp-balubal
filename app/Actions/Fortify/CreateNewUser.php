@@ -273,12 +273,20 @@ class CreateNewUser implements CreatesNewUsers
             ],
             'student_id' => ['prohibited'],
             'id_number' => [
-                Rule::requiredIf($requireStudentDetails && ($input['role'] ?? null) === 'student'),
+                Rule::requiredIf($requireStudentDetails),
                 'nullable',
                 'string',
                 'max:20',
-                'regex:/^[0-9]+$/',
-                Rule::unique('student_profiles', 'id_number')->ignore($returningUser?->id, 'user_id'),
+                Rule::when(
+                    ($input['role'] ?? null) === 'student',
+                    ['regex:/^[0-9]+$/'],
+                    ['regex:/^[A-Za-z0-9-]+$/'],
+                ),
+                Rule::when(
+                    ($input['role'] ?? null) === 'student',
+                    Rule::unique('student_profiles', 'id_number')->ignore($returningUser?->id, 'user_id'),
+                    Rule::unique('faculty_profiles', 'id_number')->ignore($returningUser?->id, 'user_id'),
+                ),
             ],
         ];
 

@@ -298,6 +298,31 @@ test('a correct OTP creates the account', function () {
         ->and(session('registration_otp_email'))->toBeNull();
 });
 
+test('faculty registrations store their employee ID number', function () {
+    fakeBrevoMail();
+    Role::firstOrCreate(['role_name' => 'faculty_staff']);
+
+    $this->post(route('register.store'), registrationPayload(['id_number' => 'EMP-1001']));
+    $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()]);
+
+    $user = User::where('email', 'test@ustp.edu.ph')->sole();
+
+    expect($user->id_number)->toBe('EMP-1001');
+    $this->assertDatabaseHas('faculty_profiles', [
+        'user_id' => $user->id,
+        'id_number' => 'EMP-1001',
+    ]);
+});
+
+test('faculty ID numbers must be unique', function () {
+    fakeBrevoMail();
+    $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    User::factory()->create(['role_id' => $role->id, 'id_number' => 'EMP-1001']);
+
+    $this->post(route('register.store'), registrationPayload(['id_number' => 'EMP-1001']))
+        ->assertSessionHasErrors('id_number');
+});
+
 test('an incorrect OTP is rejected but the account can still be created', function () {
     fakeBrevoMail();
 
@@ -476,7 +501,11 @@ test('student registration validates the ID number', function (?string $idNumber
 
 test('student registration rejects an ID number already assigned to another account', function () {
     fakeBrevoMail();
-    User::factory()->create(['id_number' => '2023303709']);
+    $studentRole = Role::firstOrCreate(['role_name' => 'student']);
+    User::factory()->create([
+        'role_id' => $studentRole->id,
+        'id_number' => '2023303709',
+    ]);
 
     $this->post(route('register.store'), studentRegistrationPayload())
         ->assertSessionHasErrors('id_number');

@@ -106,6 +106,7 @@ function registrationPayload(array $overrides = []): array
         'role' => 'faculty_staff',
         'employment_type' => 'non_teaching',
         'department' => 'Administrative Office',
+        'id_number' => 'EMP-0001',
         'position' => 'Administrative Assistant',
         'contact_no' => '09123456789',
         'terms' => 'on',

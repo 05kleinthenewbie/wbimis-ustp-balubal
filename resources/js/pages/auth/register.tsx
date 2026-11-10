@@ -146,29 +146,37 @@ export default function Register({ passwordRules, programs }: Props) {
                                 ))}
                                 <InputError message={errors.name} />
                             </div>
-                            {isStudent && (
-                                <div className="grid content-start gap-2 sm:col-span-2">
-                                    <Label
-                                        htmlFor="id_number"
-                                        className={labelClassName}
-                                    >
-                                        Student ID number
-                                    </Label>
-                                    <Input
-                                        id="id_number"
-                                        name="id_number"
-                                        type="text"
-                                        inputMode="numeric"
-                                        pattern="[0-9]{1,20}"
-                                        maxLength={20}
-                                        required
-                                        placeholder="Student ID number"
-                                        aria-invalid={Boolean(errors.id_number)}
-                                        className={fieldClassName}
-                                    />
-                                    <InputError message={errors.id_number} />
-                                </div>
-                            )}
+                            <div className="grid content-start gap-2 sm:col-span-2">
+                                <Label
+                                    htmlFor="id_number"
+                                    className={labelClassName}
+                                >
+                                    {isStudent
+                                        ? 'Student ID number'
+                                        : 'Employee ID number'}
+                                </Label>
+                                <Input
+                                    id="id_number"
+                                    name="id_number"
+                                    type="text"
+                                    inputMode={isStudent ? 'numeric' : 'text'}
+                                    pattern={
+                                        isStudent
+                                            ? '[0-9]{1,20}'
+                                            : '[A-Za-z0-9-]{1,20}'
+                                    }
+                                    maxLength={20}
+                                    required
+                                    placeholder={
+                                        isStudent
+                                            ? 'Student ID number'
+                                            : 'Employee ID number'
+                                    }
+                                    aria-invalid={Boolean(errors.id_number)}
+                                    className={fieldClassName}
+                                />
+                                <InputError message={errors.id_number} />
+                            </div>
                             <div className="grid content-start gap-2 sm:col-span-2">
                                 <Label
                                     htmlFor="email"
@@ -471,7 +479,7 @@ export default function Register({ passwordRules, programs }: Props) {
                                         id="cor"
                                         name="cor"
                                         type="file"
-                                        accept="application/pdf,image/png,image/jpeg,image/webp"
+                                        accept=".pdf,.png,.jpg,.jpeg,.webp"
                                         required
                                         aria-invalid={Boolean(errors.cor)}
                                         className={fieldClassName}

@@ -399,9 +399,6 @@ export default function Dashboard({
     const { auth } = usePage().props as any;
     const user = auth?.user;
     const userName = user?.name?.split(' ')[0] ?? 'User';
-    const userRole: string =
-        (user?.role?.name as string) ??
-        (isAdmin ? 'Administrator' : 'Faculty / Staff');
     const position: string = (user?.position as string) ?? '';
     const department: string = (user?.department as string) ?? '';
 
@@ -680,35 +677,16 @@ export default function Dashboard({
                 <div className="relative flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:p-8">
                     {/* ── Greeting Banner ── */}
                     <div className="relative overflow-hidden rounded-2xl bg-ustp-navy px-6 py-6 shadow-lg shadow-ustp-navy/20 sm:px-8 sm:py-7">
-                        {/* subtle dot pattern */}
-                        <div
-                            className="pointer-events-none absolute inset-0 opacity-[0.04]"
-                            style={{
-                                backgroundImage:
-                                    'radial-gradient(circle, #fcb315 1px, transparent 1px)',
-                                backgroundSize: '28px 28px',
-                            }}
-                        />
-                        {/* gold bottom accent */}
-                        <div className="absolute right-0 bottom-0 left-0 h-1 bg-ustp-gold" />
-
                         <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <div className="mb-1 flex flex-wrap items-center gap-2">
-                                    <span className="inline-flex items-center rounded-full border border-ustp-gold/40 bg-ustp-gold/10 px-3 py-0.5 text-xs font-semibold tracking-wider text-ustp-gold uppercase">
-                                        {userRole}
-                                    </span>
-                                    {position && (
-                                        <span className="text-xs text-white/50">
-                                            {position}
-                                        </span>
-                                    )}
-                                    {department && (
-                                        <span className="text-xs text-white/50">
-                                            · {department}
-                                        </span>
-                                    )}
-                                </div>
+                                {(position || department) && (
+                                    <p className="mb-1 flex flex-wrap items-center gap-x-2 text-xs text-white/50">
+                                        {position && <span>{position}</span>}
+                                        {department && (
+                                            <span>{department}</span>
+                                        )}
+                                    </p>
+                                )}
                                 <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
                                     {greeting},{' '}
                                     <span className="text-ustp-gold">
@@ -789,8 +767,6 @@ export default function Dashboard({
                                         href={card.href}
                                         className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
                                     >
-                                        {/* subtle top accent bar */}
-                                        <div className="absolute inset-x-0 top-0 h-0.5 bg-ustp-gold" />
                                         <div className="flex items-start justify-between gap-3">
                                             <p className="text-sm font-medium text-slate-500">
                                                 {card.label}
@@ -802,13 +778,9 @@ export default function Dashboard({
                                         <p className="mt-4 text-4xl font-bold tracking-tight text-slate-800">
                                             {card.value}
                                         </p>
-                                        <div className="mt-2 flex items-center gap-1.5">
-                                            <span className="size-1.5 rounded-full bg-ustp-gold" />
-                                            <p className="text-xs text-slate-400 group-hover:text-slate-500">
-                                                {card.sub}
-                                            </p>
-                                        </div>
-                                        <ArrowUpRight className="absolute right-4 bottom-4 size-4 text-slate-200 transition-all group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-slate-400" />
+                                        <p className="mt-2 text-xs text-slate-400 group-hover:text-slate-500">
+                                            {card.sub}
+                                        </p>
                                     </Link>
                                 ))}
                             </div>
