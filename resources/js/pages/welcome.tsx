@@ -135,9 +135,9 @@ const workflowSteps = [
     },
     {
         step: '3',
-        title: 'Wait for ICT Admin Approval',
+        title: 'Get Approved (Students)',
         description:
-            'The ICT office reviews your registration, including the uploaded COR for students. Sign-in unlocks as soon as your account is approved.',
+            'Faculty and staff can sign in right after verifying their email. Students wait for the ICT office to review their uploaded COR.',
     },
     {
         step: '4',
@@ -820,8 +820,9 @@ export default function Welcome() {
                             </h2>
                             <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-ustp-gold" />
                             <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-ustp-navy/60">
-                                Create your account, verify your email, and wait
-                                for ICT Admin approval before signing in.
+                                Create your account and verify your email.
+                                Faculty and staff can sign in immediately;
+                                students wait for COR approval.
                             </p>
                         </div>
 

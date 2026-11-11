@@ -4,13 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Models\IncidentReport;
 use App\Models\InventoryItem;
+use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class IncidentReportController extends Controller
 {
+    /**
+     * Allowed status transitions for a manual review workflow.
+     */
+    private const TRANSITIONS = [
+        'open' => ['under_review', 'closed'],
+        'under_review' => ['resolved', 'closed'],
+        'resolved' => ['closed'],
+        'closed' => [],
+    ];
+
     /**
      * Display a listing of the resource.
      */
@@ -51,13 +64,27 @@ class IncidentReportController extends Controller
             'incident_type' => ['required', 'string', 'max:100'],
             'incident_description' => ['required', 'string'],
             'incident_date' => ['nullable', 'date'],
+            'attachments' => ['nullable', 'array', 'max:5'],
+            'attachments.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
         ]);
 
-        IncidentReport::create([
-            ...$validated,
+        $incident = IncidentReport::create([
+            ...collect($validated)->except('attachments')->all(),
             'reported_by' => Auth::id(),
             'status' => 'open',
         ]);
+
+        foreach ($request->file('attachments', []) as $file) {
+            $path = $file->store('incident-attachments/'.$incident->id, 'local');
+
+            if ($path !== false) {
+                $incident->attachments()->create([
+                    'file_name' => $file->getClientOriginalName(),
+                    'file_path' => $path,
+                    'uploaded_at' => now(),
+                ]);
+            }
+        }
 
         return redirect()->route('incidents.index')
             ->with('status', 'Incident report submitted successfully.');
@@ -69,7 +96,7 @@ class IncidentReportController extends Controller
     public function show(string $id)
     {
         $incident = IncidentReport::with([
-            'reporter', 'inventoryItem', 'userLiabilities.user',
+            'reporter', 'inventoryItem', 'userLiabilities.user', 'attachments',
         ])->findOrFail($id);
 
         $isAdmin = Auth::user()->role->role_name === 'ict_admin';
@@ -83,6 +110,30 @@ class IncidentReportController extends Controller
                 ? User::query()->orderBy('name')->get(['id', 'name'])
                 : [],
         ]);
+    }
+
+    /**
+     * Download an evidence file attached to an incident.
+     */
+    public function downloadAttachment(Request $request, string $incident, string $attachment)
+    {
+        $incidentReport = IncidentReport::findOrFail($incident);
+        $user = Auth::user();
+        $isAdmin = $user->role->role_name === 'ict_admin';
+        $isReporter = $incidentReport->reported_by === $user->id;
+        $isLiable = $incidentReport->userLiabilities()->where('user_id', $user->id)->exists();
+
+        abort_unless($isAdmin || $isReporter || $isLiable, 403, 'You cannot access this attachment.');
+
+        $record = $incidentReport->attachments()->findOrFail($attachment);
+
+        abort_unless(Storage::disk('local')->exists($record->file_path), 404);
+
+        return response()->download(
+            Storage::disk('local')->path($record->file_path),
+            $record->file_name,
+            ['Cache-Control' => 'private, no-store'],
+        );
     }
 
     /**
@@ -106,21 +157,56 @@ class IncidentReportController extends Controller
 
         $validated = $request->validate([
             'status' => ['required', 'in:open,under_review,resolved,closed'],
+            'resolution_notes' => ['nullable', 'string', 'max:2000', 'required_if:status,resolved,closed'],
             'liability_user_id' => ['nullable', 'exists:users,id'],
             'liability_description' => ['nullable', 'string'],
             'liability_amount' => ['nullable', 'numeric', 'min:0', 'max:9999999999.99'],
         ]);
 
-        $incident = IncidentReport::findOrFail($id);
-        $incident->update(['status' => $validated['status']]);
+        $incident = IncidentReport::with('userLiabilities')->findOrFail($id);
+        $oldStatus = $incident->status;
+        $newStatus = $validated['status'];
+
+        if ($newStatus !== $oldStatus) {
+            if (! in_array($newStatus, self::TRANSITIONS[$oldStatus] ?? [], true)) {
+                throw ValidationException::withMessages([
+                    'status' => 'An incident cannot move from '.str_replace('_', ' ', $oldStatus)
+                        .' to '.str_replace('_', ' ', $newStatus).'.',
+                ]);
+            }
+
+            if (in_array($newStatus, ['resolved', 'closed'], true)
+                && $incident->userLiabilities()->where('liability_status', 'pending')->exists()) {
+                throw ValidationException::withMessages([
+                    'status' => 'Settle or waive pending liabilities before resolving or closing this incident.',
+                ]);
+            }
+        }
+
+        $incident->update([
+            'status' => $newStatus,
+            'resolution_notes' => $validated['resolution_notes'] ?? $incident->resolution_notes,
+        ]);
 
         if (! empty($validated['liability_user_id'])) {
-            $incident->userLiabilities()->create([
+            $liability = $incident->userLiabilities()->create([
                 'user_id' => $validated['liability_user_id'],
                 'liability_description' => $validated['liability_description'] ?? null,
                 'liability_amount' => $validated['liability_amount'] ?? null,
                 'liability_status' => 'pending',
                 'date_assigned' => now(),
+            ]);
+
+        }
+
+        if ($newStatus !== $oldStatus && $incident->reported_by !== $user->id) {
+            Notification::create([
+                'user_id' => $incident->reported_by,
+                'message' => 'Your laboratory incident #'.$incident->id.' is now '
+                    .str_replace('_', ' ', $newStatus).'.',
+                'notification_type' => 'incident',
+                'link' => '/incidents/'.$incident->id,
+                'notification_status' => 'unread',
             ]);
         }
 

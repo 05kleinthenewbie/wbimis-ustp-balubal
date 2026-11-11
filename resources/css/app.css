@@ -153,3 +153,76 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* ------------------------------------------------------------------ */
+/* Dark mode refinements                                               */
+/* Many screens use the light slate/white palette directly; remap the  */
+/* neutral ramp so those screens stay readable when dark mode is on.   */
+/* ------------------------------------------------------------------ */
+.dark {
+    color-scheme: dark;
+
+    --color-slate-50: #0f121a;
+    --color-slate-100: #151924;
+    --color-slate-200: #232936;
+    --color-slate-300: #333a4a;
+    --color-slate-400: #8f98ab;
+    --color-slate-500: #a3abbd;
+    --color-slate-600: #b9c0cf;
+    --color-slate-700: #ccd2de;
+    --color-slate-800: #e3e7ef;
+    --color-slate-900: #f4f6fa;
+
+    --color-ustp-gray: #151924;
+    --color-ustp-gray-medium: #2a3040;
+}
+
+.dark .bg-white {
+    background-color: #171c27;
+}
+
+.dark .bg-slate-900 {
+    background-color: #0a0d13;
+}
+
+.dark .text-ustp-navy {
+    color: #e3e7ef;
+}
+
+.dark .text-ustp-navy\/30 {
+    color: rgb(227 231 239 / 0.3);
+}
+
+.dark .text-ustp-navy\/40 {
+    color: rgb(227 231 239 / 0.4);
+}
+
+.dark .text-ustp-navy\/50 {
+    color: rgb(227 231 239 / 0.52);
+}
+
+.dark .text-ustp-navy\/60 {
+    color: rgb(227 231 239 / 0.64);
+}
+
+.dark .text-ustp-navy\/70 {
+    color: rgb(227 231 239 / 0.76);
+}
+
+.dark .text-ustp-navy\/80 {
+    color: rgb(227 231 239 / 0.86);
+}
+
+.dark .text-ustp-navy\/90 {
+    color: rgb(227 231 239 / 0.94);
+}
+
+.dark .bg-ustp-gold.text-ustp-navy,
+.dark .bg-ustp-gold .text-ustp-navy {
+    color: #1a1851;
+}
+
+/* Keep branded logo tiles on a light surface in dark mode */
+.dark .bg-white:has(img[alt='USTP Logo']) {
+    background-color: #ffffff;
+}

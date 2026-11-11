@@ -64,7 +64,7 @@ test('faculty employment details survive OTP verification and the account is act
     expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeFalse();
 
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
-        ->assertRedirect(route('faculty.login'));
+        ->assertRedirect(route('dashboard'));
 
     $faculty = User::where('email', 'test@ustp.edu.ph')->firstOrFail();
     expect($faculty->position)->toBe('Administrative Assistant')
@@ -238,7 +238,7 @@ test('a teaching faculty registration is stored with their department', function
     ]))->assertRedirect(route('register.otp.show'));
 
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
-        ->assertRedirect(route('faculty.login'));
+        ->assertRedirect(route('dashboard'));
 
     $user = User::where('email', 'test@ustp.edu.ph')->first();
 
@@ -255,7 +255,7 @@ test('a non-teaching faculty registration stores their department', function () 
     ]))->assertRedirect(route('register.otp.show'));
 
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
-        ->assertRedirect(route('faculty.login'));
+        ->assertRedirect(route('dashboard'));
 
     $user = User::where('email', 'test@ustp.edu.ph')->first();
 
@@ -286,7 +286,7 @@ test('a correct OTP creates the account', function () {
     $code = registrationOtpCode();
 
     $this->post(route('register.otp.verify'), ['code' => $code])
-        ->assertRedirect(route('faculty.login'))
+        ->assertRedirect(route('dashboard'))
         ->assertSessionHas('status');
 
     $user = User::where('email', 'test@ustp.edu.ph')->first();
@@ -335,7 +335,7 @@ test('an incorrect OTP is rejected but the account can still be created', functi
     expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeFalse();
 
     $this->post(route('register.otp.verify'), ['code' => $code])
-        ->assertRedirect(route('faculty.login'));
+        ->assertRedirect(route('dashboard'));
 
     expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeTrue();
 });
@@ -390,7 +390,7 @@ test('resending issues a new code that replaces the old one', function () {
         ->assertSessionHasErrors('code');
 
     $this->post(route('register.otp.verify'), ['code' => $second])
-        ->assertRedirect(route('faculty.login'));
+        ->assertRedirect(route('dashboard'));
 });
 
 test('registration OTP requests are rate limited', function () {

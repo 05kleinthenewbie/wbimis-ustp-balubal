@@ -33,30 +33,33 @@ test('the campus email domain is accepted case-insensitively', function () {
     ]))->assertRedirect(route('register.otp.show'));
 });
 
-test('campus registrations start unapproved but email-verified after the OTP flow', function () {
+test('campus faculty registrations are approved and signed in after the OTP flow', function () {
     fakeBrevoMail();
 
     $this->post(route('register.store'), registrationPayload());
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
-        ->assertRedirect(route('faculty.login'));
+        ->assertRedirect(route('dashboard'));
 
     $user = User::where('email', 'test@ustp.edu.ph')->firstOrFail();
 
     expect($user->status)->toBe('active')
-        ->and($user->is_approved)->toBeFalse()
+        ->and($user->is_approved)->toBeTrue()
         ->and($user->email_verified_at)->not->toBeNull();
+
+    $this->assertAuthenticatedAs($user);
 });
 
-test('registration payloads cannot self-approve the account', function () {
+test('registration payloads cannot self-approve a student account', function () {
     fakeBrevoMail();
+    Role::firstOrCreate(['role_name' => 'student'], ['description' => 'Students']);
 
-    $this->post(route('register.store'), registrationPayload([
+    $this->post(route('register.store'), studentRegistrationPayload([
         'is_approved' => true,
     ]))->assertRedirect(route('register.otp.show'));
 
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()]);
 
-    expect(User::where('email', 'test@ustp.edu.ph')->sole()->is_approved)->toBeFalse();
+    expect(User::where('email', 'student@8.ustp.edu.ph')->sole()->is_approved)->toBeFalse();
 });
 
 test('accounts cannot register twice with the same campus email', function () {

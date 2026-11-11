@@ -1,7 +1,6 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
-    ArrowUpRight,
     BookOpen,
     Calendar,
     Clock,
@@ -9,7 +8,6 @@ import {
     FileText,
     Layers,
     Package,
-    TrendingUp,
     Wrench,
 } from 'lucide-react';
 
@@ -742,7 +740,6 @@ export default function Dashboard({
                                         href={action.href}
                                         className={`flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-semibold shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${action.color}`}
                                     >
-                                        <action.icon className="size-4 shrink-0" />
                                         <span className="leading-tight">
                                             {action.label}
                                         </span>
@@ -771,9 +768,6 @@ export default function Dashboard({
                                             <p className="text-sm font-medium text-slate-500">
                                                 {card.label}
                                             </p>
-                                            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-ustp-navy/5">
-                                                <card.icon className="size-5 text-ustp-navy" />
-                                            </div>
                                         </div>
                                         <p className="mt-4 text-4xl font-bold tracking-tight text-slate-800">
                                             {card.value}
@@ -800,9 +794,6 @@ export default function Dashboard({
                                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
                                     <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-light-blue/10">
-                                                <TrendingUp className="size-4 text-ustp-light-blue" />
-                                            </div>
                                             <div>
                                                 <h3 className="text-sm font-semibold text-slate-800">
                                                     Monthly System Activity
@@ -823,9 +814,6 @@ export default function Dashboard({
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                 <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                                     <div className="flex items-center gap-3">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-orange-50">
-                                            <Clock className="size-4 text-orange-600" />
-                                        </div>
                                         <div>
                                             <h3 className="text-sm font-semibold text-slate-800">
                                                 Pending Actions
@@ -871,9 +859,6 @@ export default function Dashboard({
                         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                                 <div className="flex items-center gap-3">
-                                    <div className="flex size-9 items-center justify-center rounded-lg bg-rose-50">
-                                        <AlertTriangle className="size-4 text-rose-600" />
-                                    </div>
                                     <div>
                                         <h3 className="text-sm font-semibold text-slate-800">
                                             Inventory Alerts
@@ -888,7 +873,6 @@ export default function Dashboard({
                                     className="group flex items-center gap-1 text-xs font-medium text-ustp-light-blue/70 transition-colors hover:text-ustp-light-blue"
                                 >
                                     View all
-                                    <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                                 </Link>
                             </div>
                             <div className="grid gap-3 p-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -922,9 +906,6 @@ export default function Dashboard({
                     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-slate-100">
-                                    <Clock className="size-4 text-slate-500" />
-                                </div>
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-800">
                                         Recent Activity

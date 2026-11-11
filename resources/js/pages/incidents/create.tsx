@@ -94,6 +94,7 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
         item_id: '',
         incident_description: '',
         incident_date: '',
+        attachments: [] as File[],
     });
 
     const [equipmentQuery, setEquipmentQuery] = useState('');
@@ -612,6 +613,57 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
                             {errors.incident_description && (
                                 <p className="mt-2 text-xs text-red-600">
                                     {errors.incident_description}
+                                </p>
+                            )}
+                        </section>
+
+                        {/* Evidence */}
+                        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
+                            <div className="mb-4 flex items-center gap-3">
+                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
+                                    <FileQuestion className="size-4 text-ustp-gold" />
+                                </div>
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-800">
+                                        Evidence{' '}
+                                        <span className="font-normal text-slate-400">
+                                            (optional)
+                                        </span>
+                                    </p>
+                                    <p className="mt-0.5 text-[11px] text-slate-400">
+                                        Photos or documents, up to 5 files (max
+                                        5 MB each)
+                                    </p>
+                                </div>
+                            </div>
+
+                            <Input
+                                id="attachments"
+                                type="file"
+                                multiple
+                                accept=".pdf,.jpg,.jpeg,.png,.webp"
+                                onChange={(event) =>
+                                    setData(
+                                        'attachments',
+                                        Array.from(event.target.files ?? []),
+                                    )
+                                }
+                                className={fieldClass}
+                            />
+
+                            {data.attachments.length > 0 && (
+                                <p className="mt-2 text-xs text-slate-500">
+                                    {data.attachments.length} file
+                                    {data.attachments.length !== 1
+                                        ? 's'
+                                        : ''}{' '}
+                                    selected
+                                </p>
+                            )}
+
+                            {errors.attachments && (
+                                <p className="mt-2 text-xs text-red-600">
+                                    {errors.attachments}
                                 </p>
                             )}
                         </section>

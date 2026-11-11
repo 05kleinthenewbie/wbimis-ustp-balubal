@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AuditLog;
+use App\Models\Notification;
 use App\Models\StudentVerification;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -37,6 +38,18 @@ class StudentApprovalService
                 ['approval_status' => $previous],
                 ['approval_status' => $decision],
             );
+
+            $approved = $decision === 'approved';
+
+            Notification::create([
+                'user_id' => $locked->id,
+                'message' => $approved
+                    ? 'Your student registration has been approved. You can now sign in.'
+                    : 'Your student registration was rejected.'.(filled($reason) ? ' Reason: '.$reason : ''),
+                'notification_type' => $approved ? 'account_approval' : 'account_rejection',
+                'link' => '/dashboard',
+                'notification_status' => 'unread',
+            ]);
         });
 
         try {

@@ -4,6 +4,8 @@ use App\Models\IncidentReport;
 use App\Models\InventoryItem;
 use App\Models\Role;
 use App\Models\User;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
 
 function incidentAdmin(): User
@@ -170,7 +172,10 @@ test('admin can close an incident', function () {
     $incident = makeIncident(incidentFaculty());
 
     $this->actingAs($admin)
-        ->put(route('incidents.update', $incident), ['status' => 'closed'])
+        ->put(route('incidents.update', $incident), [
+            'status' => 'closed',
+            'resolution_notes' => 'No further action required.',
+        ])
         ->assertRedirect()
         ->assertSessionHasNoErrors();
 
@@ -262,4 +267,124 @@ test('create page lists inventory items', function () {
         ->has('inventoryItems', 1)
         ->where('inventoryItems.0.item_name', 'DESKTOP COMPUTER'),
     );
+});
+
+test('incident status changes must follow the review workflow', function () {
+    $admin = incidentAdmin();
+    $faculty = incidentFaculty();
+    $incident = makeIncident($faculty);
+
+    $this->actingAs($admin)
+        ->put(route('incidents.update', $incident), ['status' => 'resolved', 'resolution_notes' => 'Fixed.'])
+        ->assertSessionHasErrors('status');
+
+    $this->actingAs($admin)
+        ->put(route('incidents.update', $incident), ['status' => 'under_review'])
+        ->assertSessionHasNoErrors();
+
+    expect($incident->fresh()->status)->toBe('under_review');
+});
+
+test('resolving or closing an incident requires resolution notes', function () {
+    $admin = incidentAdmin();
+    $faculty = incidentFaculty();
+    $incident = makeIncident($faculty, ['status' => 'under_review']);
+
+    $this->actingAs($admin)
+        ->put(route('incidents.update', $incident), ['status' => 'resolved'])
+        ->assertSessionHasErrors('resolution_notes');
+
+    $this->actingAs($admin)
+        ->put(route('incidents.update', $incident), [
+            'status' => 'resolved',
+            'resolution_notes' => 'Replaced the cracked monitor.',
+        ])
+        ->assertSessionHasNoErrors();
+
+    expect($incident->fresh()->resolution_notes)->toBe('Replaced the cracked monitor.');
+});
+
+test('an incident with pending liabilities cannot be closed', function () {
+    $admin = incidentAdmin();
+    $faculty = incidentFaculty();
+    $incident = makeIncident($faculty, ['status' => 'under_review']);
+    $incident->userLiabilities()->create([
+        'user_id' => $faculty->id,
+        'liability_description' => 'Cracked monitor',
+        'liability_status' => 'pending',
+        'date_assigned' => now(),
+    ]);
+
+    $this->actingAs($admin)
+        ->put(route('incidents.update', $incident), [
+            'status' => 'resolved',
+            'resolution_notes' => 'Reviewed.',
+        ])
+        ->assertSessionHasErrors('status');
+});
+
+test('the reporter is notified when the incident status changes', function () {
+    $admin = incidentAdmin();
+    $faculty = incidentFaculty();
+    $incident = makeIncident($faculty);
+
+    $this->actingAs($admin)->put(route('incidents.update', $incident), [
+        'status' => 'under_review',
+    ])->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('notifications', [
+        'user_id' => $faculty->id,
+        'notification_type' => 'incident',
+    ]);
+});
+
+test('assigning a liability notifies the liable user', function () {
+    $admin = incidentAdmin();
+    $faculty = incidentFaculty();
+    $incident = makeIncident($faculty, ['status' => 'under_review']);
+
+    $this->actingAs($admin)->put(route('incidents.update', $incident), [
+        'status' => 'under_review',
+        'liability_user_id' => $faculty->id,
+        'liability_description' => 'Damaged monitor',
+        'liability_amount' => '1500',
+    ])->assertSessionHasNoErrors();
+
+    $this->assertDatabaseHas('notifications', [
+        'user_id' => $faculty->id,
+        'notification_type' => 'liability',
+    ]);
+});
+
+test('incident evidence files can be uploaded and downloaded privately', function () {
+    Storage::fake('local');
+
+    $admin = incidentAdmin();
+    $faculty = incidentFaculty();
+    $other = incidentFaculty();
+
+    $this->actingAs($faculty)->post(route('incidents.store'), [
+        'incident_type' => 'Equipment damage',
+        'incident_description' => 'Cracked monitor with photo evidence.',
+        'attachments' => [
+            UploadedFile::fake()->create('damage.pdf', 100, 'application/pdf'),
+        ],
+    ])->assertRedirect(route('incidents.index'));
+
+    $incident = IncidentReport::where('reported_by', $faculty->id)->sole();
+    $attachment = $incident->attachments()->sole();
+
+    Storage::disk('local')->assertExists($attachment->file_path);
+
+    $this->actingAs($faculty)
+        ->get(route('incidents.attachments.download', [$incident, $attachment]))
+        ->assertOk();
+
+    $this->actingAs($admin)
+        ->get(route('incidents.attachments.download', [$incident, $attachment]))
+        ->assertOk();
+
+    $this->actingAs($other)
+        ->get(route('incidents.attachments.download', [$incident, $attachment]))
+        ->assertForbidden();
 });

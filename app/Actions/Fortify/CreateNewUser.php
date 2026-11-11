@@ -106,6 +106,8 @@ class CreateNewUser implements CreatesNewUsers
                 ->whereIn('status', ['inactive', 'rejected'])
                 ->first();
 
+            $isFaculty = ($input['role'] ?? null) === 'faculty_staff';
+
             $attributes = [
                 'name' => $input['name'],
                 'email' => $input['email'],
@@ -116,8 +118,8 @@ class CreateNewUser implements CreatesNewUsers
                 'id_number' => $input['id_number'] ?? null,
                 ...$details,
                 'status' => 'active',
-                'is_approved' => false,
-                'approval_status' => 'pending',
+                'is_approved' => $isFaculty,
+                'approval_status' => $isFaculty ? 'approved' : 'pending',
                 'email_verified_at' => now(),
             ];
 

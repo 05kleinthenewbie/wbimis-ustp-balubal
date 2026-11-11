@@ -9,6 +9,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -71,17 +72,19 @@ class RegisterOtpController extends Controller
         event(new Registered($user));
 
         $isStudent = $user->role?->role_name === 'student';
-        $status = $user->is_approved
-            ? 'Registration successful. You can now sign in.'
-            : 'Registration successful. Your account is awaiting ICT Admin approval.';
 
-        if ($isStudent) {
-            $status = 'Registration successful. Your COR is awaiting ICT Admin approval.';
+        if (! $isStudent) {
+            Auth::login($user);
+            $request->session()->regenerate();
+
+            return redirect()->intended(route('dashboard'))
+                ->with('status', 'Welcome to the ICT Portal! Your account is ready.');
         }
 
-        return redirect()
-            ->route($isStudent ? 'student.login' : 'faculty.login')
-            ->with('status', $status);
+        return redirect()->route('student.login')->with(
+            'status',
+            'Registration successful. Your COR is awaiting ICT Admin approval.',
+        );
     }
 
     /**

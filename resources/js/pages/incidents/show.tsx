@@ -4,6 +4,7 @@ import {
     Archive,
     Calendar,
     CheckCircle2,
+    FileQuestion,
     RotateCcw,
     Save,
     ShieldAlert,
@@ -42,9 +43,15 @@ type IncidentDetail = {
     incident_description: string;
     incident_date: string | null;
     status: string;
+    resolution_notes: string | null;
     reporter: { name: string };
     inventory_item: { item_name: string; property_no: string } | null;
     user_liabilities: Liability[];
+    attachments: {
+        id: number;
+        file_name: string;
+        uploaded_at: string | null;
+    }[];
 };
 
 type UserOption = {
@@ -206,6 +213,9 @@ export default function IncidentsShow({
     users = [],
 }: Props) {
     const [status, setStatus] = useState(incident.status);
+    const [resolutionNotes, setResolutionNotes] = useState(
+        incident.resolution_notes ?? '',
+    );
     const [liabilityUserId, setLiabilityUserId] = useState('');
     const [liabilityDescription, setLiabilityDescription] = useState('');
     const [liabilityAmount, setLiabilityAmount] = useState('');
@@ -218,6 +228,7 @@ export default function IncidentsShow({
     const statusChanged = status !== incident.status;
     const dirty =
         statusChanged ||
+        resolutionNotes !== (incident.resolution_notes ?? '') ||
         (liabilityUserId !== '' && liabilityUserId !== NONE_VALUE) ||
         liabilityDescription.trim() !== '' ||
         liabilityAmount.trim() !== '';
@@ -241,6 +252,7 @@ export default function IncidentsShow({
             `/incidents/${incident.id}`,
             {
                 status,
+                resolution_notes: resolutionNotes || null,
                 liability_user_id: hasAssignee ? liabilityUserId : null,
                 liability_description: liabilityDescription || null,
                 liability_amount:
@@ -270,6 +282,7 @@ export default function IncidentsShow({
 
     function handleReset() {
         setStatus(incident.status);
+        setResolutionNotes(incident.resolution_notes ?? '');
         setLiabilityUserId('');
         setLiabilityDescription('');
         setLiabilityAmount('');
@@ -446,6 +459,61 @@ export default function IncidentsShow({
                                     </p>
                                 </div>
                             </div>
+
+                            {/* Resolution notes */}
+                            {incident.resolution_notes && (
+                                <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                                    <div className="flex items-center gap-3 border-b border-slate-200 bg-ustp-gold/4 px-5 py-4 md:px-6">
+                                        <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
+                                            <ShieldAlert className="size-4 text-ustp-gold" />
+                                        </div>
+
+                                        <p className="text-sm font-semibold text-slate-800">
+                                            Resolution notes
+                                        </p>
+                                    </div>
+                                    <div className="p-5 md:p-6">
+                                        <p className="text-sm leading-6 whitespace-pre-wrap text-slate-600">
+                                            {incident.resolution_notes}
+                                        </p>
+                                    </div>
+                                </section>
+                            )}
+
+                            {/* Evidence attachments */}
+                            {incident.attachments.length > 0 && (
+                                <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                                    <div className="flex items-center gap-3 border-b border-slate-200 bg-ustp-gold/4 px-5 py-4 md:px-6">
+                                        <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
+                                            <FileQuestion className="size-4 text-ustp-gold" />
+                                        </div>
+
+                                        <p className="text-sm font-semibold text-slate-800">
+                                            Evidence
+                                        </p>
+                                    </div>
+                                    <ul className="divide-y divide-slate-200">
+                                        {incident.attachments.map(
+                                            (attachment) => (
+                                                <li
+                                                    key={attachment.id}
+                                                    className="flex items-center justify-between gap-3 px-5 py-3 md:px-6"
+                                                >
+                                                    <span className="truncate text-sm text-slate-600">
+                                                        {attachment.file_name}
+                                                    </span>
+                                                    <a
+                                                        href={`/incidents/${incident.id}/attachments/${attachment.id}`}
+                                                        className="shrink-0 text-xs font-semibold text-ustp-navy underline-offset-2 hover:underline"
+                                                    >
+                                                        Download
+                                                    </a>
+                                                </li>
+                                            ),
+                                        )}
+                                    </ul>
+                                </section>
+                            )}
 
                             {/* Liability records */}
                             {incident.user_liabilities.length > 0 && (
@@ -630,6 +698,31 @@ export default function IncidentsShow({
                                         {errors.status && (
                                             <p className="text-[11px] text-red-600">
                                                 {errors.status}
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    <div className="grid gap-2">
+                                        <Label className="text-xs font-medium text-slate-600">
+                                            Resolution notes{' '}
+                                            <span className="font-normal text-slate-400">
+                                                (required to resolve/close)
+                                            </span>
+                                        </Label>
+                                        <Textarea
+                                            value={resolutionNotes}
+                                            onChange={(event) =>
+                                                setResolutionNotes(
+                                                    event.target.value,
+                                                )
+                                            }
+                                            rows={3}
+                                            placeholder="Findings, actions taken, or recommendation..."
+                                            className="text-sm"
+                                        />
+                                        {errors.resolution_notes && (
+                                            <p className="text-[11px] text-red-600">
+                                                {errors.resolution_notes}
                                             </p>
                                         )}
                                     </div>

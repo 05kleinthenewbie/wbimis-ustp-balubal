@@ -1,5 +1,13 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Users, Search, UserX, UserCheck, ClipboardCheck } from 'lucide-react';
+import {
+    Users,
+    Search,
+    UserX,
+    UserCheck,
+    ClipboardCheck,
+    ChevronLeft,
+    ChevronRight,
+} from 'lucide-react';
 import { useState } from 'react';
 import {
     approvals,
@@ -49,6 +57,9 @@ export default function UsersIndex({
     const [processingId, setProcessingId] = useState<number | null>(null);
     const [searchActive, setSearchActive] = useState('');
     const [roleFilter, setRoleFilter] = useState('all');
+    const [activePage, setActivePage] = useState(1);
+    const [deactivatedPage, setDeactivatedPage] = useState(1);
+    const usersPerPage = 15;
 
     function matchesRole(user: UserRow) {
         if (roleFilter === 'all') {
@@ -86,6 +97,8 @@ export default function UsersIndex({
         );
     }
 
+    const filteredDeactivated = deactivatedUsers.filter(matchesRole);
+
     const filteredActive = activeUsers.filter(matchesRole).filter((user) => {
         const q = searchActive.toLowerCase();
 
@@ -96,6 +109,29 @@ export default function UsersIndex({
             roleLabels[user.role?.role_name ?? '']?.toLowerCase().includes(q)
         );
     });
+
+    const activePageCount = Math.max(
+        1,
+        Math.ceil(filteredActive.length / usersPerPage),
+    );
+    const currentActivePage = Math.min(activePage, activePageCount);
+    const visibleActive = filteredActive.slice(
+        (currentActivePage - 1) * usersPerPage,
+        currentActivePage * usersPerPage,
+    );
+
+    const deactivatedPageCount = Math.max(
+        1,
+        Math.ceil(filteredDeactivated.length / usersPerPage),
+    );
+    const currentDeactivatedPage = Math.min(
+        deactivatedPage,
+        deactivatedPageCount,
+    );
+    const visibleDeactivated = filteredDeactivated.slice(
+        (currentDeactivatedPage - 1) * usersPerPage,
+        currentDeactivatedPage * usersPerPage,
+    );
 
     return (
         <>
@@ -151,7 +187,11 @@ export default function UsersIndex({
                                     roleFilter === role ? 'default' : 'outline'
                                 }
                                 aria-pressed={roleFilter === role}
-                                onClick={() => setRoleFilter(role)}
+                                onClick={() => {
+                                    setRoleFilter(role);
+                                    setActivePage(1);
+                                    setDeactivatedPage(1);
+                                }}
                                 className="capitalize"
                             >
                                 {role}
@@ -186,9 +226,10 @@ export default function UsersIndex({
 
                                 <Input
                                     value={searchActive}
-                                    onChange={(e) =>
-                                        setSearchActive(e.target.value)
-                                    }
+                                    onChange={(e) => {
+                                        setSearchActive(e.target.value);
+                                        setActivePage(1);
+                                    }}
                                     placeholder="Search active..."
                                     className="h-9 border-slate-300 bg-white pl-9 text-xs text-slate-800 placeholder:text-slate-400 focus-visible:border-ustp-navy focus-visible:ring-1 focus-visible:ring-ustp-navy/25"
                                 />
@@ -227,7 +268,7 @@ export default function UsersIndex({
                                         </thead>
 
                                         <tbody>
-                                            {filteredActive.map((user) => (
+                                            {visibleActive.map((user) => (
                                                 <tr
                                                     key={user.id}
                                                     className="border-b border-slate-200 transition-colors last:border-0 hover:bg-slate-50"
@@ -294,6 +335,59 @@ export default function UsersIndex({
                                         </tbody>
                                     </table>
                                 </div>
+
+                                {activePageCount > 1 && (
+                                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-5 py-3">
+                                        <p className="text-[11px] text-slate-400">
+                                            Showing {visibleActive.length} of{' '}
+                                            {filteredActive.length}
+                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={
+                                                    currentActivePage === 1
+                                                }
+                                                onClick={() =>
+                                                    setActivePage((value) =>
+                                                        Math.max(1, value - 1),
+                                                    )
+                                                }
+                                                className="h-7 px-2.5 text-[11px]"
+                                            >
+                                                <ChevronLeft className="size-3.5" />
+                                                Prev
+                                            </Button>
+                                            <span className="text-[11px] text-slate-500">
+                                                Page {currentActivePage} of{' '}
+                                                {activePageCount}
+                                            </span>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={
+                                                    currentActivePage ===
+                                                    activePageCount
+                                                }
+                                                onClick={() =>
+                                                    setActivePage((value) =>
+                                                        Math.min(
+                                                            activePageCount,
+                                                            value + 1,
+                                                        ),
+                                                    )
+                                                }
+                                                className="h-7 px-2.5 text-[11px]"
+                                            >
+                                                Next
+                                                <ChevronRight className="size-3.5" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </section>
@@ -319,7 +413,7 @@ export default function UsersIndex({
                             </div>
                         </div>
 
-                        {deactivatedUsers.filter(matchesRole).length === 0 ? (
+                        {filteredDeactivated.length === 0 ? (
                             <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 py-12 text-center">
                                 <UserX className="mb-3 size-8 text-slate-400" />
                                 <p className="text-sm text-slate-400">
@@ -349,75 +443,130 @@ export default function UsersIndex({
                                         </thead>
 
                                         <tbody>
-                                            {deactivatedUsers
-                                                .filter(matchesRole)
-                                                .map((user) => (
-                                                    <tr
-                                                        key={user.id}
-                                                        className="border-b border-slate-200 transition-colors last:border-0 hover:bg-slate-50"
-                                                    >
-                                                        <td className="px-5 py-4">
-                                                            <div className="flex items-center gap-3">
-                                                                <Avatar className="size-8 shrink-0 rounded-lg">
-                                                                    {user.avatar ? (
-                                                                        <AvatarImage
-                                                                            src={
-                                                                                user.avatar
-                                                                            }
-                                                                            alt={
-                                                                                user.name
-                                                                            }
-                                                                            className="object-cover"
-                                                                        />
-                                                                    ) : null}
-                                                                    <AvatarFallback className="rounded-lg bg-slate-200 text-[10px] font-bold text-slate-500">
-                                                                        {getInitials(
-                                                                            user.name,
-                                                                        )}
-                                                                    </AvatarFallback>
-                                                                </Avatar>
-                                                                <span className="font-medium text-slate-600">
-                                                                    {user.name}
-                                                                </span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-5 py-4 text-xs text-slate-400">
-                                                            {user.email}
-                                                        </td>
-                                                        <td className="px-5 py-4 text-xs text-slate-400">
-                                                            {roleLabels[
-                                                                user.role
-                                                                    ?.role_name ??
-                                                                    ''
-                                                            ] ?? '—'}
-                                                        </td>
-                                                        <td className="px-5 py-4 text-xs text-slate-400">
-                                                            {user.department ??
-                                                                '—'}
-                                                        </td>
-                                                        <td className="px-5 py-4 text-right">
-                                                            <Button
-                                                                size="sm"
-                                                                disabled={
-                                                                    processingId ===
-                                                                    user.id
-                                                                }
-                                                                onClick={() =>
-                                                                    reactivateUser(
-                                                                        user.id,
-                                                                    )
-                                                                }
-                                                                className="h-8 bg-emerald-600 px-3 text-xs text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700"
-                                                            >
-                                                                <UserCheck className="mr-1 size-3" />
-                                                                Reactivate
-                                                            </Button>
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                            {visibleDeactivated.map((user) => (
+                                                <tr
+                                                    key={user.id}
+                                                    className="border-b border-slate-200 transition-colors last:border-0 hover:bg-slate-50"
+                                                >
+                                                    <td className="px-5 py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <Avatar className="size-8 shrink-0 rounded-lg">
+                                                                {user.avatar ? (
+                                                                    <AvatarImage
+                                                                        src={
+                                                                            user.avatar
+                                                                        }
+                                                                        alt={
+                                                                            user.name
+                                                                        }
+                                                                        className="object-cover"
+                                                                    />
+                                                                ) : null}
+                                                                <AvatarFallback className="rounded-lg bg-slate-200 text-[10px] font-bold text-slate-500">
+                                                                    {getInitials(
+                                                                        user.name,
+                                                                    )}
+                                                                </AvatarFallback>
+                                                            </Avatar>
+                                                            <span className="font-medium text-slate-600">
+                                                                {user.name}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-5 py-4 text-xs text-slate-400">
+                                                        {user.email}
+                                                    </td>
+                                                    <td className="px-5 py-4 text-xs text-slate-400">
+                                                        {roleLabels[
+                                                            user.role
+                                                                ?.role_name ??
+                                                                ''
+                                                        ] ?? '—'}
+                                                    </td>
+                                                    <td className="px-5 py-4 text-xs text-slate-400">
+                                                        {user.department ?? '—'}
+                                                    </td>
+                                                    <td className="px-5 py-4 text-right">
+                                                        <Button
+                                                            size="sm"
+                                                            disabled={
+                                                                processingId ===
+                                                                user.id
+                                                            }
+                                                            onClick={() =>
+                                                                reactivateUser(
+                                                                    user.id,
+                                                                )
+                                                            }
+                                                            className="h-8 bg-emerald-600 px-3 text-xs text-white shadow-lg shadow-emerald-600/20 hover:bg-emerald-700"
+                                                        >
+                                                            <UserCheck className="mr-1 size-3" />
+                                                            Reactivate
+                                                        </Button>
+                                                    </td>
+                                                </tr>
+                                            ))}
                                         </tbody>
                                     </table>
                                 </div>
+
+                                {deactivatedPageCount > 1 && (
+                                    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-5 py-3">
+                                        <p className="text-[11px] text-slate-400">
+                                            Showing {visibleDeactivated.length}{' '}
+                                            of {filteredDeactivated.length}
+                                        </p>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={
+                                                    currentDeactivatedPage === 1
+                                                }
+                                                onClick={() =>
+                                                    setDeactivatedPage(
+                                                        (value) =>
+                                                            Math.max(
+                                                                1,
+                                                                value - 1,
+                                                            ),
+                                                    )
+                                                }
+                                                className="h-7 px-2.5 text-[11px]"
+                                            >
+                                                <ChevronLeft className="size-3.5" />
+                                                Prev
+                                            </Button>
+                                            <span className="text-[11px] text-slate-500">
+                                                Page {currentDeactivatedPage} of{' '}
+                                                {deactivatedPageCount}
+                                            </span>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                disabled={
+                                                    currentDeactivatedPage ===
+                                                    deactivatedPageCount
+                                                }
+                                                onClick={() =>
+                                                    setDeactivatedPage(
+                                                        (value) =>
+                                                            Math.min(
+                                                                deactivatedPageCount,
+                                                                value + 1,
+                                                            ),
+                                                    )
+                                                }
+                                                className="h-7 px-2.5 text-[11px]"
+                                            >
+                                                Next
+                                                <ChevronRight className="size-3.5" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </section>

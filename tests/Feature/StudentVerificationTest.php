@@ -235,7 +235,8 @@ test('student approvals through user management record the review decision', fun
 
     expect($student->approval_status)->toBe('approved')
         ->and($student->studentVerification->reviewed_by)->toBe($this->admin->id)
-        ->and($student->studentVerification->reviewed_at)->not->toBeNull();
+        ->and($student->studentVerification->reviewed_at)->not->toBeNull()
+        ->and($student->systemNotifications()->where('notification_type', 'account_approval')->exists())->toBeTrue();
 });
 
 test('the user management approvals queue lists pending students with their COR', function () {

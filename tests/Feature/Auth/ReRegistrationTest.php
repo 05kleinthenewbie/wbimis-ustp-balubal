@@ -20,7 +20,7 @@ test('rejected accounts can register again', function () {
     ]))->assertRedirect(route('register.otp.show'));
 
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
-        ->assertRedirect(route('faculty.login'));
+        ->assertRedirect(route('dashboard'));
 
     $user = User::where('email', 'rejected@ustp.edu.ph')->first();
 

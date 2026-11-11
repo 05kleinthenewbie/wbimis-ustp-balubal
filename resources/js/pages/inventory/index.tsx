@@ -550,7 +550,11 @@ export default function InventoryIndex({
 
                     {/* Stat cards */}
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <Link
+                            href="/inventory"
+                            aria-label="View all inventory items"
+                            className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ustp-navy"
+                        >
                             <div className="mb-3 flex items-center justify-between">
                                 <p className="text-xs text-slate-400">
                                     Total Items
@@ -562,9 +566,13 @@ export default function InventoryIndex({
                             <p className="text-2xl font-semibold text-slate-800">
                                 {stats.total}
                             </p>
-                        </div>
+                        </Link>
 
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <Link
+                            href="/inventory?status=active"
+                            aria-label="View active inventory items"
+                            className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ustp-navy"
+                        >
                             <div className="mb-3 flex items-center justify-between">
                                 <p className="text-xs text-slate-400">Active</p>
                                 <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-400/10 text-emerald-400">
@@ -582,9 +590,13 @@ export default function InventoryIndex({
                                     }}
                                 />
                             </div>
-                        </div>
+                        </Link>
 
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <Link
+                            href="/inventory?condition=defective"
+                            aria-label="View defective inventory items"
+                            className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ustp-navy"
+                        >
                             <div className="mb-3 flex items-center justify-between">
                                 <p className="text-xs text-slate-400">
                                     Defective
@@ -604,9 +616,13 @@ export default function InventoryIndex({
                                     }}
                                 />
                             </div>
-                        </div>
+                        </Link>
 
-                        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <Link
+                            href="/inventory?condition=under_repair"
+                            aria-label="View inventory items under repair"
+                            className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ustp-navy"
+                        >
                             <div className="mb-3 flex items-center justify-between">
                                 <p className="text-xs text-slate-400">
                                     Under Repair
@@ -626,9 +642,8 @@ export default function InventoryIndex({
                                     }}
                                 />
                             </div>
-                        </div>
+                        </Link>
                     </div>
-
                     {/* Health overview + Category breakdown */}
                     <div className="grid gap-4 lg:grid-cols-3">
                         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">

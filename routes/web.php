@@ -92,6 +92,7 @@ Route::middleware(['auth', 'verified', 'approved'])->group(function () {
     Route::patch('inventory/{id}/mark-disposal', [InventoryItemController::class, 'markDisposal'])->name('inventory.mark-disposal');
     Route::patch('inventory/{id}/defective/{defectiveId}', [InventoryItemController::class, 'updateRepairStatus'])->name('inventory.defective.update');
     Route::post('incidents/{incident}/liabilities/{liability}/resolve', [IncidentReportController::class, 'resolveLiability'])->name('incidents.liabilities.resolve');
+    Route::get('incidents/{incident}/attachments/{attachment}', [IncidentReportController::class, 'downloadAttachment'])->name('incidents.attachments.download');
     Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('reports/export', [ReportController::class, 'export'])->name('reports.export');
     Route::get('attachments/{attachment}/download', [AttachmentController::class, 'download'])->name('attachments.download');

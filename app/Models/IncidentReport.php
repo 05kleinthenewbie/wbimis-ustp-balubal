@@ -15,6 +15,7 @@ class IncidentReport extends Model
         'incident_description',
         'incident_date',
         'status',
+        'resolution_notes',
     ];
 
     protected $casts = [
@@ -43,5 +44,13 @@ class IncidentReport extends Model
     public function userLiabilities(): HasMany
     {
         return $this->hasMany(UserLiability::class, 'incident_id');
+    }
+
+    /**
+     * Get evidence files uploaded with this incident.
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(IncidentAttachment::class, 'incident_id');
     }
 }

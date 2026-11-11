@@ -20,7 +20,7 @@ test('new users can register', function () {
     expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeFalse();
 
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()])
-        ->assertRedirect(route('faculty.login'));
+        ->assertRedirect(route('dashboard'));
 
     $user = User::where('email', 'test@ustp.edu.ph')->first();
 
