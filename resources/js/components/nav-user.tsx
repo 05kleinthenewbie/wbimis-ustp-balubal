@@ -22,7 +22,7 @@ export function NavUser() {
     const roleLabel =
         roleName === 'ict_admin'
             ? 'Administrator'
-            : roleName === 'faculty_staff'
+            : roleName === 'faculty'
               ? 'Faculty'
               : roleName === 'student'
                 ? 'Student'

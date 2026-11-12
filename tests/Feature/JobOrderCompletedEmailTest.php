@@ -79,7 +79,7 @@ test('non admin users cannot complete a job order', function () {
     Mail::fake();
 
     [, $jobOrder] = jobOrderRequest();
-    $facultyRole = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $facultyRole = Role::firstOrCreate(['role_name' => 'faculty']);
     $faculty = User::factory()->create(['role_id' => $facultyRole->id]);
 
     $this->actingAs($faculty)

@@ -648,9 +648,6 @@ export default function InventoryIndex({
                     <div className="grid gap-4 lg:grid-cols-3">
                         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                             <div className="mb-4 flex items-center gap-3">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                    <CheckCircle2 className="size-4 text-ustp-gold" />
-                                </div>
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-800">
                                         Condition Health
@@ -670,9 +667,6 @@ export default function InventoryIndex({
 
                         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
                             <div className="mb-4 flex items-center gap-3">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                    <Box className="size-4 text-ustp-gold" />
-                                </div>
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-800">
                                         By Category
@@ -691,9 +685,6 @@ export default function InventoryIndex({
                         <div className="rounded-2xl border border-red-200 bg-red-50/60 p-4 shadow-sm">
                             <div className="mb-3 flex items-center justify-between gap-3">
                                 <div className="flex items-center gap-3">
-                                    <div className="flex size-9 items-center justify-center rounded-lg bg-red-100">
-                                        <AlertTriangle className="size-4 text-red-500" />
-                                    </div>
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <h3 className="text-sm font-semibold text-slate-800">

@@ -409,10 +409,6 @@ export default function RequestsIndex({ requests }: Props) {
                                         <div className="p-4">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex min-w-0 gap-3">
-                                                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-ustp-light-blue/10 text-ustp-light-blue">
-                                                        <ClipboardList className="size-4" />
-                                                    </div>
-
                                                     <div className="min-w-0">
                                                         <p className="truncate font-medium text-slate-800">
                                                             {request.request_services

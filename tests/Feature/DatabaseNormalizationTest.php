@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Schema;
 
 test('student and faculty facts have separate profile records and reference data', function () {
     $studentRole = Role::firstOrCreate(['role_name' => 'student']);
-    $facultyRole = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $facultyRole = Role::firstOrCreate(['role_name' => 'faculty']);
     $student = User::factory()->pendingApproval()->create([
         'role_id' => $studentRole->id, 'id_number' => '2023000001',
         'department' => 'BSIT', 'educational_level' => 'college', 'year_level' => '2',

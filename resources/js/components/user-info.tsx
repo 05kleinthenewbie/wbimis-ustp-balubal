@@ -36,7 +36,7 @@ export function UserInfo({
                 </span>
                 {showRole && role ? (
                     <span className="mt-0.5 truncate text-[10px] font-medium tracking-wider text-ustp-gold uppercase">
-                        {role === 'faculty_staff'
+                        {role === 'faculty'
                             ? 'Faculty'
                             : role.replace(/_/g, ' ')}
                     </span>

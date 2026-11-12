@@ -15,7 +15,7 @@ function bookingRole(string $name): Role
 
 function makeBooking(array $overrides = []): array
 {
-    $owner = User::factory()->create(['role_id' => bookingRole('faculty_staff')->id]);
+    $owner = User::factory()->create(['role_id' => bookingRole('faculty')->id]);
     $facility = Facility::create(['facility_name' => 'Computer Lab A']);
 
     $booking = Booking::create([
@@ -98,7 +98,7 @@ test('re-saving the same decision does not resend the email', function () {
 test('non admins cannot approve or reject bookings', function () {
     Mail::fake();
 
-    $faculty = User::factory()->create(['role_id' => bookingRole('faculty_staff')->id]);
+    $faculty = User::factory()->create(['role_id' => bookingRole('faculty')->id]);
     [, , $booking] = makeBooking();
 
     $this->actingAs($faculty)
@@ -179,7 +179,7 @@ test('booking status changes are recorded in the audit log', function () {
 
 test('the booking owner cannot cancel someone else booking', function () {
     [, , $booking] = makeBooking();
-    $other = User::factory()->create(['role_id' => bookingRole('faculty_staff')->id]);
+    $other = User::factory()->create(['role_id' => bookingRole('faculty')->id]);
 
     $this->actingAs($other)
         ->put(route('bookings.update', $booking), ['booking_status' => 'cancelled'])
@@ -214,7 +214,7 @@ test('the booking owner cannot cancel a rejected booking', function () {
 
 test('faculty can see other users bookings on the availability calendar', function () {
     [, $facility, $booking] = makeBooking();
-    $faculty = User::factory()->create(['role_id' => bookingRole('faculty_staff')->id]);
+    $faculty = User::factory()->create(['role_id' => bookingRole('faculty')->id]);
 
     $this->actingAs($faculty)
         ->get(route('bookings.index'))
@@ -232,7 +232,7 @@ test('faculty can see other users bookings on the availability calendar', functi
 
 test('the create page lists other users bookings with requester names', function () {
     [, , $booking] = makeBooking();
-    $faculty = User::factory()->create(['role_id' => bookingRole('faculty_staff')->id]);
+    $faculty = User::factory()->create(['role_id' => bookingRole('faculty')->id]);
 
     $this->actingAs($faculty)
         ->get(route('bookings.create'))

@@ -1,6 +1,6 @@
 import { Form, Head } from '@inertiajs/react';
 import { ArrowRight, GraduationCap, Mail, User, Users } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import StatusAlert, { isAlertMessage } from '@/components/status-alert';
@@ -33,24 +33,88 @@ const labelClassName = 'text-sm font-medium text-foreground';
 const detailsClassName =
     'grid min-w-0 items-start gap-x-6 gap-y-5 rounded-2xl border border-border bg-muted/20 p-4 sm:grid-cols-2 sm:p-6';
 const defaultPrograms = ['BSA', 'BAT', 'BSIT', 'BTLED'];
+const DRAFT_KEY = 'wbimis-register-draft';
+
+type RegisterDraft = Record<string, string>;
+
+function readDraft(): RegisterDraft {
+    if (typeof window === 'undefined') {
+        return {};
+    }
+
+    try {
+        const stored = JSON.parse(sessionStorage.getItem(DRAFT_KEY) ?? '{}');
+
+        return stored && typeof stored === 'object' ? stored : {};
+    } catch {
+        return {};
+    }
+}
 
 export default function Register({ passwordRules, programs }: Props) {
+    const [draft] = useState<RegisterDraft>(() => readDraft());
     const [password, setPassword] = useState('');
     const [role] = useState(() => {
         if (typeof window === 'undefined') {
-            return 'faculty_staff';
+            return 'faculty';
         }
 
         return new URLSearchParams(window.location.search).get('role') ===
             'student'
             ? 'student'
-            : 'faculty_staff';
+            : 'faculty';
     });
-    const [employmentType, setEmploymentType] = useState('');
-    const [department, setDepartment] = useState('');
-    const [yearLevel, setYearLevel] = useState('');
-    const [educationalLevel, setEducationalLevel] = useState('college');
+    const [employmentType, setEmploymentType] = useState(
+        draft.employment_type ?? '',
+    );
+    const [department, setDepartment] = useState(draft.department ?? '');
+    const [yearLevel, setYearLevel] = useState(draft.year_level ?? '');
+    const [educationalLevel, setEducationalLevel] = useState(
+        draft.educational_level || 'college',
+    );
     const isStudent = role === 'student';
+
+    useEffect(() => {
+        const form = document.getElementById(
+            'register-form',
+        ) as HTMLFormElement | null;
+
+        if (!form) {
+            return;
+        }
+
+        const persist = () => {
+            const data: RegisterDraft = {};
+
+            new FormData(form).forEach((value, key) => {
+                if (
+                    key === 'password' ||
+                    key === 'password_confirmation' ||
+                    key === 'cor'
+                ) {
+                    return;
+                }
+
+                if (typeof value === 'string' && value !== '') {
+                    data[key] = value;
+                }
+            });
+
+            try {
+                sessionStorage.setItem(DRAFT_KEY, JSON.stringify(data));
+            } catch {
+                // Ignore storage errors (private mode, quota).
+            }
+        };
+
+        form.addEventListener('input', persist);
+        form.addEventListener('change', persist);
+
+        return () => {
+            form.removeEventListener('input', persist);
+            form.removeEventListener('change', persist);
+        };
+    }, []);
 
     return (
         <>
@@ -61,6 +125,7 @@ export default function Register({ passwordRules, programs }: Props) {
             />
             <Form
                 {...store.form()}
+                id="register-form"
                 resetOnSuccess={['password', 'password_confirmation']}
                 disableWhileProcessing
                 className="flex flex-col gap-6"
@@ -116,6 +181,9 @@ export default function Register({ passwordRules, programs }: Props) {
                                             <Input
                                                 id={field.name}
                                                 name={field.name}
+                                                defaultValue={
+                                                    draft[field.name] ?? ''
+                                                }
                                                 required={
                                                     field.name !==
                                                     'middle_initial'
@@ -158,6 +226,7 @@ export default function Register({ passwordRules, programs }: Props) {
                                 <Input
                                     id="id_number"
                                     name="id_number"
+                                    defaultValue={draft.id_number ?? ''}
                                     type="text"
                                     inputMode={isStudent ? 'numeric' : 'text'}
                                     pattern={
@@ -190,6 +259,7 @@ export default function Register({ passwordRules, programs }: Props) {
                                         id="email"
                                         type="email"
                                         name="email"
+                                        defaultValue={draft.email ?? ''}
                                         required
                                         autoComplete="email"
                                         placeholder={
@@ -562,6 +632,7 @@ export default function Register({ passwordRules, programs }: Props) {
                                     id="terms"
                                     name="terms"
                                     value="on"
+                                    defaultChecked={draft.terms === 'on'}
                                     required
                                     aria-invalid={Boolean(errors.terms)}
                                     className="mt-0.5 size-4 shrink-0 rounded-[4px] border border-input accent-ustp-navy focus-visible:ring-2 focus-visible:ring-ustp-navy/30 dark:border-white/20"

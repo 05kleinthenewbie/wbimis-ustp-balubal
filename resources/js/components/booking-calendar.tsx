@@ -207,10 +207,6 @@ export default function BookingCalendar({
         >
             <div className="flex flex-col gap-4 border-b border-slate-200 bg-slate-50 px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="flex items-center gap-3">
-                    <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                        <CalendarDays className="size-4 text-ustp-gold" />
-                    </div>
-
                     <div>
                         <h2 className="text-sm font-semibold text-slate-800">
                             Availability calendar
@@ -331,7 +327,7 @@ export default function BookingCalendar({
                                             {day}
                                         </span>
 
-                                        <span className="mt-auto hidden text-[10px] font-medium sm:block">
+                                        <span className="mt-auto text-[10px] font-medium">
                                             Closed
                                         </span>
                                     </button>
@@ -383,7 +379,7 @@ export default function BookingCalendar({
                                     ) : (
                                         <span
                                             className={cn(
-                                                'mt-auto hidden text-[10px] font-medium sm:block',
+                                                'mt-auto text-[10px] font-medium',
                                                 isSelected
                                                     ? 'text-white/60'
                                                     : 'text-emerald-600',

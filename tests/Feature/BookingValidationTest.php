@@ -26,7 +26,7 @@ function bookingValidationFacility(): Facility
 }
 
 test('faculty cannot book a facility on a sunday', function () {
-    $faculty = bookingValidationUser('faculty_staff');
+    $faculty = bookingValidationUser('faculty');
     $facility = bookingValidationFacility();
 
     $this->actingAs($faculty)
@@ -45,7 +45,7 @@ test('faculty cannot book a facility on a sunday', function () {
 });
 
 test('faculty can book a facility on a saturday', function () {
-    $faculty = bookingValidationUser('faculty_staff');
+    $faculty = bookingValidationUser('faculty');
     $facility = bookingValidationFacility();
 
     $this->actingAs($faculty)
@@ -67,7 +67,7 @@ test('faculty can book a facility on a saturday', function () {
 });
 
 test('the api rejects facility bookings on a sunday', function () {
-    $faculty = bookingValidationUser('faculty_staff');
+    $faculty = bookingValidationUser('faculty');
     $facility = bookingValidationFacility();
     $token = auth('api')->login($faculty);
 

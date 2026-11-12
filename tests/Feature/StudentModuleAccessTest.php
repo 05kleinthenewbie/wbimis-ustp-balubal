@@ -2,6 +2,7 @@
 
 use App\Models\Facility;
 use App\Models\IncidentReport;
+use App\Models\InventoryItem;
 use App\Models\Role;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -39,8 +40,12 @@ test('students can submit and view only their own laboratory incidents', functio
         'status' => 'open',
     ]);
 
+    $item = InventoryItem::factory()->create();
+
     $this->actingAs($student)->get(route('incidents.create'))->assertOk();
     $this->post(route('incidents.store'), [
+        'item_id' => $item->id,
+        'incident_date' => '2026-09-15',
         'incident_type' => 'Equipment damage',
         'incident_description' => 'Broken keyboard in the laboratory',
         'reported_by' => $otherStudent->id,
@@ -82,7 +87,7 @@ test('students are blocked from booking api endpoints', function () {
 
 test('students can report incidents through the api without accessing others or reviewing reports', function () {
     $student = accessUser('student');
-    $other = accessUser('faculty_staff');
+    $other = accessUser('faculty');
     $otherIncident = IncidentReport::create([
         'reported_by' => $other->id,
         'incident_type' => 'Equipment damage',
@@ -104,8 +109,8 @@ test('students can report incidents through the api without accessing others or 
     $this->putJson('/api/v1/incidents/'.$id, ['status' => 'resolved'])->assertForbidden();
 });
 
-test('faculty and staff still access booking and incident pages', function () {
-    $faculty = accessUser('faculty_staff');
+test('faculty still access booking and incident pages', function () {
+    $faculty = accessUser('faculty');
 
     $this->actingAs($faculty)->get(route('bookings.create'))->assertOk();
     $this->actingAs($faculty)->get(route('incidents.create'))->assertOk();
@@ -113,7 +118,7 @@ test('faculty and staff still access booking and incident pages', function () {
 
 test('admins still access booking and incident indexes', function () {
     $admin = accessUser('ict_admin');
-    $faculty = accessUser('faculty_staff');
+    $faculty = accessUser('faculty');
 
     IncidentReport::create([
         'reported_by' => $faculty->id,

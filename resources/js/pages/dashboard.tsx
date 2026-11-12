@@ -419,7 +419,7 @@ export default function Dashboard({
     const isStudentUser: boolean =
         (user?.role?.role_name as string | undefined) === 'student';
 
-    // ── Quick actions (Faculty/Staff only) ──
+    // ── Quick actions (Faculty only) ──
     const quickActions = !isAdmin
         ? [
               {
@@ -673,61 +673,49 @@ export default function Dashboard({
             <Head title="Dashboard" />
             <div className="min-h-full flex-1 bg-slate-50 text-slate-800">
                 <div className="relative flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:p-8">
-                    {/* ── Greeting Banner ── */}
-                    <div className="relative overflow-hidden rounded-2xl bg-ustp-navy px-6 py-6 shadow-lg shadow-ustp-navy/20 sm:px-8 sm:py-7">
-                        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <div>
-                                {(position || department) && (
-                                    <p className="mb-1 flex flex-wrap items-center gap-x-2 text-xs text-white/50">
-                                        {position && <span>{position}</span>}
-                                        {department && (
-                                            <span>{department}</span>
-                                        )}
-                                    </p>
-                                )}
-                                <h2 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-                                    {greeting},{' '}
-                                    <span className="text-ustp-gold">
-                                        {userName}!
-                                    </span>
-                                </h2>
-                                <p className="mt-1 text-sm text-white/60">
-                                    {today}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            {(position || department) && (
+                                <p className="mb-1 flex flex-wrap items-center gap-x-2 text-xs text-slate-400">
+                                    {position && <span>{position}</span>}
+                                    {department && <span>{department}</span>}
                                 </p>
-                            </div>
+                            )}
+                            <h2 className="text-xl font-semibold tracking-tight text-slate-800 sm:text-2xl">
+                                {greeting}, {userName}
+                            </h2>
+                            <p className="mt-1 text-xs text-slate-400">
+                                {today}
+                            </p>
+                        </div>
 
-                            {/* Period filter */}
-                            <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/5 p-1">
-                                {(['month', 'year'] as const).map((value) => (
-                                    <button
-                                        key={value}
-                                        type="button"
-                                        onClick={() =>
-                                            router.get(
-                                                '/dashboard',
-                                                { period: value },
-                                                {
-                                                    preserveScroll: true,
-                                                    preserveState: true,
-                                                },
-                                            )
-                                        }
-                                        className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${
-                                            activePeriod === value
-                                                ? 'bg-ustp-gold text-ustp-navy'
-                                                : 'text-white/60 hover:bg-white/10 hover:text-white'
-                                        }`}
-                                    >
-                                        {value === 'month'
-                                            ? 'Monthly'
-                                            : 'Yearly'}
-                                    </button>
-                                ))}
-                            </div>
+                        <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-0.5">
+                            {(['month', 'year'] as const).map((value) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() =>
+                                        router.get(
+                                            '/dashboard',
+                                            { period: value },
+                                            {
+                                                preserveScroll: true,
+                                                preserveState: true,
+                                            },
+                                        )
+                                    }
+                                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                                        activePeriod === value
+                                            ? 'bg-ustp-navy text-white'
+                                            : 'text-slate-500 hover:text-slate-800'
+                                    }`}
+                                >
+                                    {value === 'month' ? 'Monthly' : 'Yearly'}
+                                </button>
+                            ))}
                         </div>
                     </div>
-
-                    {/* ── Quick Actions (Faculty/Staff only) ── */}
+                    {/* ── Quick Actions (Faculty only) ── */}
                     {quickActions.length > 0 && (
                         <div>
                             <h2 className="mb-3 text-xs font-semibold tracking-wider text-slate-400 uppercase">

@@ -297,9 +297,6 @@ export default function ReportsIndex({
                     {/* Facility utilization */}
                     <div className="relative rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                         <div className="mb-4 flex items-center gap-3">
-                            <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                <Building2 className="size-4 text-ustp-gold" />
-                            </div>
                             <div>
                                 <h3 className="text-sm font-semibold text-slate-800">
                                     Facility Utilization

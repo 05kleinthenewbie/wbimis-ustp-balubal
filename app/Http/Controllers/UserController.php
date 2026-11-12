@@ -125,7 +125,7 @@ class UserController extends Controller
     /**
      * Show the pending account approvals panel: registered accounts whose
      * email has been verified but which still await an administrator's
-     * decision. Student applications are listed alongside faculty and staff
+     * decision. Student applications are listed alongside faculty
      * so the COR can be reviewed from the same queue.
      */
     public function approvals(): Response

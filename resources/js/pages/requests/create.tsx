@@ -1,5 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import { AlertCircle, Check, FileText, Send, Paperclip, X } from 'lucide-react';
+import { AlertCircle, Check, Send, Paperclip, X } from 'lucide-react';
 import { useState } from 'react';
 import { BackButton } from '@/components/back-button';
 import { Button } from '@/components/ui/button';
@@ -127,10 +127,6 @@ export default function RequestsCreate({ categories, isStudent }: Props) {
                         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                             <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
                                 <div className="flex items-center gap-3">
-                                    <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                        <FileText className="size-4 text-ustp-gold" />
-                                    </div>
-
                                     <div>
                                         <p className="text-sm font-semibold text-slate-800">
                                             Select services
@@ -388,10 +384,6 @@ export default function RequestsCreate({ categories, isStudent }: Props) {
                         {/* Problem description */}
                         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
                             <div className="mb-4 flex items-center gap-3">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                    <AlertCircle className="size-4 text-ustp-gold" />
-                                </div>
-
                                 <div>
                                     <p className="text-sm font-semibold text-slate-800">
                                         {isStudent

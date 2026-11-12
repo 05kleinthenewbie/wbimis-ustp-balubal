@@ -26,7 +26,7 @@ test('notification page is private and paginated for every portal role', functio
         ->assertOk()->assertInertia(fn (Assert $page) => $page
         ->has('notificationHistory.data', 5)
         ->where('notificationHistory.current_page', 2));
-})->with(['student', 'faculty_staff', 'ict_admin']);
+})->with(['student', 'faculty', 'ict_admin']);
 
 test('notification page filters read state without exposing other users counts', function () {
     $user = User::factory()->create();
@@ -45,7 +45,7 @@ test('guests cannot browse notification history', function () {
 });
 
 test('the unread count shared with the sidebar badge is not capped', function () {
-    $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $role = Role::firstOrCreate(['role_name' => 'faculty']);
     $user = User::factory()->create(['role_id' => $role->id]);
 
     for ($i = 0; $i < 15; $i++) {
@@ -77,7 +77,7 @@ test('the unread count shared with the sidebar badge is zero for guests', functi
 });
 
 test('notifications are shared with a deep link for the bell', function () {
-    $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $role = Role::firstOrCreate(['role_name' => 'faculty']);
     $user = User::factory()->create(['role_id' => $role->id]);
 
     Notification::create([

@@ -18,20 +18,17 @@ import {
     ShieldCheck,
     KeyRound,
     Lock,
-    Hash,
     FileText,
     ArrowUpRight,
     Trash2,
     Shield,
     QrCode,
-    Banknote,
     User as UserIcon,
     Building2,
     BadgeCheck,
     StickyNote,
     ClipboardList,
     Wrench,
-    History,
     Pencil,
     LocateFixed,
 } from 'lucide-react';
@@ -621,9 +618,6 @@ export default function InventoryShow({ item }: Props) {
                             {/* Property Information */}
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                 <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-4 md:px-6">
-                                    <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                        <Hash className="size-4 text-ustp-gold" />
-                                    </div>
                                     <div>
                                         <h3 className="text-sm font-semibold text-slate-800">
                                             Property Information
@@ -674,9 +668,6 @@ export default function InventoryShow({ item }: Props) {
                             {/* Specifications */}
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                 <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-4 md:px-6">
-                                    <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                        <FileText className="size-4 text-ustp-gold" />
-                                    </div>
                                     <div>
                                         <h3 className="text-sm font-semibold text-slate-800">
                                             Specifications
@@ -737,9 +728,6 @@ export default function InventoryShow({ item }: Props) {
                             {/* Acquisition & Location */}
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                 <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-4 md:px-6">
-                                    <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                        <Banknote className="size-4 text-ustp-gold" />
-                                    </div>
                                     <div>
                                         <h3 className="text-sm font-semibold text-slate-800">
                                             Acquisition
@@ -983,9 +971,6 @@ export default function InventoryShow({ item }: Props) {
                             item.inspection_remarks ? (
                                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                     <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-4 md:px-6">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                            <BadgeCheck className="size-4 text-ustp-gold" />
-                                        </div>
                                         <div>
                                             <h3 className="text-sm font-semibold text-slate-800">
                                                 Inspection
@@ -1038,9 +1023,6 @@ export default function InventoryShow({ item }: Props) {
                             {requestItems.length > 0 && (
                                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                     <div className="flex items-center gap-3 border-b border-slate-200 bg-sky-50/50 px-5 py-4 md:px-6">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-sky-400/10">
-                                            <ClipboardList className="size-4 text-sky-500" />
-                                        </div>
                                         <div>
                                             <h3 className="text-sm font-semibold text-slate-800">
                                                 Service Requests
@@ -1127,9 +1109,6 @@ export default function InventoryShow({ item }: Props) {
                             {jobOrders.length > 0 && (
                                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                     <div className="flex items-center gap-3 border-b border-slate-200 bg-indigo-50/50 px-5 py-4 md:px-6">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-indigo-400/10">
-                                            <Wrench className="size-4 text-indigo-500" />
-                                        </div>
                                         <div>
                                             <h3 className="text-sm font-semibold text-slate-800">
                                                 Job Orders
@@ -1202,9 +1181,6 @@ export default function InventoryShow({ item }: Props) {
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                 <div className="flex flex-col items-start gap-3 border-b border-slate-200 bg-red-50/50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
                                     <div className="flex items-center gap-3">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-red-400/10">
-                                            <AlertTriangle className="size-4 text-red-400" />
-                                        </div>
                                         <div>
                                             <h3 className="text-sm font-semibold text-slate-800">
                                                 Defective Equipment
@@ -1389,9 +1365,6 @@ export default function InventoryShow({ item }: Props) {
                             {incidentReports.length > 0 && (
                                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                     <div className="flex items-center gap-3 border-b border-slate-200 bg-amber-50/50 px-5 py-4 md:px-6">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-amber-400/10">
-                                            <Shield className="size-4 text-amber-400" />
-                                        </div>
                                         <div>
                                             <h3 className="text-sm font-semibold text-slate-800">
                                                 Laboratory Incident Reports
@@ -1470,9 +1443,6 @@ export default function InventoryShow({ item }: Props) {
                             {auditLogs.length > 0 && (
                                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                     <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-4 md:px-6">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-slate-100">
-                                            <History className="size-4 text-slate-500" />
-                                        </div>
                                         <div>
                                             <h3 className="text-sm font-semibold text-slate-800">
                                                 Audit History
@@ -1615,9 +1585,6 @@ export default function InventoryShow({ item }: Props) {
                             {/* QR Code */}
                             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                                 <div className="mb-4 flex items-center gap-3">
-                                    <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                        <QrCode className="size-4 text-ustp-gold" />
-                                    </div>
                                     <div>
                                         <h3 className="text-sm font-semibold text-slate-800">
                                             Property Label QR

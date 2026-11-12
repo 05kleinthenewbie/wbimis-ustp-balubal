@@ -34,7 +34,7 @@ class DatabaseSeeder extends Seeder
             $admin->update(['name' => 'Anthony Michael Chua']);
         }
 
-        $facultyRole = Role::where('role_name', 'faculty_staff')->first();
+        $facultyRole = Role::where('role_name', 'faculty')->first();
 
         $faculty = User::firstOrCreate(
             ['email' => 'faculty@ustp.edu.ph'],

@@ -19,7 +19,7 @@ function wpAdmin(): User
 
 function wpRequester(): User
 {
-    $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $role = Role::firstOrCreate(['role_name' => 'faculty']);
 
     return User::factory()->create(['role_id' => $role->id]);
 }

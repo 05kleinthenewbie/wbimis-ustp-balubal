@@ -46,6 +46,14 @@ export default function Profile({
     const department =
         typeof auth.user.department === 'string' ? auth.user.department : null;
     const isVerified = auth.user.email_verified_at !== null;
+    const displayText = (value: unknown): string =>
+        typeof value === 'string' && value.trim() !== ''
+            ? value.replace(/_/g, ' ')
+            : '—';
+    const memberSince = new Date(auth.user.created_at).toLocaleDateString(
+        'en-US',
+        { month: 'long', year: 'numeric' },
+    );
 
     const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
     const [avatarUploading, setAvatarUploading] = useState(false);
@@ -199,7 +207,7 @@ export default function Profile({
 
                                     {role && (
                                         <span className="inline-flex rounded-lg bg-ustp-gold/15 px-2.5 py-1 text-[10px] font-semibold tracking-wider text-ustp-gold-dark uppercase ring-1 ring-ustp-gold/30">
-                                            {role === 'faculty_staff'
+                                            {role === 'faculty'
                                                 ? 'Faculty'
                                                 : role.replace(/_/g, ' ')}
                                         </span>
@@ -391,6 +399,80 @@ export default function Profile({
                                             readOnly
                                             disabled
                                         />
+                                    </div>
+
+                                    <div className="grid gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4 sm:col-span-2 sm:grid-cols-2">
+                                        <div>
+                                            <p className="text-xs text-slate-400">
+                                                {isStudent
+                                                    ? 'Student ID number'
+                                                    : 'Employee ID number'}
+                                            </p>
+                                            <p className="mt-1 text-sm font-medium text-slate-800">
+                                                {displayText(
+                                                    auth.user.id_number,
+                                                )}
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p className="text-xs text-slate-400">
+                                                Member since
+                                            </p>
+                                            <p className="mt-1 text-sm font-medium text-slate-800">
+                                                {memberSince}
+                                            </p>
+                                        </div>
+
+                                        {isStudent ? (
+                                            <>
+                                                <div>
+                                                    <p className="text-xs text-slate-400">
+                                                        Year level
+                                                    </p>
+                                                    <p className="mt-1 text-sm font-medium text-slate-800">
+                                                        {displayText(
+                                                            auth.user
+                                                                .year_level,
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-400">
+                                                        Educational level
+                                                    </p>
+                                                    <p className="mt-1 text-sm font-medium text-slate-800 capitalize">
+                                                        {displayText(
+                                                            auth.user
+                                                                .educational_level,
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div>
+                                                    <p className="text-xs text-slate-400">
+                                                        Position
+                                                    </p>
+                                                    <p className="mt-1 text-sm font-medium text-slate-800">
+                                                        {displayText(
+                                                            auth.user.position,
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-400">
+                                                        Employment type
+                                                    </p>
+                                                    <p className="mt-1 text-sm font-medium text-slate-800 capitalize">
+                                                        {displayText(
+                                                            auth.user
+                                                                .employment_type,
+                                                        )}
+                                                    </p>
+                                                </div>
+                                            </>
+                                        )}
                                     </div>
                                 </div>
                             </div>

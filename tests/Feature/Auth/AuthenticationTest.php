@@ -84,7 +84,7 @@ test('users can not authenticate with invalid password', function () {
 });
 
 test('the administrator login form rejects faculty credentials', function () {
-    $faculty = loginUserWithRole('faculty_staff');
+    $faculty = loginUserWithRole('faculty');
 
     $response = $this->post(route('login.store'), [
         'email' => $faculty->email,
@@ -94,7 +94,7 @@ test('the administrator login form rejects faculty credentials', function () {
 
     $this->assertGuest();
     $response->assertSessionHasErrors([
-        'email' => 'This sign-in form is for ICT administrators only. Faculty and staff should use the Faculty sign-in page.',
+        'email' => 'This sign-in form is for ICT administrators only. Faculty should use the Faculty sign-in page.',
     ]);
 });
 
@@ -109,13 +109,13 @@ test('the faculty login form rejects administrator credentials', function () {
 
     $this->assertGuest();
     $response->assertSessionHasErrors([
-        'email' => 'This sign-in form is for faculty and staff only. Administrators should use the Administrator sign-in page.',
+        'email' => 'This sign-in form is for faculty only. Administrators should use the Administrator sign-in page.',
     ]);
 });
 
 test('each portal accepts credentials that match its role', function () {
     $admin = loginUserWithRole('ict_admin');
-    $faculty = loginUserWithRole('faculty_staff');
+    $faculty = loginUserWithRole('faculty');
 
     $this->post(route('login.store'), [
         'email' => $admin->email,

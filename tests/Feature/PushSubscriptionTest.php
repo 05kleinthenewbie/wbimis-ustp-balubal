@@ -60,7 +60,7 @@ test('all portal roles can enable push notifications without duplicate subscript
 
     $this->assertDatabaseCount('push_subscriptions', 1);
     $this->assertDatabaseHas('push_subscriptions', ['user_id' => $user->id]);
-})->with(['student', 'faculty_staff', 'ict_admin']);
+})->with(['student', 'faculty', 'ict_admin']);
 
 test('push subscriptions reject arbitrary and non secure endpoints', function (string $endpoint) {
     $this->actingAs(User::factory()->create())

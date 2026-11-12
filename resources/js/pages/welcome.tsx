@@ -137,7 +137,7 @@ const workflowSteps = [
         step: '3',
         title: 'Get Approved (Students)',
         description:
-            'Faculty and staff can sign in right after verifying their email. Students wait for the ICT office to review their uploaded COR.',
+            'Faculty can sign in right after verifying their email. Students wait for the ICT office to review their uploaded COR.',
     },
     {
         step: '4',
@@ -571,16 +571,11 @@ export default function Welcome() {
                                                 text: 'Faculty, students, and administrators see only the tools they need.',
                                             },
                                         ].map((pillar) => {
-                                            const Icon = pillar.icon;
-
                                             return (
                                                 <div
                                                     key={pillar.title}
                                                     className="rounded-xl border border-ustp-gray-medium bg-ustp-gray/30 p-5"
                                                 >
-                                                    <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10 text-ustp-gold">
-                                                        <Icon className="size-4" />
-                                                    </div>
                                                     <p className="mt-3 text-sm font-bold text-ustp-navy">
                                                         {pillar.title}
                                                     </p>
@@ -603,7 +598,7 @@ export default function Welcome() {
                                     <div className="mt-6 grid gap-4 sm:grid-cols-3">
                                         {[
                                             {
-                                                role: 'Faculty & Staff',
+                                                role: 'Faculty',
                                                 text: 'Submit service requests, book facilities, report incidents, and track liabilities.',
                                             },
                                             {
@@ -688,8 +683,7 @@ export default function Welcome() {
                                         <Shield className="mt-0.5 size-4 shrink-0 text-ustp-gold-dark" />
                                         <span>
                                             Available only to verified USTP
-                                            Balubal faculty, staff, and
-                                            students.
+                                            Balubal faculty and students.
                                         </span>
                                     </div>
                                 </div>
@@ -821,8 +815,8 @@ export default function Welcome() {
                             <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-ustp-gold" />
                             <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-ustp-navy/60">
                                 Create your account and verify your email.
-                                Faculty and staff can sign in immediately;
-                                students wait for COR approval.
+                                Faculty can sign in immediately; students
+                                wait for COR approval.
                             </p>
                         </div>
 
@@ -1142,7 +1136,7 @@ export default function Welcome() {
                                             href={facultyLogin().url}
                                             className="transition-colors hover:text-ustp-gold"
                                         >
-                                            Faculty & Staff
+                                            Faculty
                                         </Link>
                                     </li>
                                     <li>

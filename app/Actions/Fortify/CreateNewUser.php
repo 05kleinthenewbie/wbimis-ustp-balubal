@@ -106,7 +106,7 @@ class CreateNewUser implements CreatesNewUsers
                 ->whereIn('status', ['inactive', 'rejected'])
                 ->first();
 
-            $isFaculty = ($input['role'] ?? null) === 'faculty_staff';
+            $isFaculty = ($input['role'] ?? null) === 'faculty';
 
             $attributes = [
                 'name' => $input['name'],
@@ -242,18 +242,18 @@ class CreateNewUser implements CreatesNewUsers
                 // pending/active emails block a new registration.
                 Rule::unique(User::class)->where(fn ($query) => $query->whereIn('status', ['pending', 'active'])),
             ],
-            'role' => ['required', Rule::in(['faculty_staff', 'student'])],
+            'role' => ['required', Rule::in(['faculty', 'student'])],
             'employment_type' => [
-                'required_if:role,faculty_staff',
+                'required_if:role,faculty',
                 'nullable',
                 'string',
                 Rule::when(
-                    ($input['role'] ?? null) === 'faculty_staff',
+                    ($input['role'] ?? null) === 'faculty',
                     Rule::in(['teaching', 'non_teaching']),
                 ),
             ],
             'department' => [
-                'required_if:role,student,faculty_staff',
+                'required_if:role,student,faculty',
                 'nullable',
                 'string',
                 'max:100',
@@ -294,8 +294,8 @@ class CreateNewUser implements CreatesNewUsers
 
         if ($requireStudentDetails) {
             $rules['terms'] = ['required', 'accepted'];
-            $rules['position'] = ['required_if:role,faculty_staff', 'nullable', 'string', 'max:255'];
-            $rules['contact_no'] = ['required_if:role,faculty_staff', 'nullable', 'string', 'max:30'];
+            $rules['position'] = ['required_if:role,faculty', 'nullable', 'string', 'max:255'];
+            $rules['contact_no'] = ['required_if:role,faculty', 'nullable', 'string', 'max:30'];
             $rules['educational_level'] = [
                 'required_if:role,student',
                 'nullable',
@@ -370,7 +370,7 @@ class CreateNewUser implements CreatesNewUsers
      */
     private function applyEmploymentDefaults(array &$input): void
     {
-        if (($input['role'] ?? null) !== 'faculty_staff') {
+        if (($input['role'] ?? null) !== 'faculty') {
             $input['employment_type'] = null;
         }
     }

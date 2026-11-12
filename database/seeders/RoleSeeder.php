@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Role;
 use Illuminate\Database\Seeder;
 
 class RoleSeeder extends Seeder
@@ -10,7 +10,7 @@ class RoleSeeder extends Seeder
     /**
      * Run the database seeds.
      */
-   public function run(): void
+    public function run(): void
     {
         $roles = [
             [
@@ -18,8 +18,8 @@ class RoleSeeder extends Seeder
                 'role_description' => 'ICT personnel responsible for managing service requests, job orders, inventory, bookings, and system administration.',
             ],
             [
-                'role_name' => 'faculty_staff',
-                'role_description' => 'Faculty and staff members who can submit service requests and book facilities.',
+                'role_name' => 'faculty',
+                'role_description' => 'Faculty members who can submit service requests, book facilities, and report incidents.',
             ],
             [
                 'role_name' => 'student',
@@ -28,7 +28,7 @@ class RoleSeeder extends Seeder
         ];
 
         foreach ($roles as $role) {
-            \App\Models\Role::firstOrCreate(
+            Role::firstOrCreate(
                 ['role_name' => $role['role_name']],
                 $role
             );

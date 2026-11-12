@@ -27,7 +27,7 @@ class BookingController extends Controller
 
         $query = Booking::with(['user', 'facility', 'approver'])->latest();
 
-        // Faculty/Staff only see their own bookings. Admins see everyone's.
+        // Faculty only see their own bookings. Admins see everyone's.
         if ($user->role->role_name !== 'ict_admin') {
             $query->where('user_id', $user->id);
         }

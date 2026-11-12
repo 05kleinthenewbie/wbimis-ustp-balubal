@@ -8,6 +8,7 @@ import {
     CalendarDays,
     Layers,
     ChevronDown,
+    ChevronLeft,
     ChevronRight,
 } from 'lucide-react';
 import {
@@ -517,10 +518,10 @@ export default function AuditLogIndex({
                     </div>
 
                     {/* Toolbar: Search + Filter */}
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
                         <div
                             ref={searchRef}
-                            className="relative w-full max-w-sm"
+                            className="relative w-full xl:max-w-xs"
                         >
                             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
 
@@ -606,12 +607,12 @@ export default function AuditLogIndex({
                             )}
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap">
                             <Select
                                 value={filters.module ?? 'all'}
                                 onValueChange={applyFilter}
                             >
-                                <SelectTrigger className="h-10 w-44 border-slate-300 bg-white text-slate-600 focus:ring-1 focus:ring-ustp-navy/30">
+                                <SelectTrigger className="h-10 w-40 border-slate-300 bg-white text-slate-600 focus:ring-1 focus:ring-ustp-navy/30">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="border-slate-200 bg-white text-slate-800">
@@ -635,7 +636,7 @@ export default function AuditLogIndex({
                                     })
                                 }
                             >
-                                <SelectTrigger className="h-10 w-44 border-slate-300 bg-white text-slate-600 focus:ring-1 focus:ring-ustp-navy/30">
+                                <SelectTrigger className="h-10 w-40 border-slate-300 bg-white text-slate-600 focus:ring-1 focus:ring-ustp-navy/30">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="border-slate-200 bg-white text-slate-800">
@@ -662,7 +663,7 @@ export default function AuditLogIndex({
                                     })
                                 }
                             >
-                                <SelectTrigger className="h-10 w-36 border-slate-300 bg-white text-slate-600 focus:ring-1 focus:ring-ustp-navy/30">
+                                <SelectTrigger className="h-10 w-32 border-slate-300 bg-white text-slate-600 focus:ring-1 focus:ring-ustp-navy/30">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="border-slate-200 bg-white text-slate-800">
@@ -694,7 +695,7 @@ export default function AuditLogIndex({
                                                 search: search || undefined,
                                             })
                                         }
-                                        className={`h-8 w-40 border-0 bg-transparent px-2 text-xs text-slate-600 shadow-none focus-visible:ring-0 ${
+                                        className={`h-8 w-28 border-0 bg-transparent px-2 text-xs text-slate-600 shadow-none focus-visible:ring-0 ${
                                             filters.date_from
                                                 ? ''
                                                 : '[&::-webkit-datetime-edit]:text-transparent'
@@ -720,7 +721,7 @@ export default function AuditLogIndex({
                                                 search: search || undefined,
                                             })
                                         }
-                                        className={`h-8 w-40 border-0 bg-transparent px-2 text-xs text-slate-600 shadow-none focus-visible:ring-0 ${
+                                        className={`h-8 w-28 border-0 bg-transparent px-2 text-xs text-slate-600 shadow-none focus-visible:ring-0 ${
                                             filters.date_to
                                                 ? ''
                                                 : '[&::-webkit-datetime-edit]:text-transparent'
@@ -1171,24 +1172,43 @@ export default function AuditLogIndex({
                                 </p>
 
                                 {logs.last_page > 1 && (
-                                    <div className="flex flex-wrap items-center justify-center gap-1">
-                                        {logs.links.map((link, index) => (
+                                    <div className="flex items-center gap-2">
+                                        {logs.links[0]?.url ? (
                                             <Link
-                                                key={index}
-                                                href={link.url ?? '#'}
+                                                href={logs.links[0].url}
                                                 preserveState
-                                                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
-                                                    link.active
-                                                        ? 'bg-ustp-navy text-white shadow-lg shadow-ustp-navy/10'
-                                                        : link.url
-                                                          ? 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
-                                                          : 'pointer-events-none text-slate-400'
-                                                }`}
-                                                dangerouslySetInnerHTML={{
-                                                    __html: link.label,
-                                                }}
-                                            />
-                                        ))}
+                                                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                            >
+                                                <ChevronLeft className="size-3.5" />
+                                                Prev
+                                            </Link>
+                                        ) : (
+                                            <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-300">
+                                                <ChevronLeft className="size-3.5" />
+                                                Prev
+                                            </span>
+                                        )}
+
+                                        <span className="px-1 text-xs text-slate-500">
+                                            Page {logs.current_page} of{' '}
+                                            {logs.last_page}
+                                        </span>
+
+                                        {logs.links.at(-1)?.url ? (
+                                            <Link
+                                                href={logs.links.at(-1)!.url!}
+                                                preserveState
+                                                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50"
+                                            >
+                                                Next
+                                                <ChevronRight className="size-3.5" />
+                                            </Link>
+                                        ) : (
+                                            <span className="inline-flex cursor-not-allowed items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-300">
+                                                Next
+                                                <ChevronRight className="size-3.5" />
+                                            </span>
+                                        )}
                                     </div>
                                 )}
                             </div>

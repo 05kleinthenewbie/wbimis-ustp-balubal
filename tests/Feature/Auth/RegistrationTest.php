@@ -11,7 +11,7 @@ test('registration screen can be rendered', function () {
 
 test('new users can register', function () {
     fakeBrevoMail();
-    Role::firstOrCreate(['role_name' => 'faculty_staff'], ['description' => 'Faculty and staff']);
+    Role::firstOrCreate(['role_name' => 'faculty'], ['description' => 'Faculty']);
 
     $response = $this->post(route('register.store'), registrationPayload());
 

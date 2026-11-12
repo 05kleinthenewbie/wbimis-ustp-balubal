@@ -14,7 +14,7 @@ function mgmtUser(string $roleName, string $status = 'active'): User
 
 test('the user management page lists active and deactivated users', function () {
     $admin = mgmtUser('ict_admin');
-    mgmtUser('faculty_staff');
+    mgmtUser('faculty');
     mgmtUser('student', 'inactive');
 
     $this->actingAs($admin)
@@ -28,7 +28,7 @@ test('the user management page lists active and deactivated users', function () 
 
 test('admins can deactivate an active account', function () {
     $admin = mgmtUser('ict_admin');
-    $user = mgmtUser('faculty_staff');
+    $user = mgmtUser('faculty');
 
     $this->actingAs($admin)
         ->put(route('users.update', $user->id), ['status' => 'inactive'])
@@ -53,7 +53,7 @@ test('admins can reactivate a deactivated account', function () {
 });
 
 test('non-admins cannot manage user accounts', function () {
-    $faculty = mgmtUser('faculty_staff');
+    $faculty = mgmtUser('faculty');
     $target = mgmtUser('student');
 
     $this->actingAs($faculty)->get(route('users.index'))->assertForbidden();

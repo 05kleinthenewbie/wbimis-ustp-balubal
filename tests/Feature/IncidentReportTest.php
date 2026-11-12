@@ -17,7 +17,7 @@ function incidentAdmin(): User
 
 function incidentFaculty(): User
 {
-    $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $role = Role::firstOrCreate(['role_name' => 'faculty']);
 
     return User::factory()->create(['role_id' => $role->id]);
 }
@@ -107,8 +107,26 @@ test('incident store validates required fields', function () {
         'incident_description' => '',
     ]);
 
-    $response->assertSessionHasErrors(['incident_type', 'incident_description']);
+    $response->assertSessionHasErrors([
+        'incident_type',
+        'incident_description',
+        'incident_date',
+    ]);
     $this->assertDatabaseCount('incident_reports', 0);
+});
+
+test('incidents without related equipment can still be reported', function () {
+    $faculty = incidentFaculty();
+
+    $this->actingAs($faculty)->post(route('incidents.store'), [
+        'incident_type' => 'Safety concern',
+        'incident_description' => 'Exposed cable near the laboratory entrance.',
+        'incident_date' => '2026-09-15',
+    ])->assertRedirect(route('incidents.index'))->assertSessionHasNoErrors();
+
+    $incident = IncidentReport::where('reported_by', $faculty->id)->sole();
+
+    expect($incident->item_id)->toBeNull();
 });
 
 test('non admins cannot update an incident', function () {
@@ -363,9 +381,13 @@ test('incident evidence files can be uploaded and downloaded privately', functio
     $faculty = incidentFaculty();
     $other = incidentFaculty();
 
+    $item = InventoryItem::factory()->create();
+
     $this->actingAs($faculty)->post(route('incidents.store'), [
+        'item_id' => $item->id,
         'incident_type' => 'Equipment damage',
         'incident_description' => 'Cracked monitor with photo evidence.',
+        'incident_date' => '2026-09-15',
         'attachments' => [
             UploadedFile::fake()->create('damage.pdf', 100, 'application/pdf'),
         ],

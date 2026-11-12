@@ -1,11 +1,5 @@
 import { Head, Link, router } from '@inertiajs/react';
-import {
-    ArrowUpRight,
-    Calendar,
-    CheckCircle2,
-    Clock3,
-    XCircle,
-} from 'lucide-react';
+import { ArrowUpRight, CheckCircle2, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 
@@ -81,57 +75,38 @@ export default function BookingApprovals({ bookings, stats }: Props) {
                             {
                                 label: 'Pending',
                                 value: stats.pending,
-                                icon: Clock3,
-                                color: 'text-amber-600',
-                                bg: 'bg-amber-50',
+                                href: '/bookings?status=pending',
                             },
                             {
                                 label: 'Scheduled Today',
                                 value: stats.today,
-                                icon: Calendar,
-                                color: 'text-ustp-navy',
-                                bg: 'bg-ustp-navy/5',
+                                href: '/bookings?today=1',
                             },
                             {
                                 label: 'Approved',
                                 value: stats.approved,
-                                icon: CheckCircle2,
-                                color: 'text-emerald-600',
-                                bg: 'bg-emerald-50',
+                                href: '/bookings?status=approved',
                             },
                             {
                                 label: 'Rejected',
                                 value: stats.rejected,
-                                icon: XCircle,
-                                color: 'text-rose-600',
-                                bg: 'bg-rose-50',
+                                href: '/bookings?status=rejected',
                             },
                         ].map((card) => (
-                            <div
+                            <Link
                                 key={card.label}
-                                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                                href={card.href}
+                                className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ustp-navy"
                             >
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className={`flex size-10 items-center justify-center rounded-xl ${card.bg}`}
-                                    >
-                                        <card.icon
-                                            className={`size-5 ${card.color}`}
-                                        />
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-semibold text-slate-800">
-                                            {card.value}
-                                        </p>
-                                        <p className="text-[11px] text-slate-400">
-                                            {card.label}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                                <p className="text-2xl font-semibold text-slate-800">
+                                    {card.value}
+                                </p>
+                                <p className="text-[11px] text-slate-400">
+                                    {card.label}
+                                </p>
+                            </Link>
                         ))}
                     </div>
-
                     {bookings.length === 0 ? (
                         <div className="relative flex min-h-90 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white px-6 text-center">
                             <div className="mb-4 flex size-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
@@ -177,10 +152,6 @@ export default function BookingApprovals({ bookings, stats }: Props) {
                                             >
                                                 <td className="px-5 py-4">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-ustp-gold/10 text-ustp-gold">
-                                                            <Calendar className="size-4" />
-                                                        </div>
-
                                                         <div>
                                                             <p className="font-medium text-slate-800">
                                                                 {

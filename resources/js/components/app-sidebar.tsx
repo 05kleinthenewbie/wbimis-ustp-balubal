@@ -159,7 +159,7 @@ export function AppSidebar() {
         },
     ];
 
-    const facultyStaffNavItems: NavItem[] = [
+    const facultyNavItems: NavItem[] = [
         { title: 'Dashboard', href: dashboardUrl, icon: LayoutGrid },
         {
             title: 'Service Requests',
@@ -239,7 +239,7 @@ export function AppSidebar() {
         },
     ];
 
-    let mainNavItems: NavItem[] = facultyStaffNavItems;
+    let mainNavItems: NavItem[] = facultyNavItems;
 
     if (roleName === 'student') {
         mainNavItems = studentNavItems;

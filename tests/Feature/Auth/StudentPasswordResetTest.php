@@ -53,7 +53,7 @@ test('unknown student emails receive the same response without an email', functi
 test('the student form does not issue links for non student accounts', function () {
     fakeBrevoMail();
 
-    $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $role = Role::firstOrCreate(['role_name' => 'faculty']);
     User::factory()->create([
         'role_id' => $role->id,
         'email' => 'faculty.reset@gmail.com',

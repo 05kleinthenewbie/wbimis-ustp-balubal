@@ -39,7 +39,7 @@ type Props = {
 };
 
 const roleLabels: Record<string, string> = {
-    faculty_staff: 'Faculty',
+    faculty: 'Faculty',
     student: 'Student',
     ict_admin: 'ICT Admin',
 };
@@ -70,7 +70,7 @@ export default function UsersIndex({
             return user.role?.role_name === 'student';
         }
 
-        return user.role?.role_name === 'faculty_staff';
+        return user.role?.role_name === 'faculty';
     }
 
     function deactivateUser(id: number) {

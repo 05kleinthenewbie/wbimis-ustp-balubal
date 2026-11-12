@@ -50,7 +50,7 @@ class IncidentReportController extends Controller
     public function create()
     {
         return Inertia::render('incidents/create', [
-            'inventoryItems' => InventoryItem::select('id', 'item_name', 'property_no')->get(),
+            'inventoryItems' => InventoryItem::select('id', 'item_name', 'property_no')->orderBy('item_name')->get(),
         ]);
     }
 
@@ -63,7 +63,7 @@ class IncidentReportController extends Controller
             'item_id' => ['nullable', 'exists:inventory_items,id'],
             'incident_type' => ['required', 'string', 'max:100'],
             'incident_description' => ['required', 'string'],
-            'incident_date' => ['nullable', 'date'],
+            'incident_date' => ['required', 'date'],
             'attachments' => ['nullable', 'array', 'max:5'],
             'attachments.*' => ['file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:5120'],
         ]);

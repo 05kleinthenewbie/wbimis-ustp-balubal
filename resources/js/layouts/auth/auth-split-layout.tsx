@@ -42,11 +42,12 @@ export default function AuthSplitLayout({
                 <div className="relative z-10">
                     <div className="mb-4 h-0.75 w-9 bg-ustp-gold" />
                     <h1 className="mb-3 text-2xl leading-tight font-medium text-white uppercase">
-                        A Web-Based ICT Management and Information System for USTP Balubal
+                        A Web-Based ICT Management and Information System for
+                        USTP Balubal
                     </h1>
                     <p className="text-sm leading-relaxed text-blue-200">
-                        Submit requests, track job orders, book facilities,
-                        and report incidents — all in one place.
+                        Submit requests, track job orders, book facilities, and
+                        report incidents — all in one place.
                     </p>
                 </div>
 
@@ -56,8 +57,12 @@ export default function AuthSplitLayout({
                         <p className="text-xs text-blue-200">Core modules</p>
                     </div>
                     <div>
-                        <p className="text-xl font-medium text-ustp-gold">24/7</p>
-                        <p className="text-xs text-blue-200">Request tracking</p>
+                        <p className="text-xl font-medium text-ustp-gold">
+                            24/7
+                        </p>
+                        <p className="text-xs text-blue-200">
+                            Request tracking
+                        </p>
                     </div>
                 </div>
             </div>

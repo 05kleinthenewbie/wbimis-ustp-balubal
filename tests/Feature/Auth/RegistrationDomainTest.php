@@ -5,7 +5,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Http;
 
 beforeEach(function () {
-    Role::firstOrCreate(['role_name' => 'faculty_staff'], ['description' => 'Faculty and staff']);
+    Role::firstOrCreate(['role_name' => 'faculty'], ['description' => 'Faculty']);
 });
 
 test('faculty registration is restricted to the ustp.edu.ph email domain', function (string $email) {

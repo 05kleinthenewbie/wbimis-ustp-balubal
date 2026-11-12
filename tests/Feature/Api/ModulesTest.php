@@ -25,7 +25,7 @@ function roleFor(string $name): Role
 }
 
 beforeEach(function () {
-    $this->facultyRole = roleFor('faculty_staff');
+    $this->facultyRole = roleFor('faculty');
     $this->adminRole = roleFor('ict_admin');
 });
 
@@ -198,7 +198,7 @@ it('allows admins to create inventory items', function () {
     $this->assertDatabaseHas('inventory_items', ['property_no' => 'PROP-0001']);
 });
 
-it('allows faculty, staff, and admins to book facilities', function () {
+it('allows faculty and admins to book facilities', function () {
     $faculty = apiUser($this->facultyRole);
     $facultyToken = auth('api')->login($faculty);
 

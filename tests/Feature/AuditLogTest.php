@@ -14,7 +14,7 @@ function auditLogAdmin(string $name = 'Ada Admin'): User
 
 function auditLogFaculty(): User
 {
-    $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $role = Role::firstOrCreate(['role_name' => 'faculty']);
 
     return User::factory()->create(['role_id' => $role->id]);
 }
@@ -36,7 +36,7 @@ test('guests are redirected to the login page from the audit log', function () {
     $this->get(route('audit-log.index'))->assertRedirect(route('login'));
 });
 
-test('faculty and staff cannot view the audit log', function () {
+test('faculty cannot view the audit log', function () {
     $faculty = auditLogFaculty();
 
     $this->actingAs($faculty)->get(route('audit-log.index'))->assertForbidden();

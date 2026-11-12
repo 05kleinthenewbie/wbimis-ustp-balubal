@@ -2,7 +2,6 @@ import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertTriangle,
     Building2,
-    Calendar,
     CheckCircle2,
     Clock3,
     MapPin,
@@ -74,18 +73,35 @@ export default function FacilitiesIndex({
     stats,
 }: Props) {
     const [search, setSearch] = useState('');
+    const [availabilityFilter, setAvailabilityFilter] = useState<
+        'all' | 'available' | 'unavailable'
+    >('all');
 
     const query = search.trim().toLowerCase();
-    const filteredFacilities = query
-        ? facilities.filter((facility) =>
-              [
-                  facility.facility_name,
-                  facilityTypeLabel[facility.facility_type] ?? '',
-                  facility.facility_type,
-                  facility.location ?? '',
-              ].some((value) => value.toLowerCase().includes(query)),
-          )
-        : facilities;
+    const filteredFacilities = facilities
+        .filter((facility) => {
+            if (availabilityFilter === 'available') {
+                return facility.availability_status === 'available';
+            }
+
+            if (availabilityFilter === 'unavailable') {
+                return facility.availability_status !== 'available';
+            }
+
+            return true;
+        })
+        .filter((facility) => {
+            if (!query) {
+                return true;
+            }
+
+            return [
+                facility.facility_name,
+                facilityTypeLabel[facility.facility_type] ?? '',
+                facility.facility_type,
+                facility.location ?? '',
+            ].some((value) => value.toLowerCase().includes(query));
+        });
 
     function handleDelete(id: number) {
         if (confirm('Delete this facility? This cannot be undone.')) {
@@ -131,55 +147,60 @@ export default function FacilitiesIndex({
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                         {[
                             {
+                                key: 'all' as const,
                                 label: 'Total Facilities',
                                 value: stats.total,
-                                icon: Building2,
-                                bg: 'bg-ustp-gold/10',
-                                color: 'text-ustp-gold',
                             },
                             {
+                                key: 'available' as const,
                                 label: 'Available',
                                 value: stats.available,
-                                icon: CheckCircle2,
-                                bg: 'bg-emerald-400/10',
-                                color: 'text-emerald-500',
                             },
                             {
+                                key: 'unavailable' as const,
                                 label: 'Unavailable / Maintenance',
                                 value: stats.unavailable,
-                                icon: Wrench,
-                                bg: 'bg-amber-400/10',
-                                color: 'text-amber-600',
-                            },
-                            {
-                                label: 'Total Bookings',
-                                value: stats.total_bookings,
-                                icon: Calendar,
-                                bg: 'bg-ustp-blue-accent/15',
-                                color: 'text-ustp-light-blue',
                             },
                         ].map((card) => (
-                            <div
-                                key={card.label}
-                                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                            <button
+                                key={card.key}
+                                type="button"
+                                aria-pressed={availabilityFilter === card.key}
+                                onClick={() =>
+                                    setAvailabilityFilter((current) =>
+                                        current === card.key &&
+                                        card.key !== 'all'
+                                            ? 'all'
+                                            : card.key,
+                                    )
+                                }
+                                className={`cursor-pointer rounded-2xl border p-4 text-left shadow-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ustp-navy ${
+                                    availabilityFilter === card.key
+                                        ? 'border-ustp-navy bg-ustp-navy/5 ring-1 ring-ustp-navy'
+                                        : 'border-slate-200 bg-white hover:border-slate-400'
+                                }`}
                             >
-                                <div className="mb-3 flex items-center justify-between">
-                                    <p className="text-xs text-slate-400">
-                                        {card.label}
-                                    </p>
-                                    <div
-                                        className={`flex size-8 items-center justify-center rounded-lg ${card.bg} ${card.color}`}
-                                    >
-                                        <card.icon className="size-4" />
-                                    </div>
-                                </div>
                                 <p className="text-2xl font-semibold text-slate-800">
                                     {card.value}
                                 </p>
-                            </div>
+                                <p className="text-[11px] text-slate-400">
+                                    {card.label}
+                                </p>
+                            </button>
                         ))}
-                    </div>
 
+                        <Link
+                            href="/bookings"
+                            className="block rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ustp-navy"
+                        >
+                            <p className="text-2xl font-semibold text-slate-800">
+                                {stats.total_bookings}
+                            </p>
+                            <p className="text-[11px] text-slate-400">
+                                Total Bookings
+                            </p>
+                        </Link>
+                    </div>
                     {/* Empty state */}
                     {facilities.length === 0 ? (
                         <div className="flex min-h-80 flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white px-6 text-center">
@@ -304,9 +325,6 @@ export default function FacilitiesIndex({
                                                             >
                                                                 <td className="px-5 py-4">
                                                                     <div className="flex items-center gap-3">
-                                                                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-ustp-gold/10 text-ustp-gold">
-                                                                            <Building2 className="size-4" />
-                                                                        </div>
                                                                         <span className="font-medium text-slate-800">
                                                                             {
                                                                                 facility.facility_name

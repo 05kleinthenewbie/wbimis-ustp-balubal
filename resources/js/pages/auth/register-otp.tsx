@@ -34,6 +34,13 @@ export default function RegisterOtp({
             <Form
                 {...verify.form()}
                 disableWhileProcessing
+                onSuccess={() => {
+                    try {
+                        sessionStorage.removeItem('wbimis-register-draft');
+                    } catch {
+                        // Ignore storage errors.
+                    }
+                }}
                 className="flex flex-col gap-5"
             >
                 {({ processing, errors }) => (

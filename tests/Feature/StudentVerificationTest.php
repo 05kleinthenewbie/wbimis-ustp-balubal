@@ -164,7 +164,7 @@ test('replacing a COR removes the old copy and preserves the new upload', functi
 });
 
 test('student review cannot change a faculty account', function () {
-    $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $role = Role::firstOrCreate(['role_name' => 'faculty']);
     $faculty = User::factory()->pendingApproval()->create(['role_id' => $role->id]);
 
     $this->actingAs($this->admin)->patch(route('students.decision', $faculty), ['decision' => 'approved'])
@@ -216,7 +216,7 @@ test('students cannot review their own application', function () {
 });
 
 test('non-administrators cannot use the bulk decision endpoint', function () {
-    $facultyRole = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $facultyRole = Role::firstOrCreate(['role_name' => 'faculty']);
     $faculty = User::factory()->create(['role_id' => $facultyRole->id]);
 
     $this->actingAs($faculty)

@@ -7,7 +7,6 @@ import {
     PlayCircle,
     CheckCircle2,
     Archive,
-    MessageSquare,
     Send,
     UserCog,
     FileText,
@@ -479,9 +478,6 @@ export default function JobOrdersShow({
                     {jobOrder.service_request.location && (
                         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                    <FileText className="size-4 text-ustp-gold" />
-                                </div>
                                 <p className="text-sm font-semibold text-slate-800">
                                     Location
                                 </p>
@@ -497,9 +493,6 @@ export default function JobOrdersShow({
                     {/* Services */}
                     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                         <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-4 md:px-6">
-                            <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                <ClipboardList className="size-4 text-ustp-gold" />
-                            </div>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800">
                                     Services requested
@@ -552,9 +545,6 @@ export default function JobOrdersShow({
                     {/* Problem description */}
                     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
                         <div className="flex items-center gap-3">
-                            <div className="flex size-9 items-center justify-center rounded-lg bg-red-50">
-                                <FileText className="size-4 text-red-600" />
-                            </div>
                             <p className="text-sm font-semibold text-slate-800">
                                 Problem description
                             </p>
@@ -569,9 +559,6 @@ export default function JobOrdersShow({
                     {/* Technician responses */}
                     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
                         <div className="flex items-center gap-3">
-                            <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                <MessageSquare className="size-4 text-ustp-gold" />
-                            </div>
                             <p className="text-sm font-semibold text-slate-800">
                                 Technician responses
                             </p>
@@ -648,9 +635,6 @@ export default function JobOrdersShow({
                     {(canRate || jobOrder.rating) && (
                         <section className="overflow-hidden rounded-2xl border border-ustp-gold/30 bg-white shadow-sm">
                             <div className="flex items-center gap-3 border-b border-slate-200 bg-ustp-gold/5 px-5 py-4 md:px-6">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                    <Star className="size-4 text-ustp-gold" />
-                                </div>
                                 <div>
                                     <p className="text-sm font-semibold text-slate-800">
                                         Service Rating
@@ -772,9 +756,6 @@ export default function JobOrdersShow({
                     {canVerify && (
                         <section className="overflow-hidden rounded-2xl border border-ustp-light-blue/20 bg-white shadow-sm">
                             <div className="flex items-center gap-3 border-b border-slate-200 bg-ustp-light-blue/5 px-5 py-4 md:px-6">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-light-blue/10">
-                                    <CheckCircle2 className="size-4 text-ustp-light-blue" />
-                                </div>
                                 <div>
                                     <p className="text-sm font-semibold text-slate-800">
                                         Verify Completion
@@ -817,9 +798,6 @@ export default function JobOrdersShow({
                     {isAdmin && (
                         <section className="overflow-hidden rounded-2xl border border-ustp-gold/30 bg-white shadow-sm">
                             <div className="flex items-center gap-3 border-b border-slate-200 bg-ustp-gold/5 px-5 py-4 md:px-6">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                    <UserCog className="size-4 text-ustp-gold" />
-                                </div>
                                 <div>
                                     <p className="text-sm font-semibold text-slate-800">
                                         Manage job order

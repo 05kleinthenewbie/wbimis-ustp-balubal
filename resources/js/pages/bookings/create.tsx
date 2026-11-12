@@ -5,7 +5,6 @@ import {
     Clock3,
     MapPin,
     Users,
-    Building2,
 } from 'lucide-react';
 import { BackButton } from '@/components/back-button';
 import { BookingCalendar } from '@/components/booking-calendar';
@@ -121,10 +120,6 @@ export default function BookingsCreate({
                                 {/* Form header */}
                                 <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
                                     <div className="flex items-center gap-3">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                            <CalendarDays className="size-4 text-ustp-gold" />
-                                        </div>
-
                                         <div>
                                             <h2 className="text-sm font-semibold text-slate-800">
                                                 Booking details
@@ -200,9 +195,6 @@ export default function BookingsCreate({
                                     {selectedFacility && (
                                         <div className="rounded-xl border border-ustp-gold/20 bg-ustp-gold/4 p-4">
                                             <div className="flex items-center gap-3">
-                                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                                    <Building2 className="size-4 text-ustp-gold" />
-                                                </div>
                                                 <div>
                                                     <p className="text-sm font-medium text-slate-800">
                                                         {

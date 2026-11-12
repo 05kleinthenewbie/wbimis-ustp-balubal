@@ -1,18 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import {
-    AlertTriangle,
-    CalendarDays,
-    Check,
-    Circle,
-    FileQuestion,
-    Monitor,
-    Package,
-    Search,
-    Send,
-    ShieldAlert,
-    UserMinus,
-    X,
-} from 'lucide-react';
+import { CalendarDays, Package, Search, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BackButton } from '@/components/back-button';
 import { Button } from '@/components/ui/button';
@@ -62,27 +49,22 @@ function highlightMatch(value: string, query: string) {
 const incidentTypes = [
     {
         value: 'Equipment damage',
-        icon: Monitor,
         hint: 'Broken or damaged ICT equipment',
     },
     {
         value: 'Unauthorized use',
-        icon: UserMinus,
         hint: 'Used without permission',
     },
     {
         value: 'Theft or loss',
-        icon: Package,
         hint: 'Missing or lost equipment',
     },
     {
         value: 'Safety concern',
-        icon: ShieldAlert,
         hint: 'Hazards around ICT gear',
     },
     {
         value: 'Others',
-        icon: FileQuestion,
         hint: 'Anything not listed above',
     },
 ];
@@ -139,7 +121,8 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
     const otherLength = data.incident_type_other.trim().length;
     const typeDone =
         data.incident_type !== '' && (!isOthers || otherLength > 0);
-    const canSubmit = typeDone && descriptionLength > 0;
+    const canSubmit =
+        typeDone && descriptionLength > 0 && data.incident_date !== '';
 
     const checklist = [
         { label: 'Incident type selected', done: typeDone },
@@ -245,10 +228,6 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
                         {/* Incident type tiles */}
                         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
                             <div className="mb-4 flex items-center gap-3">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                    <ShieldAlert className="size-4 text-ustp-gold" />
-                                </div>
-
                                 <div>
                                     <p className="text-sm font-semibold text-slate-800">
                                         Incident type{' '}
@@ -264,7 +243,6 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
                                 {incidentTypes.map((type) => {
                                     const selected =
                                         data.incident_type === type.value;
-                                    const Icon = type.icon;
 
                                     return (
                                         <button
@@ -283,16 +261,6 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
                                                     : 'border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50'
                                             }`}
                                         >
-                                            <div
-                                                className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${
-                                                    selected
-                                                        ? 'bg-ustp-gold/15 text-ustp-gold'
-                                                        : 'bg-slate-100 text-slate-400'
-                                                }`}
-                                            >
-                                                <Icon className="size-4" />
-                                            </div>
-
                                             <div className="min-w-0 flex-1">
                                                 <p
                                                     className={`text-sm font-medium ${selected ? 'text-slate-800' : 'text-slate-600'}`}
@@ -302,20 +270,6 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
                                                 <p className="mt-0.5 text-[11px] text-slate-400">
                                                     {type.hint}
                                                 </p>
-                                            </div>
-
-                                            <div
-                                                className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full transition-colors ${
-                                                    selected
-                                                        ? 'bg-ustp-gold text-white'
-                                                        : 'border border-slate-300 text-transparent'
-                                                }`}
-                                            >
-                                                {selected ? (
-                                                    <Check className="size-3" />
-                                                ) : (
-                                                    <Circle className="size-3" />
-                                                )}
                                             </div>
                                         </button>
                                     );
@@ -366,17 +320,13 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
                         {/* Date + equipment */}
                         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
                             <div className="mb-4 flex items-center gap-3">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                    <CalendarDays className="size-4 text-ustp-gold" />
-                                </div>
-
                                 <div>
                                     <p className="text-sm font-semibold text-slate-800">
                                         When &amp; what equipment
                                     </p>
                                     <p className="mt-0.5 text-[11px] text-slate-400">
-                                        Optional details that help ICT locate
-                                        the issue.
+                                        The date is required; equipment is
+                                        optional when no item is involved.
                                     </p>
                                 </div>
                             </div>
@@ -388,9 +338,7 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
                                         className="text-xs font-medium text-slate-600"
                                     >
                                         Date of incident{' '}
-                                        <span className="font-normal text-slate-400">
-                                            (optional)
-                                        </span>
+                                        <span className="text-red-500">*</span>
                                     </label>
 
                                     <div className="relative">
@@ -398,6 +346,7 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
                                         <Input
                                             id="incident_date"
                                             type="date"
+                                            required
                                             value={data.incident_date}
                                             onChange={(
                                                 e: React.ChangeEvent<HTMLInputElement>,
@@ -574,10 +523,6 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
                         {/* Description */}
                         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
                             <div className="mb-4 flex items-center gap-3">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                    <AlertTriangle className="size-4 text-ustp-gold" />
-                                </div>
-
                                 <div className="flex-1">
                                     <p className="text-sm font-semibold text-slate-800">
                                         Description{' '}
@@ -620,9 +565,6 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
                         {/* Evidence */}
                         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
                             <div className="mb-4 flex items-center gap-3">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                    <FileQuestion className="size-4 text-ustp-gold" />
-                                </div>
                                 <div>
                                     <p className="text-sm font-semibold text-slate-800">
                                         Evidence{' '}
@@ -694,9 +636,7 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
                                                         ? 'bg-emerald-100 text-emerald-600'
                                                         : 'bg-slate-100 text-slate-300'
                                                 }`}
-                                            >
-                                                <Check className="size-2.5" />
-                                            </span>
+                                            ></span>
                                             <span
                                                 className={
                                                     item.done
@@ -716,11 +656,7 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
                                 disabled={processing || !canSubmit}
                                 className="h-10 bg-ustp-gold px-5 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                             >
-                                {processing ? (
-                                    <Spinner />
-                                ) : (
-                                    <Send className="size-4" />
-                                )}
+                                {processing && <Spinner />}
                                 Submit Report
                             </Button>
                         </div>

@@ -44,7 +44,7 @@ class StudentLoginController extends Controller
 
         if ($user->role?->role_name !== 'student') {
             throw ValidationException::withMessages([
-                'email' => 'This sign-in form is for students only. Faculty and staff should use the main login page.',
+                'email' => 'This sign-in form is for students only. Faculty should use the main login page.',
             ]);
         }
 

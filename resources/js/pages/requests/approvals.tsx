@@ -238,9 +238,6 @@ export default function RequestApprovals({ requests, stats }: Props) {
                                             >
                                                 <td className="px-5 py-4">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-ustp-gold/10 text-ustp-gold">
-                                                            <FileText className="size-4" />
-                                                        </div>
                                                         <div className="min-w-0">
                                                             <Link
                                                                 href={`/requests/${request.id}`}

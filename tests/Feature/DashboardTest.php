@@ -18,7 +18,7 @@ test('guests are redirected to the login page', function () {
 });
 
 test('authenticated users can visit the dashboard', function () {
-    $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $role = Role::firstOrCreate(['role_name' => 'faculty']);
     $user = User::factory()->create(['role_id' => $role->id]);
 
     $response = $this
@@ -44,7 +44,7 @@ test('admin dashboard surfaces assignment, sla, and inventory expiry stats', fun
     $admin = User::factory()->create(['role_id' => $adminRole->id]);
     $technician = User::factory()->create(['role_id' => $adminRole->id]);
 
-    $requesterRole = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $requesterRole = Role::firstOrCreate(['role_name' => 'faculty']);
     $requester = User::factory()->create(['role_id' => $requesterRole->id]);
 
     $serviceRequest = ServiceRequest::create([
@@ -87,7 +87,7 @@ test('admin dashboard overview, pending actions, and alerts are exposed', functi
     $adminRole = Role::firstOrCreate(['role_name' => 'ict_admin']);
     $admin = User::factory()->create(['role_id' => $adminRole->id]);
 
-    $requesterRole = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $requesterRole = Role::firstOrCreate(['role_name' => 'faculty']);
     $requester = User::factory()->create(['role_id' => $requesterRole->id]);
 
     ServiceRequest::create([
@@ -119,7 +119,7 @@ test('admin dashboard period filter scopes totals and activity buckets', functio
     $adminRole = Role::firstOrCreate(['role_name' => 'ict_admin']);
     $admin = User::factory()->create(['role_id' => $adminRole->id]);
 
-    $requesterRole = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $requesterRole = Role::firstOrCreate(['role_name' => 'faculty']);
     $requester = User::factory()->create(['role_id' => $requesterRole->id]);
 
     $oldRequest = ServiceRequest::create([
@@ -168,7 +168,7 @@ test('admin dashboard period filter scopes totals and activity buckets', functio
 
 test('faculty dashboard scopes overview, pending actions, and activity to their own data', function () {
     $adminRole = Role::firstOrCreate(['role_name' => 'ict_admin']);
-    $facultyRole = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $facultyRole = Role::firstOrCreate(['role_name' => 'faculty']);
 
     $faculty = User::factory()->create(['role_id' => $facultyRole->id]);
     $otherFaculty = User::factory()->create(['role_id' => $facultyRole->id]);

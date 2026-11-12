@@ -61,7 +61,7 @@ test('the student login form rejects credentials that do not match', function ()
 });
 
 test('the student login form only accepts student accounts', function () {
-    $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $role = Role::firstOrCreate(['role_name' => 'faculty']);
     User::factory()->create([
         'role_id' => $role->id,
         'email' => 'faculty@ustp.edu.ph',

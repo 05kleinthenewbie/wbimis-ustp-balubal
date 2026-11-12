@@ -1,5 +1,5 @@
 import { Head, useForm } from '@inertiajs/react';
-import { Building2, CalendarDays, MapPin, Plus, Users } from 'lucide-react';
+import { CalendarDays, MapPin, Plus, Users } from 'lucide-react';
 import { BackButton } from '@/components/back-button';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,10 +45,6 @@ export default function FacilitiesCreate() {
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                 <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
                                     <div className="flex items-center gap-3">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                            <Building2 className="size-4 text-ustp-gold" />
-                                        </div>
-
                                         <div>
                                             <h2 className="text-sm font-semibold text-slate-800">
                                                 Facility details

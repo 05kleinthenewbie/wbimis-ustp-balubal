@@ -44,8 +44,8 @@ test('guests are redirected away from facility pages', function () {
     $this->post('/facilities', [])->assertRedirect('/login');
 });
 
-test('faculty and staff cannot manage facilities', function () {
-    $faculty = facilityUser('faculty_staff');
+test('faculty cannot manage facilities', function () {
+    $faculty = facilityUser('faculty');
     $facility = makeFacility();
 
     $this->actingAs($faculty)->get('/facilities')->assertForbidden();
@@ -138,7 +138,7 @@ test('admins can delete facilities without bookings', function () {
 
 test('facilities with bookings cannot be deleted', function () {
     $admin = facilityUser('ict_admin');
-    $faculty = facilityUser('faculty_staff');
+    $faculty = facilityUser('faculty');
     $facility = makeFacility();
 
     Booking::create([

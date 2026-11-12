@@ -7,7 +7,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 beforeEach(function () {
     $this->adminRole = Role::firstOrCreate(['role_name' => 'ict_admin'], ['description' => 'ICT admins']);
-    $this->facultyRole = Role::firstOrCreate(['role_name' => 'faculty_staff'], ['description' => 'Faculty and staff']);
+    $this->facultyRole = Role::firstOrCreate(['role_name' => 'faculty'], ['description' => 'Faculty']);
     $this->admin = User::factory()->create(['role_id' => $this->adminRole->id]);
 });
 

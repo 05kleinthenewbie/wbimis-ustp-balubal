@@ -45,7 +45,7 @@ test('admins can view the service request approvals queue', function () {
 
 test('admins can view job order assignments', function () {
     $admin = servicePagesUser('ict_admin');
-    $requester = servicePagesUser('faculty_staff');
+    $requester = servicePagesUser('faculty');
 
     $serviceRequest = ServiceRequest::create([
         'user_id' => $requester->id,
@@ -83,7 +83,7 @@ test('admins can view job order assignments', function () {
 
 test('admins can view work progress', function () {
     $admin = servicePagesUser('ict_admin');
-    $requester = servicePagesUser('faculty_staff');
+    $requester = servicePagesUser('faculty');
 
     $serviceRequest = ServiceRequest::create([
         'user_id' => $requester->id,
@@ -117,7 +117,7 @@ test('admins can view work progress', function () {
 });
 
 test('faculty and students cannot view request approvals, assignments, or progress', function () {
-    $faculty = servicePagesUser('faculty_staff');
+    $faculty = servicePagesUser('faculty');
     $student = servicePagesUser('student');
 
     $this->actingAs($faculty)->get('/requests/approvals')->assertForbidden();

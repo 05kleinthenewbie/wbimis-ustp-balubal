@@ -22,9 +22,9 @@ test('separate registration name fields survive email verification', function (s
     expect(User::where('email', $payload['email'])->firstOrFail()->name)->toBe($expectedName);
 })->with([
     ['student', 's', 'Juan S. Dela Cruz'],
-    ['faculty_staff', 'S.', 'Juan S. Dela Cruz'],
+    ['faculty', 'S.', 'Juan S. Dela Cruz'],
     ['student', null, 'Juan Dela Cruz'],
-    ['faculty_staff', null, 'Juan Dela Cruz'],
+    ['faculty', null, 'Juan Dela Cruz'],
 ]);
 
 test('registration validates separate name fields', function (array $parts, string $field) {
@@ -39,7 +39,7 @@ test('registration validates separate name fields', function (array $parts, stri
 
 beforeEach(function () {
     Storage::fake('local');
-    Role::firstOrCreate(['role_name' => 'faculty_staff'], ['description' => 'Faculty and staff']);
+    Role::firstOrCreate(['role_name' => 'faculty'], ['description' => 'Faculty']);
 });
 
 test('registering emails an OTP and defers account creation', function () {
@@ -300,7 +300,7 @@ test('a correct OTP creates the account', function () {
 
 test('faculty registrations store their employee ID number', function () {
     fakeBrevoMail();
-    Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    Role::firstOrCreate(['role_name' => 'faculty']);
 
     $this->post(route('register.store'), registrationPayload(['id_number' => 'EMP-1001']));
     $this->post(route('register.otp.verify'), ['code' => registrationOtpCode()]);
@@ -316,7 +316,7 @@ test('faculty registrations store their employee ID number', function () {
 
 test('faculty ID numbers must be unique', function () {
     fakeBrevoMail();
-    $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $role = Role::firstOrCreate(['role_name' => 'faculty']);
     User::factory()->create(['role_id' => $role->id, 'id_number' => 'EMP-1001']);
 
     $this->post(route('register.store'), registrationPayload(['id_number' => 'EMP-1001']))

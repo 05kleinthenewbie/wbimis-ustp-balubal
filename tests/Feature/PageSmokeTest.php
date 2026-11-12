@@ -63,7 +63,7 @@ test('the security settings page renders once the password is confirmed', functi
 });
 
 test('the security settings page requires recent password confirmation', function () {
-    foreach (['ict_admin', 'faculty_staff', 'student'] as $roleName) {
+    foreach (['ict_admin', 'faculty', 'student'] as $roleName) {
         $user = smokeUser($roleName);
 
         $this->actingAs($user)->get('/settings/security')->assertRedirect();
@@ -72,7 +72,7 @@ test('the security settings page requires recent password confirmation', functio
 
 test('admin detail pages render without server errors', function (string $uri) {
     $admin = smokeUser('ict_admin');
-    $requester = smokeUser('faculty_staff');
+    $requester = smokeUser('faculty');
 
     $serviceRequest = ServiceRequest::create([
         'user_id' => $requester->id,
@@ -137,8 +137,8 @@ test('admin detail pages render without server errors', function (string $uri) {
     'inventory qr' => '/inventory/{inventory}/qr',
 ]);
 
-test('faculty and staff pages render without server errors', function (string $uri) {
-    $faculty = smokeUser('faculty_staff');
+test('faculty pages render without server errors', function (string $uri) {
+    $faculty = smokeUser('faculty');
 
     $this->actingAs($faculty)->get($uri)->assertSuccessful();
 })->with([

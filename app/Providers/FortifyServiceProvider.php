@@ -96,13 +96,13 @@ class FortifyServiceProvider extends ServiceProvider
 
             if ($portal === 'admin' && $role !== 'ict_admin') {
                 throw ValidationException::withMessages([
-                    Fortify::username() => 'This sign-in form is for ICT administrators only. Faculty and staff should use the Faculty sign-in page.',
+                    Fortify::username() => 'This sign-in form is for ICT administrators only. Faculty should use the Faculty sign-in page.',
                 ]);
             }
 
-            if ($portal === 'faculty' && $role !== 'faculty_staff') {
+            if ($portal === 'faculty' && $role !== 'faculty') {
                 throw ValidationException::withMessages([
-                    Fortify::username() => 'This sign-in form is for faculty and staff only. Administrators should use the Administrator sign-in page.',
+                    Fortify::username() => 'This sign-in form is for faculty only. Administrators should use the Administrator sign-in page.',
                 ]);
             }
 

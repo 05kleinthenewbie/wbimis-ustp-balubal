@@ -4,9 +4,7 @@ import {
     CheckCircle2,
     Clock3,
     MapPin,
-    UserRound,
     XCircle,
-    Building2,
     Users,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -131,10 +129,6 @@ export default function BookingsShow({ booking, isAdmin, isOwner }: Props) {
                         <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
                             <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
                                 <div className="flex gap-4">
-                                    <div className="flex size-12 shrink-0 items-center justify-center rounded-xl bg-ustp-gold/10 text-ustp-gold">
-                                        <CalendarDays className="size-5" />
-                                    </div>
-
                                     <div>
                                         <div className="mb-1 flex items-center gap-2">
                                             <span className="font-mono text-[10px] text-slate-400">
@@ -178,10 +172,6 @@ export default function BookingsShow({ booking, isAdmin, isOwner }: Props) {
                                 {/* Schedule card */}
                                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                     <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-5">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                            <CalendarDays className="size-4 text-ustp-gold" />
-                                        </div>
-
                                         <div>
                                             <h2 className="text-sm font-semibold text-slate-800">
                                                 Reservation schedule
@@ -235,10 +225,6 @@ export default function BookingsShow({ booking, isAdmin, isOwner }: Props) {
                                 {/* Facility details */}
                                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                     <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-5">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                            <Building2 className="size-4 text-ustp-gold" />
-                                        </div>
-
                                         <h2 className="text-sm font-semibold text-slate-800">
                                             Facility details
                                         </h2>
@@ -300,10 +286,6 @@ export default function BookingsShow({ booking, isAdmin, isOwner }: Props) {
                                 {/* Requester */}
                                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                     <div className="flex items-center gap-3 border-b border-slate-200 px-6 py-5">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                            <UserRound className="size-4 text-ustp-gold" />
-                                        </div>
-
                                         <h2 className="text-sm font-semibold text-slate-800">
                                             Requester information
                                         </h2>
@@ -359,10 +341,6 @@ export default function BookingsShow({ booking, isAdmin, isOwner }: Props) {
                                 {booking.purpose && (
                                     <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                                <MapPin className="size-4 text-ustp-gold" />
-                                            </div>
-
                                             <p className="text-[10px] font-medium tracking-[0.12em] text-slate-400 uppercase">
                                                 Purpose
                                             </p>
@@ -382,10 +360,6 @@ export default function BookingsShow({ booking, isAdmin, isOwner }: Props) {
                                     booking.booking_status === 'pending' && (
                                         <div className="overflow-hidden rounded-2xl border border-ustp-gold/30 bg-white shadow-sm">
                                             <div className="flex items-center gap-3 border-b border-slate-200 bg-ustp-gold/4 px-5 py-5">
-                                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                                    <CheckCircle2 className="size-4 text-ustp-gold" />
-                                                </div>
-
                                                 <div>
                                                     <p className="text-sm font-semibold text-slate-800">
                                                         Review booking

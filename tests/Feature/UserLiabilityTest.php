@@ -44,7 +44,7 @@ test('assigning liability notifies the liable user and they can view it even whe
     $this->post(route('liabilities.acknowledge', $liability))->assertRedirect();
     expect($liability->fresh()->acknowledged_at->equalTo($acknowledgedAt))->toBeTrue();
     expect(Notification::where('user_id', $admin->id)->where('notification_type', 'liability')->count())->toBe(1);
-})->with(['student', 'faculty_staff']);
+})->with(['student', 'faculty']);
 
 test('liability can be assigned without an amount', function () {
     $admin = User::factory()->create(['role_id' => Role::firstOrCreate(['role_name' => 'ict_admin'])->id]);

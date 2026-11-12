@@ -31,7 +31,7 @@ test('dashboard query counts stay within a small budget for each portal', functi
     expect(count($queries))->toBeLessThanOrEqual($budget);
 })->with([
     'admin' => ['ict_admin', 24],
-    'faculty' => ['faculty_staff', 13],
+    'faculty' => ['faculty', 13],
     'student' => ['student', 9],
 ]);
 
@@ -60,7 +60,7 @@ test('combined dashboard summaries preserve period totals and private all time s
         ->where('overview.serviceRequests.completed', 1)
         ->where('stats.myRequests', 3)
         ->where('stats.pendingRequests', 1));
-})->with(['faculty_staff', 'student']);
+})->with(['faculty', 'student']);
 
 test('production pages preload shared javascript dependencies and resolve current font assets', function () {
     Storage::fake('page-assets');

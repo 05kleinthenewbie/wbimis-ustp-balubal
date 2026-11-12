@@ -2,14 +2,8 @@ import { Head, router, usePage } from '@inertiajs/react';
 import {
     AlertTriangle,
     Archive,
-    Calendar,
     CheckCircle2,
-    FileQuestion,
-    RotateCcw,
-    Save,
     ShieldAlert,
-    User,
-    UserPlus,
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -330,12 +324,6 @@ export default function IncidentsShow({
                     <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
                         <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
                             <div className="flex gap-4">
-                                <div
-                                    className={`flex size-12 shrink-0 items-center justify-center rounded-xl ${statusCfg.bg} ${statusCfg.color}`}
-                                >
-                                    {statusCfg.icon}
-                                </div>
-
                                 <div>
                                     <div className="mb-1 flex flex-wrap items-center gap-2">
                                         <span className="font-mono text-[10px] text-slate-400">
@@ -359,7 +347,6 @@ export default function IncidentsShow({
                                         </span>
 
                                         <span className="flex items-center gap-1.5">
-                                            <Calendar className="size-3.5" />
                                             {formatDate(incident.incident_date)}
                                         </span>
                                     </div>
@@ -381,10 +368,6 @@ export default function IncidentsShow({
                             {/* Reporter card */}
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                 <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-4 md:px-6">
-                                    <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                        <User className="size-4 text-ustp-gold" />
-                                    </div>
-
                                     <div>
                                         <h2 className="text-sm font-semibold text-slate-800">
                                             Reporter information
@@ -438,10 +421,6 @@ export default function IncidentsShow({
                             {/* Description */}
                             <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
                                 <div className="mb-4 flex items-center gap-3">
-                                    <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                        <AlertTriangle className="size-4 text-ustp-gold" />
-                                    </div>
-
                                     <p className="text-sm font-semibold text-slate-800">
                                         Description
                                     </p>
@@ -464,10 +443,6 @@ export default function IncidentsShow({
                             {incident.resolution_notes && (
                                 <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                     <div className="flex items-center gap-3 border-b border-slate-200 bg-ustp-gold/4 px-5 py-4 md:px-6">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                            <ShieldAlert className="size-4 text-ustp-gold" />
-                                        </div>
-
                                         <p className="text-sm font-semibold text-slate-800">
                                             Resolution notes
                                         </p>
@@ -484,10 +459,6 @@ export default function IncidentsShow({
                             {incident.attachments.length > 0 && (
                                 <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                     <div className="flex items-center gap-3 border-b border-slate-200 bg-ustp-gold/4 px-5 py-4 md:px-6">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                            <FileQuestion className="size-4 text-ustp-gold" />
-                                        </div>
-
                                         <p className="text-sm font-semibold text-slate-800">
                                             Evidence
                                         </p>
@@ -519,10 +490,6 @@ export default function IncidentsShow({
                             {incident.user_liabilities.length > 0 && (
                                 <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                     <div className="flex items-center gap-3 border-b border-slate-200 bg-ustp-gold/4 px-5 py-4 md:px-6">
-                                        <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                            <UserPlus className="size-4 text-ustp-gold" />
-                                        </div>
-
                                         <div>
                                             <p className="text-sm font-semibold text-slate-800">
                                                 Liability records
@@ -627,7 +594,6 @@ export default function IncidentsShow({
                                                                             )
                                                                         }
                                                                     >
-                                                                        <RotateCcw className="size-3" />
                                                                         Waive
                                                                     </Button>
                                                                 </div>
@@ -645,10 +611,6 @@ export default function IncidentsShow({
                         {isAdmin && (
                             <div className="h-fit overflow-hidden rounded-2xl border border-ustp-gold/30 bg-white shadow-sm">
                                 <div className="flex items-center gap-3 border-b border-slate-200 bg-ustp-gold/4 px-5 py-5">
-                                    <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                        <ShieldAlert className="size-4 text-ustp-gold" />
-                                    </div>
-
                                     <div>
                                         <p className="text-sm font-semibold text-slate-800">
                                             Review incident
@@ -844,7 +806,6 @@ export default function IncidentsShow({
                                             onClick={handleReset}
                                             className="border-slate-200 bg-transparent text-slate-500 hover:border-ustp-gold/30 hover:bg-ustp-gold/10 hover:text-ustp-gold"
                                         >
-                                            <RotateCcw className="size-4" />
                                             Reset
                                         </Button>
 
@@ -854,11 +815,7 @@ export default function IncidentsShow({
                                             onClick={handleSave}
                                             className="bg-ustp-gold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
                                         >
-                                            {processing ? (
-                                                <Spinner />
-                                            ) : (
-                                                <Save className="size-4" />
-                                            )}
+                                            {processing && <Spinner />}
                                             Save changes
                                         </Button>
                                     </div>
@@ -883,12 +840,6 @@ export default function IncidentsShow({
                                 </div>
 
                                 <div className="mt-4 flex items-center gap-3">
-                                    <div
-                                        className={`flex size-9 items-center justify-center rounded-lg ${statusCfg.bg} ${statusCfg.color}`}
-                                    >
-                                        {statusCfg.icon}
-                                    </div>
-
                                     <div>
                                         <p className="text-sm font-medium text-slate-800 capitalize">
                                             {displayStatus.replace('_', ' ')}

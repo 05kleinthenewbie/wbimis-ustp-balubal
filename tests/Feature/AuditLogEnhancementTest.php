@@ -105,7 +105,7 @@ test('audit logs store and expose previous and new values', function () {
 });
 
 test('non-admins cannot view the audit log', function () {
-    $faculty = auditFilterUser('faculty_staff');
+    $faculty = auditFilterUser('faculty');
 
     $this->actingAs($faculty)->get('/audit-log')->assertForbidden();
 });

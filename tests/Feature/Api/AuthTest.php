@@ -4,14 +4,14 @@ use App\Models\Role;
 use App\Models\User;
 
 it('can register and is activated immediately', function () {
-    Role::create(['role_name' => 'faculty_staff']);
+    Role::create(['role_name' => 'faculty']);
 
     $payload = [
         'name' => 'New Faculty',
         'email' => 'new@ustp.edu.ph',
         'password' => 'password123',
         'password_confirmation' => 'password123',
-        'role' => 'faculty_staff',
+        'role' => 'faculty',
         'employment_type' => 'non_teaching',
         'department' => 'Administrative Office',
     ];
@@ -26,14 +26,14 @@ it('can register and is activated immediately', function () {
 });
 
 it('rejects a faculty registration without an employment type', function () {
-    Role::create(['role_name' => 'faculty_staff']);
+    Role::create(['role_name' => 'faculty']);
 
     $response = $this->postJson('/api/v1/auth/register', [
         'name' => 'New Faculty',
         'email' => 'new@ustp.edu.ph',
         'password' => 'password123',
         'password_confirmation' => 'password123',
-        'role' => 'faculty_staff',
+        'role' => 'faculty',
         'employment_type' => null,
     ]);
 

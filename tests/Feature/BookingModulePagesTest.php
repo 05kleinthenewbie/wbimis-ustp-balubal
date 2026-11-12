@@ -42,7 +42,7 @@ function bookingPagesBooking(User $owner, Facility $facility, string $status, st
 
 test('admins can view the booking approvals queue', function () {
     $admin = bookingPagesUser('ict_admin');
-    $faculty = bookingPagesUser('faculty_staff');
+    $faculty = bookingPagesUser('faculty');
     $facility = bookingPagesFacility();
     $pending = bookingPagesBooking($faculty, $facility, 'pending');
     bookingPagesBooking($faculty, $facility, 'approved', '2099-03-15');
@@ -59,7 +59,7 @@ test('admins can view the booking approvals queue', function () {
 });
 
 test('faculty and students cannot view the booking approvals queue', function () {
-    $faculty = bookingPagesUser('faculty_staff');
+    $faculty = bookingPagesUser('faculty');
     $student = bookingPagesUser('student');
 
     $this->actingAs($faculty)->get('/bookings/approvals')->assertForbidden();
@@ -68,7 +68,7 @@ test('faculty and students cannot view the booking approvals queue', function ()
 
 test('booking stats include completed bookings', function () {
     $admin = bookingPagesUser('ict_admin');
-    $faculty = bookingPagesUser('faculty_staff');
+    $faculty = bookingPagesUser('faculty');
     $facility = bookingPagesFacility();
     bookingPagesBooking($faculty, $facility, 'completed', '2020-01-10');
 
@@ -81,7 +81,7 @@ test('booking stats include completed bookings', function () {
 });
 
 test('the complete past bookings command only completes past approved bookings', function () {
-    $faculty = bookingPagesUser('faculty_staff');
+    $faculty = bookingPagesUser('faculty');
     $facility = bookingPagesFacility();
     $pastApproved = bookingPagesBooking($faculty, $facility, 'approved', '2020-01-10');
     $pastPending = bookingPagesBooking($faculty, $facility, 'pending', '2020-01-11');
@@ -104,7 +104,7 @@ test('the complete past bookings command only completes past approved bookings',
 
 test('admins can mark an approved booking as completed', function () {
     $admin = bookingPagesUser('ict_admin');
-    $faculty = bookingPagesUser('faculty_staff');
+    $faculty = bookingPagesUser('faculty');
     $facility = bookingPagesFacility();
     $booking = bookingPagesBooking($faculty, $facility, 'approved');
 
@@ -117,8 +117,8 @@ test('admins can mark an approved booking as completed', function () {
 });
 
 test('faculty cannot view another users booking', function () {
-    $faculty = bookingPagesUser('faculty_staff');
-    $other = bookingPagesUser('faculty_staff');
+    $faculty = bookingPagesUser('faculty');
+    $other = bookingPagesUser('faculty');
     $facility = bookingPagesFacility();
     $booking = bookingPagesBooking($other, $facility, 'approved');
 
@@ -129,7 +129,7 @@ test('faculty cannot view another users booking', function () {
 
 test('admins can view any booking', function () {
     $admin = bookingPagesUser('ict_admin');
-    $faculty = bookingPagesUser('faculty_staff');
+    $faculty = bookingPagesUser('faculty');
     $facility = bookingPagesFacility();
     $booking = bookingPagesBooking($faculty, $facility, 'approved');
 
@@ -141,7 +141,7 @@ test('admins can view any booking', function () {
 test('bookings that already ended are removed from the calendar', function () {
     $this->travelTo('2026-10-31 14:00:00');
 
-    $faculty = bookingPagesUser('faculty_staff');
+    $faculty = bookingPagesUser('faculty');
     $facility = bookingPagesFacility();
     bookingPagesBooking($faculty, $facility, 'approved', '2026-10-30');
     Booking::create([
@@ -174,7 +174,7 @@ test('bookings that already ended are removed from the calendar', function () {
 test('ended bookings do not block new bookings for the same slot', function () {
     $this->travelTo('2026-10-31 14:00:00');
 
-    $faculty = bookingPagesUser('faculty_staff');
+    $faculty = bookingPagesUser('faculty');
     $facility = bookingPagesFacility();
     Booking::create([
         'user_id' => $faculty->id,
@@ -202,7 +202,7 @@ test('ended bookings do not block new bookings for the same slot', function () {
 test('the complete past command completes approved bookings that already ended today', function () {
     $this->travelTo('2026-10-31 14:00:00');
 
-    $faculty = bookingPagesUser('faculty_staff');
+    $faculty = bookingPagesUser('faculty');
     $facility = bookingPagesFacility();
     $endedToday = Booking::create([
         'user_id' => $faculty->id,

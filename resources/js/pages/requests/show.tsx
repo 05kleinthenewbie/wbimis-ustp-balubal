@@ -8,7 +8,6 @@ import {
     Clock3,
     Download,
     FileText,
-    Paperclip,
     UserRound,
     X,
 } from 'lucide-react';
@@ -373,10 +372,6 @@ export default function RequestsShow({ request, isAdmin }: Props) {
                     {/* Services */}
                     <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                         <div className="flex items-center gap-3 border-b border-slate-200 px-5 py-4 md:px-6">
-                            <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                <FileText className="size-4 text-ustp-gold" />
-                            </div>
-
                             <div>
                                 <p className="text-sm font-semibold text-slate-800">
                                     Services requested
@@ -440,10 +435,6 @@ export default function RequestsShow({ request, isAdmin }: Props) {
                     {/* Problem */}
                     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
                         <div className="flex items-center gap-3">
-                            <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                <AlertTriangle className="size-4 text-ustp-gold" />
-                            </div>
-
                             <p className="text-sm font-semibold text-slate-800">
                                 Problem description
                             </p>
@@ -460,10 +451,6 @@ export default function RequestsShow({ request, isAdmin }: Props) {
                     {request.attachments.length > 0 && (
                         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
                             <div className="flex items-center gap-3">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                    <Paperclip className="size-4 text-ustp-gold" />
-                                </div>
-
                                 <div>
                                     <p className="text-sm font-semibold text-slate-800">
                                         Attachments
@@ -527,10 +514,6 @@ export default function RequestsShow({ request, isAdmin }: Props) {
                     {isAdmin && request.request_status === 'pending' && (
                         <section className="overflow-hidden rounded-2xl border border-ustp-gold/30 bg-white shadow-sm">
                             <div className="flex items-center gap-3 border-b border-slate-200 bg-ustp-gold/4 px-5 py-4 md:px-6">
-                                <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/10">
-                                    <Check className="size-4 text-ustp-gold" />
-                                </div>
-
                                 <div>
                                     <p className="text-sm font-semibold text-slate-800">
                                         Review request

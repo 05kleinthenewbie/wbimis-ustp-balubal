@@ -49,7 +49,7 @@ type Props = {
 };
 
 const roleLabels: Record<string, string> = {
-    faculty_staff: 'Faculty',
+    faculty: 'Faculty',
     student: 'Student',
     ict_admin: 'ICT Admin',
 };
@@ -489,7 +489,8 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
                             onClick={submitReject}
                             disabled={
                                 rejectProcessing ||
-                                (rejectNeedsReason && rejectReason.trim() === '')
+                                (rejectNeedsReason &&
+                                    rejectReason.trim() === '')
                             }
                             className="bg-rose-600 text-white hover:bg-rose-700"
                         >

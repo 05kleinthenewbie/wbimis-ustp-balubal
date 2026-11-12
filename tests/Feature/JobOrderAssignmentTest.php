@@ -23,7 +23,7 @@ function assignTechUser(string $roleName): User
 
 function makeAssignableJobOrder(): JobOrder
 {
-    $requester = assignTechUser('faculty_staff');
+    $requester = assignTechUser('faculty');
 
     $serviceRequest = ServiceRequest::create([
         'user_id' => $requester->id,
@@ -38,8 +38,8 @@ function makeAssignableJobOrder(): JobOrder
 }
 
 test('only requesters assigned technicians and admins can view a job order', function () {
-    $requester = assignTechUser('faculty_staff');
-    $other = assignTechUser('faculty_staff');
+    $requester = assignTechUser('faculty');
+    $other = assignTechUser('faculty');
     $technician = assignTechUser('ict_admin');
     $admin = assignTechUser('ict_admin');
 
@@ -166,7 +166,7 @@ test('technicians must hold the ict admin role', function () {
 });
 
 test('faculty and students cannot assign technicians', function () {
-    $faculty = assignTechUser('faculty_staff');
+    $faculty = assignTechUser('faculty');
     $student = assignTechUser('student');
     $jobOrder = makeAssignableJobOrder();
 
@@ -315,7 +315,7 @@ test('technician name is required', function () {
 });
 
 test('faculty and students cannot add technicians', function () {
-    $faculty = assignTechUser('faculty_staff');
+    $faculty = assignTechUser('faculty');
     $student = assignTechUser('student');
 
     $this->actingAs($faculty)

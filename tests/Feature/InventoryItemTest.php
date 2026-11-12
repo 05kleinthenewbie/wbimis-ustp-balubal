@@ -168,7 +168,7 @@ test('admin can update the expiration date', function () {
 });
 
 test('non admins cannot create inventory items', function () {
-    $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $role = Role::firstOrCreate(['role_name' => 'faculty']);
     $faculty = User::factory()->create(['role_id' => $role->id]);
 
     $this->actingAs($faculty)
@@ -227,7 +227,7 @@ test('admin can mark an item for disposal', function () {
 });
 
 test('non admins cannot mark items for disposal', function () {
-    $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $role = Role::firstOrCreate(['role_name' => 'faculty']);
     $faculty = User::factory()->create(['role_id' => $role->id]);
     $item = InventoryItem::factory()->create(['status' => 'active']);
 
@@ -308,7 +308,7 @@ test('admin can view the expiration monitor', function () {
 });
 
 test('non admins cannot view the expiration monitor', function () {
-    $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $role = Role::firstOrCreate(['role_name' => 'faculty']);
     $faculty = User::factory()->create(['role_id' => $role->id]);
 
     $this->actingAs($faculty)
@@ -348,7 +348,7 @@ test('admin can view the defective and under repair inventory views', function (
 });
 
 test('non admins cannot view the defective and under repair views', function () {
-    $role = Role::firstOrCreate(['role_name' => 'faculty_staff']);
+    $role = Role::firstOrCreate(['role_name' => 'faculty']);
     $faculty = User::factory()->create(['role_id' => $role->id]);
 
     $this->actingAs($faculty)

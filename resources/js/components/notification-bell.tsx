@@ -129,9 +129,6 @@ export function NotificationBell() {
                     <div className="pointer-events-none absolute -top-10 right-0 h-32 w-32 rounded-full bg-ustp-gold/12 blur-2xl" />
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-gold/15 text-ustp-gold">
-                                <Bell className="size-5" />
-                            </div>
                             <div>
                                 <p className="font-serif text-sm font-bold text-white">
                                     Notifications

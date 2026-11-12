@@ -7,7 +7,7 @@ use Illuminate\Validation\ValidationException;
 
 test('rejected accounts can register again', function () {
     fakeBrevoMail();
-    Role::firstOrCreate(['role_name' => 'faculty_staff'], ['description' => 'Faculty and staff']);
+    Role::firstOrCreate(['role_name' => 'faculty'], ['description' => 'Faculty']);
 
     $rejected = User::factory()->create([
         'email' => 'rejected@ustp.edu.ph',
@@ -56,7 +56,7 @@ test('deactivated students can register again and are reactivated', function () 
 });
 
 test('active emails still cannot register twice', function () {
-    Role::firstOrCreate(['role_name' => 'faculty_staff'], ['description' => 'Faculty and staff']);
+    Role::firstOrCreate(['role_name' => 'faculty'], ['description' => 'Faculty']);
 
     User::factory()->create([
         'email' => 'active@8.ustp.edu.ph',
@@ -68,6 +68,6 @@ test('active emails still cannot register twice', function () {
         'email' => 'active@8.ustp.edu.ph',
         'password' => 'password',
         'password_confirmation' => 'password',
-        'role' => 'faculty_staff',
+        'role' => 'faculty',
     ]))->toThrow(ValidationException::class);
 });

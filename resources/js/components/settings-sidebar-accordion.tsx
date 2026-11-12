@@ -56,7 +56,7 @@ export function SettingsSidebarAccordion() {
 
     return (
         <div className="mx-auto w-full max-w-xs lg:mx-0">
-            <p className="mb-3 font-semibold tracking-widest text-muted-foreground text-xs uppercase">
+            <p className="mb-3 text-xs font-semibold tracking-widest text-muted-foreground uppercase">
                 Settings
             </p>
             {sections.map(({ icon: Icon, label, value, links }) => (
@@ -66,24 +66,25 @@ export function SettingsSidebarAccordion() {
                     onOpenChange={(isOpen) => toggle(value, isOpen)}
                 >
                     <CollapsibleTrigger className="flex w-full items-center rounded-md px-2 py-2 hover:bg-accent hover:no-underline">
-                    <div className="flex w-full items-center gap-2.5">
-                        <Icon className="size-4 text-muted-foreground" />
-                        <span className="font-medium text-sm">{label}</span>
-                        <svg
-                            className={cn(
-                                'ml-auto size-4 shrink-0 text-muted-foreground transition-transform duration-200',
-                                openSections.includes(value) && 'rotate-180',
-                            )}
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        >
-                            <path d="m6 9 6 6 6-6" />
-                        </svg>
-                    </div>
+                        <div className="flex w-full items-center gap-2.5">
+                            <Icon className="size-4 text-muted-foreground" />
+                            <span className="text-sm font-medium">{label}</span>
+                            <svg
+                                className={cn(
+                                    'ml-auto size-4 shrink-0 text-muted-foreground transition-transform duration-200',
+                                    openSections.includes(value) &&
+                                        'rotate-180',
+                                )}
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </div>
                     </CollapsibleTrigger>
                     <CollapsibleContent className="pb-1">
                         <ul className="ml-6 flex flex-col gap-0.5 border-l pl-3">

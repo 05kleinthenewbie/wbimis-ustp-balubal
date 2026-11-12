@@ -2,8 +2,6 @@ import { Head, Link } from '@inertiajs/react';
 import {
     ArrowUpRight,
     Calendar,
-    CheckCircle2,
-    Clock3,
     Plus,
     Search,
     XCircle,
@@ -65,7 +63,22 @@ export default function BookingsIndex({
     facilities,
 }: Props) {
     const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [statusFilter, setStatusFilter] = useState<string>(() => {
+        if (typeof window === 'undefined') {
+            return 'all';
+        }
+
+        return (
+            new URLSearchParams(window.location.search).get('status') ?? 'all'
+        );
+    });
+    const [todayOnly, setTodayOnly] = useState<boolean>(() => {
+        if (typeof window === 'undefined') {
+            return false;
+        }
+
+        return new URLSearchParams(window.location.search).get('today') === '1';
+    });
 
     const filtered = bookings.filter((booking) => {
         const q = search.toLowerCase();
@@ -75,41 +88,12 @@ export default function BookingsIndex({
             String(booking.id).includes(q);
         const matchesStatus =
             statusFilter === 'all' || booking.booking_status === statusFilter;
+        const matchesToday =
+            !todayOnly ||
+            booking.booking_date === new Date().toISOString().slice(0, 10);
 
-        return matchesSearch && matchesStatus;
+        return matchesSearch && matchesStatus && matchesToday;
     });
-
-    const statusTabs = [
-        { key: 'all', label: 'All', count: stats.total },
-        {
-            key: 'pending',
-            label: 'Pending',
-            count: stats.pending,
-            icon: Clock3,
-            color: 'text-amber-600',
-        },
-        {
-            key: 'approved',
-            label: 'Approved',
-            count: stats.approved,
-            icon: CheckCircle2,
-            color: 'text-emerald-600',
-        },
-        {
-            key: 'completed',
-            label: 'Completed',
-            count: stats.completed,
-            icon: CheckCircle2,
-            color: 'text-sky-600',
-        },
-        {
-            key: 'rejected',
-            label: 'Rejected',
-            count: stats.rejected,
-            icon: XCircle,
-            color: 'text-rose-600',
-        },
-    ];
 
     return (
         <>
@@ -129,70 +113,6 @@ export default function BookingsIndex({
                         </Button>
                     </div>
 
-                    {/* Stats Cards */}
-                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
-                        {[
-                            {
-                                label: 'Total Bookings',
-                                value: stats.total,
-                                icon: Calendar,
-                                color: 'text-ustp-navy',
-                                bg: 'bg-ustp-navy/5',
-                            },
-                            {
-                                label: 'Pending',
-                                value: stats.pending,
-                                icon: Clock3,
-                                color: 'text-amber-600',
-                                bg: 'bg-amber-50',
-                            },
-                            {
-                                label: 'Approved',
-                                value: stats.approved,
-                                icon: CheckCircle2,
-                                color: 'text-emerald-600',
-                                bg: 'bg-emerald-50',
-                            },
-                            {
-                                label: 'Completed',
-                                value: stats.completed,
-                                icon: CheckCircle2,
-                                color: 'text-sky-600',
-                                bg: 'bg-sky-50',
-                            },
-                            {
-                                label: 'Rejected',
-                                value: stats.rejected,
-                                icon: XCircle,
-                                color: 'text-rose-600',
-                                bg: 'bg-rose-50',
-                            },
-                        ].map((card) => (
-                            <div
-                                key={card.label}
-                                className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className={`flex size-10 items-center justify-center rounded-xl ${card.bg}`}
-                                    >
-                                        <card.icon
-                                            className={`size-5 ${card.color}`}
-                                        />
-                                    </div>
-                                    <div>
-                                        <p className="text-2xl font-semibold text-slate-800">
-                                            {card.value}
-                                        </p>
-                                        <p className="text-[11px] text-slate-400">
-                                            {card.label}
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
                     {/* Availability Calendar */}
                     <BookingCalendar
                         bookings={calendarBookings}
@@ -201,37 +121,62 @@ export default function BookingsIndex({
                         showRequester
                     />
 
-                    {/* Status Tabs */}
-                    <div className="flex flex-wrap items-center gap-2">
-                        {statusTabs.map((tab) => (
+                    {/* Stats Cards */}
+                    <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
+                        {[
+                            {
+                                key: 'all',
+                                label: 'Total Bookings',
+                                value: stats.total,
+                            },
+                            {
+                                key: 'pending',
+                                label: 'Pending',
+                                value: stats.pending,
+                            },
+                            {
+                                key: 'approved',
+                                label: 'Approved',
+                                value: stats.approved,
+                            },
+                            {
+                                key: 'completed',
+                                label: 'Completed',
+                                value: stats.completed,
+                            },
+                            {
+                                key: 'rejected',
+                                label: 'Rejected',
+                                value: stats.rejected,
+                            },
+                        ].map((card) => (
                             <button
-                                key={tab.key}
-                                onClick={() => setStatusFilter(tab.key)}
-                                className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-colors ${
-                                    statusFilter === tab.key
-                                        ? 'bg-ustp-navy text-white shadow-sm'
-                                        : 'bg-white text-slate-500 hover:bg-slate-50 hover:text-slate-700'
+                                key={card.key}
+                                type="button"
+                                aria-pressed={statusFilter === card.key}
+                                onClick={() =>
+                                    setStatusFilter((current) =>
+                                        current === card.key &&
+                                        card.key !== 'all'
+                                            ? 'all'
+                                            : card.key,
+                                    )
+                                }
+                                className={`cursor-pointer rounded-2xl border p-4 text-left shadow-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ustp-navy ${
+                                    statusFilter === card.key
+                                        ? 'border-ustp-navy bg-ustp-navy/5 ring-1 ring-ustp-navy'
+                                        : 'border-slate-200 bg-white hover:border-slate-400'
                                 }`}
                             >
-                                {tab.icon && (
-                                    <tab.icon
-                                        className={`size-3.5 ${statusFilter === tab.key ? 'text-white' : tab.color}`}
-                                    />
-                                )}
-                                {tab.label}
-                                <span
-                                    className={`ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] ${
-                                        statusFilter === tab.key
-                                            ? 'bg-white/20 text-white'
-                                            : 'bg-slate-100 text-slate-500'
-                                    }`}
-                                >
-                                    {tab.count}
-                                </span>
+                                <p className="text-2xl font-semibold text-slate-800">
+                                    {card.value}
+                                </p>
+                                <p className="text-[11px] text-slate-400">
+                                    {card.label}
+                                </p>
                             </button>
                         ))}
                     </div>
-
                     {/* Toolbar */}
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="relative w-full max-w-sm">
@@ -255,11 +200,14 @@ export default function BookingsIndex({
                         </div>
 
                         <div className="flex items-center gap-3">
-                            {(statusFilter !== 'all' || search) && (
+                            {(statusFilter !== 'all' ||
+                                search ||
+                                todayOnly) && (
                                 <button
                                     onClick={() => {
                                         setStatusFilter('all');
                                         setSearch('');
+                                        setTodayOnly(false);
                                     }}
                                     className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700"
                                 >
@@ -338,10 +286,6 @@ export default function BookingsIndex({
                                             >
                                                 <td className="px-5 py-4">
                                                     <div className="flex items-center gap-3">
-                                                        <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-ustp-gold/10 text-ustp-gold">
-                                                            <Calendar className="size-4" />
-                                                        </div>
-
                                                         <div>
                                                             <p className="font-medium text-slate-800">
                                                                 {
@@ -432,10 +376,6 @@ export default function BookingsIndex({
                                         <div className="p-4">
                                             <div className="flex items-start justify-between gap-3">
                                                 <div className="flex min-w-0 gap-3">
-                                                    <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-ustp-gold/10 text-ustp-gold">
-                                                        <Calendar className="size-4" />
-                                                    </div>
-
                                                     <div className="min-w-0">
                                                         <p className="truncate font-medium text-slate-800">
                                                             {
