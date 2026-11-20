@@ -43,8 +43,6 @@ type PendingUser = {
 };
 
 type Props = {
-    status?: string | null;
-    error?: string | null;
     pendingUsers: PendingUser[];
 };
 
@@ -54,7 +52,7 @@ const roleLabels: Record<string, string> = {
     ict_admin: 'ICT Admin',
 };
 
-export default function UserApprovals({ status, error, pendingUsers }: Props) {
+export default function UserApprovals({ pendingUsers }: Props) {
     const getInitials = useInitials();
     const [selected, setSelected] = useState<number[]>([]);
     const [processingId, setProcessingId] = useState<number | null>(null);
@@ -112,18 +110,6 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
 
             <div className="min-h-full flex-1 bg-slate-50 text-slate-800">
                 <div className="relative flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:p-8">
-                    {status && (
-                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                            {status}
-                        </div>
-                    )}
-
-                    {error && (
-                        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                            {error}
-                        </div>
-                    )}
-
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-center gap-2">
                             <div className="flex size-8 items-center justify-center rounded-lg bg-amber-100 text-amber-700">
@@ -149,17 +135,6 @@ export default function UserApprovals({ status, error, pendingUsers }: Props) {
                             <UserCheck className="size-3.5" />
                             User Management
                         </Link>
-                    </div>
-
-                    <div className="grid grid-cols-1 items-center gap-1 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-700 sm:flex sm:gap-2">
-                        <CheckCircle2 className="size-4 shrink-0 text-amber-600" />
-                        <span>
-                            Approving grants the account access to the
-                            application; rejecting blocks the registration until
-                            the applicant registers again. Student applications
-                            require a rejection reason and can be reviewed from
-                            the uploaded COR.
-                        </span>
                     </div>
 
                     {pendingUsers.length === 0 ? (

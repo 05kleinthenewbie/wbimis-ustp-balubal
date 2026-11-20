@@ -1,5 +1,4 @@
 import { Link } from '@inertiajs/react';
-import { ChevronDown } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import {
@@ -49,21 +48,29 @@ export function NavMain({
                     isActive={isActive}
                     className={cn(
                         'group h-8 rounded-lg px-2 text-[13px] font-medium',
-                        hasChildren && 'pr-8',
                         isActive
-                            ? 'bg-ustp-navy/[0.06] font-semibold text-ustp-navy'
-                            : 'text-slate-500 hover:bg-slate-100/80 hover:text-ustp-navy',
+                            ? 'bg-white/10 font-semibold text-ustp-gold'
+                            : 'text-white/65 hover:bg-white/10 hover:text-white',
                         '[&>svg]:size-4 [&>svg]:shrink-0',
                         isActive
-                            ? '[&>svg]:text-ustp-navy'
-                            : '[&>svg]:text-slate-400 group-hover:[&>svg]:text-ustp-navy',
+                            ? '[&>svg]:text-ustp-gold'
+                            : '[&>svg]:text-white/50 group-hover:[&>svg]:text-ustp-gold',
                     )}
                 >
                     <Link
                         href={item.href}
                         prefetch
                         onClick={
-                            hasChildren ? () => setOpen(key, true) : undefined
+                            hasChildren
+                                ? (event) => {
+                                      if (isOpen) {
+                                          event.preventDefault();
+                                          setOpen(key, false);
+                                      } else {
+                                          setOpen(key, true);
+                                      }
+                                  }
+                                : undefined
                         }
                     >
                         {item.icon && <item.icon />}
@@ -71,31 +78,14 @@ export function NavMain({
                     </Link>
                 </SidebarMenuSubButton>
 
-                {hasChildren && (
-                    <button
-                        type="button"
-                        onClick={() => setOpen(key, !isOpen)}
-                        aria-expanded={isOpen}
-                        aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${item.title}`}
-                        className={cn(
-                            'absolute top-1/2 right-1 z-10 flex size-5 -translate-y-1/2 items-center justify-center rounded-md transition-colors',
-                            'group-data-[collapsible=icon]:hidden',
-                            isActive
-                                ? 'text-ustp-navy/60 hover:bg-ustp-navy/10 hover:text-ustp-navy'
-                                : 'text-slate-400 hover:bg-slate-100 hover:text-ustp-navy',
-                        )}
-                    >
-                        <ChevronDown
-                            className={cn(
-                                'size-3.5 transition-transform duration-200',
-                                isOpen && 'rotate-180',
-                            )}
-                        />
-                    </button>
+                {Boolean(item.badge) && (
+                    <SidebarMenuBadge className="absolute top-1.5 right-1.5 h-4.5 min-w-4.5 rounded-full bg-ustp-gold px-1 text-[10px] font-bold text-ustp-navy peer-data-[active=true]/menu-button:bg-ustp-gold peer-data-[active=true]/menu-button:text-ustp-navy">
+                        {item.badge! > 99 ? '99+' : item.badge}
+                    </SidebarMenuBadge>
                 )}
 
                 {hasChildren && isOpen && (
-                    <SidebarMenuSub className="mt-0.5 ml-2 gap-0.5 border-slate-200">
+                    <SidebarMenuSub className="mt-0.5 ml-2 gap-0.5 border-white/10">
                         {item.children?.map((child) =>
                             renderSubItem(child, `${key}/${child.title}`),
                         )}
@@ -107,7 +97,7 @@ export function NavMain({
 
     return (
         <SidebarGroup className="px-2 py-1.5">
-            <SidebarGroupLabel className="h-7 px-3 text-[10px] font-semibold tracking-[0.18em] text-slate-400 uppercase">
+            <SidebarGroupLabel className="h-7 px-3 text-[10px] font-semibold tracking-[0.18em] text-white/45 uppercase">
                 {label}
             </SidebarGroupLabel>
             <SidebarMenu className="gap-0.5">
@@ -125,14 +115,13 @@ export function NavMain({
                                 tooltip={{ children: item.title }}
                                 className={cn(
                                     'group relative h-10 rounded-xl px-3 text-sm font-medium transition-colors duration-200',
-                                    hasChildren && 'pr-9',
                                     isActive
-                                        ? 'bg-ustp-navy/[0.07] font-semibold text-ustp-navy'
-                                        : 'text-slate-600 hover:bg-slate-100/80 hover:text-ustp-navy',
+                                        ? 'bg-white/12 font-semibold text-white before:absolute before:top-1.5 before:bottom-1.5 before:left-1 before:w-1 before:rounded-full before:bg-ustp-gold'
+                                        : 'text-white/70 hover:bg-white/10 hover:text-white',
                                     '[&>svg]:size-4.5 [&>svg]:shrink-0',
                                     isActive
-                                        ? '[&>svg]:text-ustp-navy'
-                                        : '[&>svg]:text-slate-400 group-hover:[&>svg]:text-ustp-navy',
+                                        ? '[&>svg]:text-ustp-gold'
+                                        : '[&>svg]:text-white/60 group-hover:[&>svg]:text-ustp-gold',
                                 )}
                             >
                                 <Link
@@ -140,7 +129,14 @@ export function NavMain({
                                     prefetch
                                     onClick={
                                         hasChildren
-                                            ? () => setOpen(key, true)
+                                            ? (event) => {
+                                                  if (isOpen) {
+                                                      event.preventDefault();
+                                                      setOpen(key, false);
+                                                  } else {
+                                                      setOpen(key, true);
+                                                  }
+                                              }
                                             : undefined
                                     }
                                 >
@@ -155,31 +151,8 @@ export function NavMain({
                                 </SidebarMenuBadge>
                             )}
 
-                            {hasChildren && (
-                                <button
-                                    type="button"
-                                    onClick={() => setOpen(key, !isOpen)}
-                                    aria-expanded={isOpen}
-                                    aria-label={`${isOpen ? 'Collapse' : 'Expand'} ${item.title}`}
-                                    className={cn(
-                                        'absolute top-1/2 right-2 z-10 flex size-6 -translate-y-1/2 items-center justify-center rounded-md transition-colors',
-                                        'group-data-[collapsible=icon]:hidden',
-                                        isActive
-                                            ? 'text-ustp-navy/60 hover:bg-ustp-navy/10 hover:text-ustp-navy'
-                                            : 'text-slate-400 hover:bg-slate-100 hover:text-ustp-navy',
-                                    )}
-                                >
-                                    <ChevronDown
-                                        className={cn(
-                                            'size-3.5 transition-transform duration-200',
-                                            isOpen && 'rotate-180',
-                                        )}
-                                    />
-                                </button>
-                            )}
-
                             {hasChildren && isOpen && (
-                                <SidebarMenuSub className="mt-1 gap-0.5 border-slate-200">
+                                <SidebarMenuSub className="mt-1 gap-0.5 border-white/10">
                                     {item.children?.map((child) =>
                                         renderSubItem(
                                             child,

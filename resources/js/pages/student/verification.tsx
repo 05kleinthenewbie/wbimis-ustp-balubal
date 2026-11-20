@@ -24,10 +24,8 @@ type Application = {
 
 export default function Verification({
     application,
-    status,
 }: {
     application: Application;
-    status?: string;
 }) {
     const statusLabels: Record<string, string> = {
         pending: 'Awaiting administrator review',
@@ -53,12 +51,6 @@ export default function Verification({
                         Sign out
                     </Link>
                 </header>
-                {status && (
-                    <p role="status" className="rounded-lg border p-4">
-                        {status}
-                    </p>
-                )}
-
                 {!application.email_verified && (
                     <section className="rounded-xl border p-6">
                         <h2 className="mb-2 text-lg font-semibold">

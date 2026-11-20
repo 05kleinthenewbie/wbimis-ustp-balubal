@@ -497,7 +497,14 @@ test('student registration validates the ID number', function (?string $idNumber
         ->assertSessionHasErrors('id_number');
 
     Http::assertNothingSent();
-})->with([null, '', 'student-123', '123456789012345678901']);
+})->with([
+    null,
+    '',
+    'student-123',
+    '123456789',
+    '12345678901',
+    '123456789012345678901',
+]);
 
 test('student registration rejects an ID number already assigned to another account', function () {
     fakeBrevoMail();

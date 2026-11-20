@@ -1,23 +1,25 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
-    LayoutGrid,
-    Activity,
-    UserCog,
+    LayoutDashboard,
     FileText,
     FilePlus2,
     ClipboardList,
-    Box,
+    ListChecks,
+    Package,
     Calendar,
+    CalendarCheck,
     CalendarClock,
     Building2,
     CheckCircle2,
     AlertTriangle,
-    ShieldAlert,
+    ReceiptText,
     History,
     BarChart3,
     Users,
     UserCheck,
     Wrench,
+    Hammer,
+    Clock,
     Bell,
     Settings,
     Shield,
@@ -47,59 +49,65 @@ import type { NavItem } from '@/types';
 
 export function AppSidebar() {
     const dashboardUrl = '/dashboard';
-    const { auth, unreadNotificationsCount } = usePage().props as any;
+    const {
+        auth,
+        unreadNotificationsCount,
+        pendingApprovalsCount,
+        pendingServiceRequestsCount,
+        pendingBookingsCount,
+        unassignedJobOrdersCount,
+    } = usePage().props as any;
     const roleName = auth?.user?.role?.role_name;
     const unreadCount = Number(unreadNotificationsCount ?? 0);
+    const pendingApprovalCount = Number(pendingApprovalsCount ?? 0);
+    const pendingServiceRequestCount = Number(pendingServiceRequestsCount ?? 0);
+    const pendingBookingCount = Number(pendingBookingsCount ?? 0);
+    const unassignedJobOrderCount = Number(unassignedJobOrdersCount ?? 0);
 
     const adminNavItems: NavItem[] = [
-        { title: 'Dashboard', href: dashboardUrl, icon: LayoutGrid },
+        { title: 'Dashboard', href: dashboardUrl, icon: LayoutDashboard },
         {
             title: 'Service Requests',
             href: '/requests',
             icon: FileText,
-            children: [
-                { title: 'All Requests', href: '/requests', icon: FileText },
-                {
-                    title: 'Request Approvals',
-                    href: '/requests/approvals',
-                    icon: CheckCircle2,
-                },
-            ],
+            badge: pendingServiceRequestCount,
         },
         {
             title: 'Job Orders',
             href: '/job-orders',
             icon: ClipboardList,
+            badge: unassignedJobOrderCount,
             children: [
                 {
-                    title: 'All Job Orders',
+                    title: 'Job Order List',
                     href: '/job-orders',
-                    icon: ClipboardList,
+                    icon: ListChecks,
                 },
                 {
-                    title: 'Assignments',
+                    title: 'Technician Assignments',
                     href: '/job-orders/assignments',
-                    icon: UserCog,
+                    icon: Wrench,
+                    badge: unassignedJobOrderCount,
                 },
                 {
-                    title: 'Work Progress',
+                    title: 'Active Work Progress',
                     href: '/job-orders/progress',
-                    icon: Activity,
+                    icon: Clock,
                 },
             ],
         },
         {
             title: 'Inventory',
             href: '/inventory',
-            icon: Box,
+            icon: Package,
             children: [
                 {
                     title: 'All Items',
                     href: '/inventory',
-                    icon: Box,
+                    icon: Package,
                 },
                 {
-                    title: 'Monitor Expiration',
+                    title: 'Monitor Shelf Life',
                     href: '/inventory/expirations',
                     icon: CalendarClock,
                 },
@@ -111,7 +119,7 @@ export function AppSidebar() {
                 {
                     title: 'Under Repair',
                     href: '/inventory/under-repair',
-                    icon: Wrench,
+                    icon: Hammer,
                 },
             ],
         },
@@ -119,11 +127,12 @@ export function AppSidebar() {
             title: 'Facility Booking',
             href: '/bookings',
             icon: Calendar,
+            badge: pendingBookingCount,
             children: [
                 {
                     title: 'Reservations',
                     href: '/bookings',
-                    icon: ClipboardList,
+                    icon: CalendarCheck,
                 },
                 {
                     title: 'Facilities',
@@ -134,6 +143,7 @@ export function AppSidebar() {
                     title: 'Booking Approvals',
                     href: '/bookings/approvals',
                     icon: CheckCircle2,
+                    badge: pendingBookingCount,
                 },
             ],
         },
@@ -148,19 +158,21 @@ export function AppSidebar() {
             title: 'User Management',
             href: '/users',
             icon: Users,
+            badge: pendingApprovalCount,
             children: [
                 { title: 'All Users', href: '/users', icon: Users },
                 {
                     title: 'Pending Approvals',
                     href: '/users/approvals',
                     icon: UserCheck,
+                    badge: pendingApprovalCount,
                 },
             ],
         },
     ];
 
     const facultyNavItems: NavItem[] = [
-        { title: 'Dashboard', href: dashboardUrl, icon: LayoutGrid },
+        { title: 'Dashboard', href: dashboardUrl, icon: LayoutDashboard },
         {
             title: 'Service Requests',
             href: '/requests',
@@ -182,7 +194,7 @@ export function AppSidebar() {
                 {
                     title: 'Reservations',
                     href: '/bookings',
-                    icon: ClipboardList,
+                    icon: CalendarCheck,
                 },
             ],
         },
@@ -199,14 +211,14 @@ export function AppSidebar() {
                 {
                     title: 'My Liabilities',
                     href: liabilitiesIndex().url,
-                    icon: ShieldAlert,
+                    icon: ReceiptText,
                 },
             ],
         },
     ];
 
     const studentNavItems: NavItem[] = [
-        { title: 'Dashboard', href: dashboardUrl, icon: LayoutGrid },
+        { title: 'Dashboard', href: dashboardUrl, icon: LayoutDashboard },
         {
             title: 'Service Requests',
             href: '/requests',
@@ -233,7 +245,7 @@ export function AppSidebar() {
                 {
                     title: 'My Liabilities',
                     href: liabilitiesIndex().url,
-                    icon: ShieldAlert,
+                    icon: ReceiptText,
                 },
             ],
         },
@@ -305,13 +317,13 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent className="py-2">
+            <SidebarContent className="sidebar-scroll py-2 pb-4">
                 <NavMain items={mainNavItems} label="Main Menu" />
                 <NavMain items={communicationNavItems} label="Communication" />
                 <NavMain items={accountNavItems} label="Account" />
             </SidebarContent>
 
-            <SidebarFooter className="mt-auto border-t border-slate-100 p-3 group-data-[collapsible=icon]:p-1">
+            <SidebarFooter className="relative z-10 shrink-0 border-t border-white/10 bg-ustp-navy p-3 shadow-[0_-8px_24px_rgba(18,16,63,0.35)] group-data-[collapsible=icon]:p-1">
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

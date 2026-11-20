@@ -58,6 +58,21 @@ test('the approvals panel lists verified unapproved accounts', function () {
             }));
 });
 
+test('the sidebar receives the pending approval count for administrators', function () {
+    User::factory()->pendingApproval()->create(['role_id' => $this->facultyRole->id]);
+    User::factory()->pendingApproval()->unverified()->create(['role_id' => $this->facultyRole->id]);
+    User::factory()->pendingApproval()->create([
+        'role_id' => $this->facultyRole->id,
+        'status' => 'rejected',
+    ]);
+
+    $this->actingAs($this->admin)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('pendingApprovalsCount', 1));
+});
+
 test('approval requires a verified email address', function () {
     $user = User::factory()->pendingApproval()->unverified()->create(['role_id' => $this->facultyRole->id]);
     Notification::fake();

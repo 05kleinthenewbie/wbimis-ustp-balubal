@@ -2,6 +2,7 @@ import { Head, useForm } from '@inertiajs/react';
 import { CalendarDays, Package, Search, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BackButton } from '@/components/back-button';
+import FormErrorSummary from '@/components/form-error-summary';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -225,6 +226,17 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
                         onSubmit={handleSubmit}
                         className="flex flex-col gap-6"
                     >
+                        <FormErrorSummary
+                            errors={errors}
+                            labels={{
+                                incident_type: 'Incident type',
+                                incident_type_other: 'Other incident type',
+                                incident_date: 'Date of incident',
+                                item_id: 'Related equipment',
+                                incident_description: 'Description',
+                                attachments: 'Evidence',
+                            }}
+                        />
                         {/* Incident type tiles */}
                         <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-6">
                             <div className="mb-4 flex items-center gap-3">
@@ -654,7 +666,7 @@ export default function IncidentsCreate({ inventoryItems }: Props) {
                             <Button
                                 type="submit"
                                 disabled={processing || !canSubmit}
-                                className="h-10 bg-ustp-gold px-5 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                                className="h-11 w-full bg-ustp-gold px-5 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
                             >
                                 {processing && <Spinner />}
                                 Submit Report

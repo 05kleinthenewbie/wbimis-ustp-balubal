@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowUpRight, CheckCircle2, XCircle } from 'lucide-react';
 import { useState } from 'react';
+import { useConfirm } from '@/components/confirm-provider';
 import { Button } from '@/components/ui/button';
 
 type PendingBooking = {
@@ -33,24 +34,30 @@ const statusBadge: Record<string, string> = {
 };
 
 const facilityTypeLabel: Record<string, string> = {
-    computer_lab: 'Computer Lab',
-    av_room: 'AV Room',
+    computer_lab: 'Computer Laboratory',
+    office: 'Office',
+    classroom: 'Classroom',
 };
 
 export default function BookingApprovals({ bookings, stats }: Props) {
     const [processingId, setProcessingId] = useState<number | null>(null);
+    const confirm = useConfirm();
 
-    const decide = (
+    const decide = async (
         booking: PendingBooking,
         status: 'approved' | 'rejected',
     ) => {
-        if (
-            status === 'rejected' &&
-            !window.confirm(
-                `Reject the booking for ${booking.facility.facility_name} requested by ${booking.user.name}?`,
-            )
-        ) {
-            return;
+        if (status === 'rejected') {
+            const confirmed = await confirm({
+                title: 'Reject booking',
+                description: `Reject the booking for ${booking.facility.facility_name} requested by ${booking.user.name}?`,
+                confirmLabel: 'Reject booking',
+                destructive: true,
+            });
+
+            if (!confirmed) {
+                return;
+            }
         }
 
         router.put(

@@ -77,22 +77,22 @@ const statusConfig: Record<
     { label: string; badge: string; icon: typeof CheckCircle2 }
 > = {
     open: {
-        label: 'Open',
-        badge: 'border-slate-200 bg-slate-50 text-slate-600',
+        label: 'Awaiting technician',
+        badge: 'border-amber-200 bg-amber-50 text-amber-700',
         icon: Clock3,
     },
     in_progress: {
-        label: 'In Progress',
-        badge: 'border-amber-200 bg-amber-50 text-amber-700',
+        label: 'In progress',
+        badge: 'border-sky-200 bg-sky-50 text-sky-700',
         icon: Wrench,
     },
     completed: {
-        label: 'Completed',
-        badge: 'border-sky-200 bg-sky-50 text-sky-700',
+        label: 'Awaiting verification',
+        badge: 'border-violet-200 bg-violet-50 text-violet-700',
         icon: CheckCircle2,
     },
     closed: {
-        label: 'Closed',
+        label: 'Completed',
         badge: 'border-emerald-200 bg-emerald-50 text-emerald-700',
         icon: CheckCircle2,
     },
@@ -388,7 +388,7 @@ export default function JobOrderAssignments({
                         <button
                             type="button"
                             onClick={() => openTechDialog('add')}
-                            className="inline-flex h-10 items-center gap-2 rounded-lg bg-ustp-navy px-4 text-sm font-medium text-white shadow-sm transition hover:bg-ustp-navy-light"
+                            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-ustp-navy px-5 text-sm font-medium text-white shadow-sm transition hover:bg-ustp-navy-light sm:w-auto"
                         >
                             <UserPlus className="size-4" />
                             Add technician
@@ -464,9 +464,16 @@ export default function JobOrderAssignments({
                                     <div className="flex items-center justify-between border-b border-amber-100 bg-amber-50/70 px-5 py-3">
                                         <div className="flex items-center gap-2">
                                             <UserRound className="size-4 text-amber-600" />
-                                            <h2 className="text-sm font-semibold text-slate-800">
-                                                Unassigned Job Orders
-                                            </h2>
+                                            <div>
+                                                <h2 className="text-sm font-semibold text-slate-800">
+                                                    Needs a technician
+                                                </h2>
+                                                <p className="text-[10px] text-amber-700">
+                                                    These job orders cannot
+                                                    start until a technician is
+                                                    assigned.
+                                                </p>
+                                            </div>
                                         </div>
                                         <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-amber-700">
                                             {filteredUnassigned.length}
@@ -653,7 +660,7 @@ export default function JobOrderAssignments({
                                 <button
                                     type="button"
                                     onClick={() => setTechView('add')}
-                                    className="inline-flex h-10 items-center gap-2 rounded-lg bg-ustp-navy px-4 text-sm font-medium text-white transition hover:bg-ustp-navy-light"
+                                    className="inline-flex h-11 items-center gap-2 rounded-lg bg-ustp-navy px-5 text-sm font-medium text-white transition hover:bg-ustp-navy-light"
                                 >
                                     <UserPlus className="size-4" />
                                     Add technician
@@ -795,7 +802,7 @@ export default function JobOrderAssignments({
                                 <button
                                     type="submit"
                                     disabled={techSubmitting}
-                                    className="inline-flex h-10 items-center gap-2 rounded-lg bg-ustp-navy px-4 text-sm font-medium text-white transition hover:bg-ustp-navy-light disabled:cursor-not-allowed disabled:opacity-60"
+                                    className="inline-flex h-11 items-center gap-2 rounded-lg bg-ustp-navy px-5 text-sm font-medium text-white transition hover:bg-ustp-navy-light disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                     <UserPlus className="size-4" />
                                     {techSubmitting

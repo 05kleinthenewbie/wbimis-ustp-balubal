@@ -251,7 +251,7 @@ it('allows booking owners to cancel their own approved bookings via the api', fu
 
     $facility = Facility::create([
         'facility_name' => 'AV Room',
-        'facility_type' => 'av_room',
+        'facility_type' => 'classroom',
         'capacity' => 30,
         'location' => 'Balubal Campus',
         'availability_status' => 'available',

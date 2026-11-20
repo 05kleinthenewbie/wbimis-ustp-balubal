@@ -27,12 +27,36 @@ class JobOrderController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        $isAdmin = $user->role->role_name === 'ict_admin';
 
-        $query = JobOrder::with(['serviceRequest.user', 'serviceRequest.requestServices.serviceType', 'technician']);
+        $base = JobOrder::query();
 
-        if ($user->role->role_name !== 'ict_admin') {
-            $query->where('assigned_to', $user->id);
+        if (! $isAdmin) {
+            $base->where('assigned_to', $user->id);
         }
+
+        $statusCounts = (clone $base)
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        $stats = [
+            'total' => (int) $statusCounts->sum(),
+            'open' => (int) ($statusCounts['open'] ?? 0),
+            'in_progress' => (int) ($statusCounts['in_progress'] ?? 0),
+            'completed' => (int) ($statusCounts['completed'] ?? 0),
+            'closed' => (int) ($statusCounts['closed'] ?? 0),
+            'unassigned' => (int) (clone $base)
+                ->whereNull('assigned_to')
+                ->whereIn('status', ['open', 'in_progress'])
+                ->count(),
+        ];
+
+        $query = (clone $base)->with([
+            'serviceRequest.user',
+            'serviceRequest.requestServices.serviceType',
+            'technician',
+        ]);
 
         if ($search = $request->input('search')) {
             $query->where(function ($q) use ($search) {
@@ -41,6 +65,11 @@ class JobOrderController extends Controller
                     ->orWhereHas('technician', fn ($q) => $q->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('serviceRequest.requestServices.serviceType', fn ($q) => $q->where('service_name', 'like', "%{$search}%"));
             });
+        }
+
+        $status = $request->input('status');
+        if ($status && $status !== 'all' && in_array($status, ['open', 'in_progress', 'completed', 'closed'], true)) {
+            $query->where('status', $status);
         }
 
         $sort = $request->input('sort', 'status');
@@ -56,7 +85,8 @@ class JobOrderController extends Controller
 
         return Inertia::render('job-orders/index', [
             'jobOrders' => $query->paginate(25)->withQueryString(),
-            'filters' => $request->only(['search', 'sort']),
+            'filters' => $request->only(['search', 'status', 'sort']),
+            'stats' => $stats,
         ]);
     }
 
@@ -191,6 +221,8 @@ class JobOrderController extends Controller
      */
     public function print(string $id)
     {
+        abort_unless(Auth::user()->role->role_name === 'ict_admin', 403, 'Only ICT Admins can print the job order form.');
+
         $jobOrder = JobOrder::with([
             'serviceRequest.user',
             'serviceRequest.attachments',

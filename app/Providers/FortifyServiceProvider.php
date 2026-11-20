@@ -96,18 +96,31 @@ class FortifyServiceProvider extends ServiceProvider
 
             if ($portal === 'admin' && $role !== 'ict_admin') {
                 throw ValidationException::withMessages([
-                    Fortify::username() => 'This sign-in form is for ICT administrators only. Faculty should use the Faculty sign-in page.',
+                    Fortify::username() => 'This sign-in form is for ICT administrators only. '.$this->matchingSignInPage($role),
                 ]);
             }
 
             if ($portal === 'faculty' && $role !== 'faculty') {
                 throw ValidationException::withMessages([
-                    Fortify::username() => 'This sign-in form is for faculty only. Administrators should use the Administrator sign-in page.',
+                    Fortify::username() => 'This sign-in form is for faculty only. '.$this->matchingSignInPage($role),
                 ]);
             }
 
             return $user;
         });
+    }
+
+    /**
+     * Suggest the sign-in page that matches the account role.
+     */
+    private function matchingSignInPage(?string $role): string
+    {
+        return match ($role) {
+            'ict_admin' => 'Administrators should use the Administrator sign-in page.',
+            'faculty' => 'Faculty should use the Faculty sign-in page.',
+            'student' => 'Students should use the Student sign-in page.',
+            default => 'Use the sign-in page that matches your account role.',
+        };
     }
 
     /**

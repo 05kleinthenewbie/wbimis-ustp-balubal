@@ -239,21 +239,39 @@ export default function Welcome() {
                             : 'border-white/10 bg-ustp-navy-dark/95 backdrop-blur-md'
                     }`}
                 >
-                    <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
+                    <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-3 sm:gap-3 sm:px-6 sm:py-4">
                         <a
                             href="#top"
-                            className="flex items-center gap-3 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ustp-gold focus-visible:ring-offset-2"
+                            className="flex min-w-0 items-center gap-2 rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ustp-gold focus-visible:ring-offset-2 sm:gap-3"
                         >
-                            <div className="flex size-12 items-center justify-center rounded-lg bg-white p-1 shadow-sm">
+                            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white p-1 shadow-sm sm:size-12">
                                 <img
                                     src={ustpLogo}
                                     alt="USTP Logo"
                                     className="size-full object-contain"
                                 />
                             </div>
-                            <div>
+                            <div className="min-w-0">
                                 <p
-                                    className={`font-serif text-base leading-tight font-bold transition-colors sm:text-lg ${
+                                    className={`font-serif text-sm leading-tight font-bold transition-colors sm:hidden ${
+                                        isScrolled
+                                            ? 'text-ustp-navy'
+                                            : 'text-white'
+                                    }`}
+                                >
+                                    USTP Balubal
+                                </p>
+                                <p
+                                    className={`text-[10px] font-semibold tracking-[0.14em] uppercase transition-colors sm:hidden ${
+                                        isScrolled
+                                            ? 'text-ustp-navy/60'
+                                            : 'text-white/60'
+                                    }`}
+                                >
+                                    ICT Portal
+                                </p>
+                                <p
+                                    className={`hidden font-serif text-lg leading-tight font-bold transition-colors sm:block ${
                                         isScrolled
                                             ? 'text-ustp-navy'
                                             : 'text-white'
@@ -262,7 +280,7 @@ export default function Welcome() {
                                     University of Science and Technology
                                 </p>
                                 <p
-                                    className={`font-serif text-xs font-bold transition-colors sm:text-sm ${
+                                    className={`hidden font-serif text-sm font-bold transition-colors sm:block ${
                                         isScrolled
                                             ? 'text-ustp-navy'
                                             : 'text-white'
@@ -321,7 +339,7 @@ export default function Welcome() {
                             ) : (
                                 <Link
                                     href={login()}
-                                    className={`rounded-xl px-5 py-2 text-sm font-semibold transition-all ${
+                                    className={`shrink-0 rounded-xl px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all sm:px-5 sm:text-sm ${
                                         isScrolled
                                             ? 'bg-ustp-navy text-white shadow-sm hover:bg-ustp-navy-dark'
                                             : 'bg-ustp-gold font-bold text-ustp-navy shadow-md hover:bg-ustp-gold-dark hover:text-white'
@@ -375,25 +393,25 @@ export default function Welcome() {
                         <Mail className="size-16 text-white" strokeWidth={1} />
                         <Inbox className="size-16 text-white" strokeWidth={1} />
                     </div>
-                    <div className="relative mx-auto w-full max-w-7xl px-6 py-20 lg:py-28">
-                        <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-12">
+                    <div className="relative mx-auto w-full max-w-7xl px-5 pt-28 pb-14 sm:px-6 sm:py-20 lg:py-28">
+                        <div className="grid items-center gap-10 sm:gap-14 lg:grid-cols-2 lg:gap-12">
                             <div>
-                                <h1 className="font-serif text-3xl leading-tight font-bold text-white sm:text-5xl lg:text-[3.4rem]">
+                                <h1 className="font-serif text-[1.75rem] leading-tight font-bold text-white sm:text-5xl lg:text-[3.4rem]">
                                     Web-Based ICT Management and Information
                                     System
                                 </h1>
-                                <p className="mt-6 max-w-lg text-base leading-relaxed text-white/70 sm:mt-7 sm:text-lg">
+                                <p className="mt-4 max-w-lg text-sm leading-relaxed text-white/70 sm:mt-7 sm:text-lg">
                                     A centralized platform for managing ICT
                                     service requests, job orders, inventory,
                                     defective equipment, incident reporting with
                                     user liability, facility bookings, and
                                     notifications across the Balubal Campus.
                                 </p>
-                                <div className="mt-10 flex flex-wrap gap-4">
+                                <div className="mt-7 flex flex-col gap-3 sm:mt-10 sm:flex-row sm:flex-wrap sm:gap-4">
                                     {auth.user ? (
                                         <Link
                                             href={dashboardUrl}
-                                            className="group flex items-center gap-2 rounded-lg bg-ustp-gold px-7 py-3.5 text-sm font-bold text-ustp-navy shadow-lg shadow-ustp-gold/20 transition-all hover:-translate-y-0.5 hover:bg-ustp-gold-dark hover:text-white hover:shadow-xl hover:shadow-ustp-gold/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-ustp-gold focus-visible:ring-offset-2 focus-visible:ring-offset-ustp-navy"
+                                            className="group flex w-full items-center justify-center gap-2 rounded-lg bg-ustp-gold px-7 py-3.5 text-sm font-bold text-ustp-navy shadow-lg shadow-ustp-gold/20 transition-all hover:-translate-y-0.5 hover:bg-ustp-gold-dark hover:text-white hover:shadow-xl hover:shadow-ustp-gold/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-ustp-gold focus-visible:ring-offset-2 focus-visible:ring-offset-ustp-navy sm:w-auto"
                                         >
                                             Go to Dashboard
                                             <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
@@ -404,7 +422,7 @@ export default function Welcome() {
                                                 asChild
                                                 variant="secondary"
                                                 size="lg"
-                                                className="px-7"
+                                                className="w-full px-7 sm:w-auto"
                                             >
                                                 <Link href={login()}>
                                                     Sign in
@@ -414,7 +432,7 @@ export default function Welcome() {
                                                 asChild
                                                 variant="outline"
                                                 size="lg"
-                                                className="border-white/20 px-7 text-white/80 hover:border-ustp-gold/50 hover:bg-white/5 hover:text-white"
+                                                className="w-full border-white/20 px-7 text-white/80 hover:border-ustp-gold/50 hover:bg-white/5 hover:text-white sm:w-auto"
                                             >
                                                 <Link href={register()}>
                                                     Faculty Registration
@@ -424,7 +442,7 @@ export default function Welcome() {
                                                 asChild
                                                 variant="outline"
                                                 size="lg"
-                                                className="border-white/20 px-7 text-white/80 hover:border-ustp-gold/50 hover:bg-white/5 hover:text-white"
+                                                className="w-full border-white/20 px-7 text-white/80 hover:border-ustp-gold/50 hover:bg-white/5 hover:text-white sm:w-auto"
                                             >
                                                 <Link
                                                     href={register({
@@ -557,8 +575,8 @@ export default function Welcome() {
                                             },
                                             {
                                                 icon: Wifi,
-                                                title: 'Real-time visibility',
-                                                text: 'Status changes and notifications appear as ICT staff act on each record.',
+                                                title: 'Up-to-date visibility',
+                                                text: 'Status changes and notifications keep everyone informed as ICT staff act on each record.',
                                             },
                                             {
                                                 icon: Shield,
@@ -815,8 +833,8 @@ export default function Welcome() {
                             <div className="mx-auto mt-3 h-1 w-16 rounded-full bg-ustp-gold" />
                             <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-ustp-navy/60">
                                 Create your account and verify your email.
-                                Faculty can sign in immediately; students
-                                wait for COR approval.
+                                Faculty can sign in immediately; students wait
+                                for COR approval.
                             </p>
                         </div>
 

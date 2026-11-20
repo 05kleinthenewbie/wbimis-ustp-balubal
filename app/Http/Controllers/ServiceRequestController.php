@@ -97,7 +97,7 @@ class ServiceRequestController extends Controller
                 $isStudent,
                 fn ($query) => $query
                     ->where('category_name', 'Information System Services')
-                    ->with(['serviceTypes' => fn ($types) => $types->whereIn('service_name', ['E-mail', 'Office 365'])]),
+                    ->with(['serviceTypes' => fn ($types) => $types->whereIn('service_name', ['E-mail', 'Microsoft 365'])]),
                 fn ($query) => $query->with('serviceTypes'),
             )
             ->get();
@@ -174,7 +174,7 @@ class ServiceRequestController extends Controller
     private function studentAllowedServiceTypeIds()
     {
         return ServiceType::query()
-            ->whereIn('service_name', ['E-mail', 'Office 365'])
+            ->whereIn('service_name', ['E-mail', 'Microsoft 365'])
             ->whereHas('category', fn ($query) => $query->where('category_name', 'Information System Services'))
             ->pluck('id');
     }
@@ -185,7 +185,11 @@ class ServiceRequestController extends Controller
     public function show(string $id)
     {
         $serviceRequest = ServiceRequestModel::with([
-            'user', 'requestServices.serviceType.category', 'attachments', 'jobOrders.technician',
+            'user',
+            'requestServices.serviceType.category',
+            'attachments',
+            'jobOrders.technician',
+            'jobOrders.technicianResponses.technician',
         ])->findOrFail($id);
 
         abort_unless(
@@ -194,9 +198,46 @@ class ServiceRequestController extends Controller
             'You can only view your own service requests.',
         );
 
+        $jobOrder = $serviceRequest->jobOrders->sortByDesc('id')->first();
+        $technician = $jobOrder?->technician;
+
+        $serviceRequest->unsetRelation('jobOrders');
+
         return Inertia::render('requests/show', [
             'request' => $serviceRequest,
             'isAdmin' => Auth::user()->role->role_name === 'ict_admin',
+            'jobOrder' => $jobOrder ? [
+                'id' => $jobOrder->id,
+                'job_order_number' => $jobOrder->job_order_number,
+                'status' => $jobOrder->status,
+                'date_assigned' => $jobOrder->date_assigned?->toISOString(),
+                'date_in_progress' => $jobOrder->date_in_progress?->toISOString(),
+                'date_completed' => $jobOrder->date_completed?->toISOString(),
+                'technician' => $technician ? [
+                    'name' => $technician->name,
+                    'department' => $technician->department,
+                    'position' => $technician->position,
+                    'expertise' => $technician->expertise,
+                    'contact_no' => $technician->contact_no,
+                    'email' => str_ends_with((string) $technician->email, '@no-login.local')
+                        ? null
+                        : $technician->email,
+                ] : null,
+                'technician_responses' => $jobOrder->technicianResponses
+                    ->sortBy('date_responded')
+                    ->values()
+                    ->map(fn ($response) => [
+                        'id' => $response->id,
+                        'response_type' => $response->response_type ?? 'progress',
+                        'response_report' => $response->response_report,
+                        'time_spent_minutes' => $response->time_spent_minutes,
+                        'date_responded' => $response->date_responded?->toISOString(),
+                        'date_resolved' => $response->date_resolved?->toISOString(),
+                        'technician' => [
+                            'name' => $response->technician?->name ?? 'ICT Technician',
+                        ],
+                    ]),
+            ] : null,
         ]);
     }
 

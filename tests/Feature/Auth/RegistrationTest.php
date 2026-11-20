@@ -28,3 +28,19 @@ test('new users can register', function () {
         ->and($user->status)->toBe('active')
         ->and($user->email_verified_at)->not->toBeNull();
 });
+
+test('registration rejects passwords shorter than eight characters', function () {
+    fakeBrevoMail();
+    Role::firstOrCreate(['role_name' => 'faculty'], ['description' => 'Faculty']);
+
+    $response = $this->post(
+        route('register.store'),
+        registrationPayload([
+            'password' => 'Abc1234',
+            'password_confirmation' => 'Abc1234',
+        ]),
+    );
+
+    $response->assertSessionHasErrors('password');
+    expect(User::where('email', 'test@ustp.edu.ph')->exists())->toBeFalse();
+});

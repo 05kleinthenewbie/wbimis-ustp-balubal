@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Facility;
 use Illuminate\Database\Seeder;
 
 class FacilitySeeder extends Seeder
@@ -10,7 +10,6 @@ class FacilitySeeder extends Seeder
     /**
      * Run the database seeds.
      */
-    
     public function run(): void
     {
         $facilities = [
@@ -22,8 +21,22 @@ class FacilitySeeder extends Seeder
                 'availability_status' => 'available',
             ],
             [
-                'facility_name' => 'AV Room',
-                'facility_type' => 'av_room',
+                'facility_name' => 'Computer Laboratory 2',
+                'facility_type' => 'computer_lab',
+                'capacity' => 40,
+                'location' => 'ICT Building',
+                'availability_status' => 'available',
+            ],
+            [
+                'facility_name' => 'ICT Office',
+                'facility_type' => 'office',
+                'capacity' => 10,
+                'location' => 'ICT Building',
+                'availability_status' => 'available',
+            ],
+            [
+                'facility_name' => 'Classroom',
+                'facility_type' => 'classroom',
                 'capacity' => 60,
                 'location' => 'Main Building',
                 'availability_status' => 'available',
@@ -31,7 +44,7 @@ class FacilitySeeder extends Seeder
         ];
 
         foreach ($facilities as $facility) {
-            \App\Models\Facility::firstOrCreate(
+            Facility::firstOrCreate(
                 ['facility_name' => $facility['facility_name']],
                 $facility
             );

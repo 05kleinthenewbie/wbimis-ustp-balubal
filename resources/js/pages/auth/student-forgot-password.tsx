@@ -19,7 +19,7 @@ export default function StudentForgotPassword({ status }: Props) {
         <>
             <Head title="Forgot your password?" />
 
-            <Form {...email.form()} className="flex flex-col gap-5">
+            <Form {...email.form()} className="flex flex-col gap-4">
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-1.5">

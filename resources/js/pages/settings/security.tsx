@@ -138,7 +138,7 @@ export default function Security(props: Props) {
                                     data-test="update-password-button"
                                     className="bg-ustp-navy text-white shadow-lg shadow-ustp-navy/20 hover:bg-ustp-navy-dark"
                                 >
-                                    Save
+                                    Update password
                                 </Button>
                             </div>
                         </div>

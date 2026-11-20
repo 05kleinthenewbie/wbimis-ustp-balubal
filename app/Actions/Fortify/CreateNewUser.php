@@ -281,7 +281,7 @@ class CreateNewUser implements CreatesNewUsers
                 'max:20',
                 Rule::when(
                     ($input['role'] ?? null) === 'student',
-                    ['regex:/^[0-9]+$/'],
+                    ['regex:/^[0-9]{10}$/'],
                     ['regex:/^[A-Za-z0-9-]+$/'],
                 ),
                 Rule::when(

@@ -13,6 +13,8 @@ import {
     approvals,
     update,
 } from '@/actions/App/Http/Controllers/UserController';
+import { useConfirm } from '@/components/confirm-provider';
+import { PageHeader } from '@/components/page-header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,14 +47,11 @@ const roleLabels: Record<string, string> = {
 };
 
 export default function UsersIndex({
-    status,
-    error: flashError,
-    errors,
     pendingCount,
     activeUsers,
     deactivatedUsers,
 }: Props) {
-    const error = Object.values(errors ?? {}).join(' ') || flashError;
+    const confirm = useConfirm();
     const getInitials = useInitials();
     const [processingId, setProcessingId] = useState<number | null>(null);
     const [searchActive, setSearchActive] = useState('');
@@ -73,12 +72,16 @@ export default function UsersIndex({
         return user.role?.role_name === 'faculty';
     }
 
-    function deactivateUser(id: number) {
-        if (
-            confirm(
+    async function deactivateUser(id: number) {
+        const confirmed = await confirm({
+            title: 'Deactivate account',
+            description:
                 'Deactivate this account? They will no longer be able to log in.',
-            )
-        ) {
+            confirmLabel: 'Deactivate account',
+            destructive: true,
+        });
+
+        if (confirmed) {
             setProcessingId(id);
             router.put(
                 update.url(id),
@@ -139,42 +142,25 @@ export default function UsersIndex({
 
             <div className="min-h-full flex-1 bg-slate-50 text-slate-800">
                 <div className="relative flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:p-8">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div>
-                            <h1 className="text-lg font-semibold text-slate-800">
-                                User Management
-                            </h1>
-                            <p className="text-xs text-slate-500">
-                                Approve registrations, deactivate accounts and
-                                manage technicians.
-                            </p>
-                        </div>
-
-                        <Link
-                            href={approvals.url()}
-                            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:border-ustp-navy/40 hover:text-ustp-navy"
-                        >
-                            <ClipboardCheck className="size-4" />
-                            Pending approvals
-                            {pendingCount > 0 && (
-                                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-ustp-navy px-1.5 py-0.5 text-[10px] font-semibold text-white">
-                                    {pendingCount}
-                                </span>
-                            )}
-                        </Link>
-                    </div>
-
-                    {status && (
-                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                            {status}
-                        </div>
-                    )}
-
-                    {error && (
-                        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                            {error}
-                        </div>
-                    )}
+                    <PageHeader
+                        title="User Management"
+                        description="Approve registrations, deactivate accounts, and manage technicians."
+                        icon={Users}
+                        actions={
+                            <Link
+                                href={approvals.url()}
+                                className="inline-flex h-10 items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 shadow-sm transition hover:border-ustp-navy/40 hover:text-ustp-navy"
+                            >
+                                <ClipboardCheck className="size-4" />
+                                Pending approvals
+                                {pendingCount > 0 && (
+                                    <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-ustp-navy px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                                        {pendingCount}
+                                    </span>
+                                )}
+                            </Link>
+                        }
+                    />
 
                     <div
                         className="flex flex-wrap gap-2"

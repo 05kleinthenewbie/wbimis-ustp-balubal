@@ -1,6 +1,7 @@
 import { Head, useForm } from '@inertiajs/react';
 import { CalendarDays, MapPin, Plus, Users } from 'lucide-react';
 import { BackButton } from '@/components/back-button';
+import FormErrorSummary from '@/components/form-error-summary';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,6 +43,17 @@ export default function FacilitiesCreate() {
                         </div>
 
                         <form onSubmit={handleSubmit}>
+                            <FormErrorSummary
+                                errors={errors}
+                                labels={{
+                                    facility_name: 'Facility name',
+                                    facility_type: 'Facility type',
+                                    availability_status: 'Availability',
+                                    capacity: 'Capacity',
+                                    location: 'Location',
+                                }}
+                                className="mb-4"
+                            />
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                 <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
                                     <div className="flex items-center gap-3">
@@ -116,10 +128,13 @@ export default function FacilitiesCreate() {
 
                                                 <SelectContent className="border-slate-200 bg-white text-slate-800">
                                                     <SelectItem value="computer_lab">
-                                                        Computer Lab
+                                                        Computer Laboratory
                                                     </SelectItem>
-                                                    <SelectItem value="av_room">
-                                                        AV Room
+                                                    <SelectItem value="office">
+                                                        Office
+                                                    </SelectItem>
+                                                    <SelectItem value="classroom">
+                                                        Classroom
                                                     </SelectItem>
                                                 </SelectContent>
                                             </Select>
@@ -281,7 +296,7 @@ export default function FacilitiesCreate() {
                                     <Button
                                         type="submit"
                                         disabled={processing}
-                                        className="bg-ustp-gold px-5 font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white"
+                                        className="h-11 w-full bg-ustp-gold px-5 font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white sm:w-auto"
                                     >
                                         {processing ? (
                                             <Spinner />

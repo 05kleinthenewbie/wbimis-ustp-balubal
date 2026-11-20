@@ -48,6 +48,7 @@ test('users can authenticate using the login screen', function () {
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard'));
+    $response->assertSessionHas('status', 'Welcome back, '.$user->name.'!');
 });
 
 test('users with two factor enabled are redirected to two factor challenge', function () {
@@ -110,6 +111,21 @@ test('the faculty login form rejects administrator credentials', function () {
     $this->assertGuest();
     $response->assertSessionHasErrors([
         'email' => 'This sign-in form is for faculty only. Administrators should use the Administrator sign-in page.',
+    ]);
+});
+
+test('the faculty login form points student credentials to the student sign-in page', function () {
+    $student = loginUserWithRole('student');
+
+    $response = $this->post(route('login.store'), [
+        'email' => $student->email,
+        'password' => 'password',
+        'portal' => 'faculty',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors([
+        'email' => 'This sign-in form is for faculty only. Students should use the Student sign-in page.',
     ]);
 });
 

@@ -31,7 +31,7 @@ function facilityPayload(array $overrides = []): array
 {
     return array_merge([
         'facility_name' => 'AV Room 2',
-        'facility_type' => 'av_room',
+        'facility_type' => 'classroom',
         'capacity' => 60,
         'location' => 'Main Building',
         'availability_status' => 'available',
@@ -83,7 +83,7 @@ test('admins can create facilities', function () {
 
     $this->assertDatabaseHas('facilities', [
         'facility_name' => 'AV Room 2',
-        'facility_type' => 'av_room',
+        'facility_type' => 'classroom',
     ]);
 
     $this->assertDatabaseHas('audit_logs', [

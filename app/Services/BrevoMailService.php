@@ -56,7 +56,7 @@ class BrevoMailService
      * Send the post-registration welcome email to a newly registered user.
      *
      * The status is checked at send time (not registration time) because the
-     * email is queued — an admin may approve the account before the worker
+     * email is queued because an admin may approve the account before the worker
      * picks the job up. Approved users get the approved wording instead of
      * the pending-approval wording.
      */
@@ -66,8 +66,8 @@ class BrevoMailService
         $loginUrl = (string) config('app.url').'/login';
 
         $subject = $isApproved
-            ? "Welcome to {$appName} — your account is ready"
-            : "Welcome to {$appName} — registration received";
+            ? "Welcome to {$appName}: your account is ready"
+            : "Welcome to {$appName}: registration received";
 
         $html = view('emails.auth.welcome', [
             'name' => $name,
@@ -77,7 +77,7 @@ class BrevoMailService
         ])->render();
 
         $text = $isApproved
-            ? "Hi {$name}, thank you for registering at {$appName}. Your account is approved and ready — log in here: {$loginUrl}"
+            ? "Hi {$name}, thank you for registering at {$appName}. Your account is approved and ready. Log in here: {$loginUrl}"
             : "Hi {$name}, thank you for registering at {$appName}. Your account is pending approval. Log in here: {$loginUrl}";
 
         return $this->send(
@@ -169,7 +169,14 @@ class BrevoMailService
         $message = $approved
             ? 'Your student account is approved. You can now sign in.'
             : 'Your registration needs attention. '.($reason ?: 'Please contact the ICT office for next steps.');
-        $html = '<p>Hi '.e($name).',</p><p>'.e($message).'</p>';
+
+        $html = view('emails.auth.student-decision', [
+            'name' => $name,
+            'appName' => $appName,
+            'approved' => $approved,
+            'reason' => $reason,
+            'loginUrl' => (string) config('app.url').'/login',
+        ])->render();
 
         return $this->send(
             [['email' => $email, 'name' => $name]],

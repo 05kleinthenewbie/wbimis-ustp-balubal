@@ -23,6 +23,15 @@ type Props = {
     title?: string;
 };
 
+function isSignInError(message?: string): boolean {
+    return (
+        typeof message === 'string' &&
+        /do not match|credentials|sign-in form|pending|rejected|deactivated|login accounts/i.test(
+            message,
+        )
+    );
+}
+
 export default function Login({
     status,
     canResetPassword,
@@ -41,7 +50,7 @@ export default function Login({
             <Form
                 {...(isStudent ? authenticate.form() : store.form())}
                 resetOnSuccess={['password']}
-                className="flex flex-col gap-5"
+                className="flex flex-col gap-6"
             >
                 {({ processing, errors }) => (
                     <>
@@ -49,7 +58,14 @@ export default function Login({
                             <input type="hidden" name="portal" value={portal} />
                         )}
 
-                        <div className="grid items-start gap-5">
+                        {isSignInError(errors.email) && (
+                            <StatusAlert
+                                message={errors.email}
+                                variant="error"
+                            />
+                        )}
+
+                        <div className="grid items-start gap-4">
                             <div className="grid content-start gap-2">
                                 <Label
                                     htmlFor="email"
@@ -72,43 +88,34 @@ export default function Login({
                                                 ? 'name@example.com'
                                                 : 'name.id@ustp.edu.ph'
                                         }
-                                        className="h-11 rounded-lg border-border bg-background pl-10 text-sm transition-colors focus-visible:border-ustp-navy focus-visible:ring-ustp-navy/20"
+                                        className={`h-11 rounded-lg bg-background pl-10 text-sm transition-colors ${
+                                            isSignInError(errors.email)
+                                                ? 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500/20'
+                                                : 'border-border focus-visible:border-ustp-navy focus-visible:ring-ustp-navy/20'
+                                        }`}
                                     />
                                 </div>
-                                {errors.email && (
-                                    <StatusAlert
-                                        message={errors.email}
-                                        variant={
-                                            isAlertMessage(errors.email)
-                                                ? 'warning'
-                                                : 'error'
-                                        }
-                                        className="mt-1.5"
-                                    />
-                                )}
+                                {errors.email &&
+                                    !isSignInError(errors.email) && (
+                                        <StatusAlert
+                                            message={errors.email}
+                                            variant={
+                                                isAlertMessage(errors.email)
+                                                    ? 'warning'
+                                                    : 'error'
+                                            }
+                                            className="mt-1.5"
+                                        />
+                                    )}
                             </div>
 
                             <div className="grid content-start gap-2">
-                                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                                    <Label
-                                        htmlFor="password"
-                                        className="text-sm font-medium text-foreground"
-                                    >
-                                        Password
-                                    </Label>
-                                    {canResetPassword && (
-                                        <TextLink
-                                            href={
-                                                isStudent
-                                                    ? studentForgotPassword()
-                                                    : request()
-                                            }
-                                            className="py-1 text-sm font-medium text-ustp-navy hover:text-ustp-navy-dark dark:text-white/80 dark:hover:text-white"
-                                        >
-                                            Forgot password?
-                                        </TextLink>
-                                    )}
-                                </div>
+                                <Label
+                                    htmlFor="password"
+                                    className="text-sm font-medium text-foreground"
+                                >
+                                    Password
+                                </Label>
                                 <div className="relative">
                                     <LockKeyhole className="pointer-events-none absolute top-1/2 left-3 z-10 size-4.5 -translate-y-1/2 text-muted-foreground" />
                                     <PasswordInput
@@ -116,12 +123,31 @@ export default function Login({
                                         name="password"
                                         required
                                         autoComplete="current-password"
-                                        aria-invalid={Boolean(errors.password)}
+                                        aria-invalid={
+                                            isSignInError(errors.email) ||
+                                            Boolean(errors.password)
+                                        }
                                         placeholder="Enter your password"
-                                        className="h-11 rounded-lg border-border bg-background pl-10 text-sm transition-colors focus-visible:border-ustp-navy focus-visible:ring-ustp-navy/20"
+                                        className={`h-11 rounded-lg bg-background pl-10 text-sm transition-colors ${
+                                            isSignInError(errors.email)
+                                                ? 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500/20'
+                                                : 'border-border focus-visible:border-ustp-navy focus-visible:ring-ustp-navy/20'
+                                        }`}
                                     />
                                 </div>
                                 <InputError message={errors.password} />
+                                {canResetPassword && (
+                                    <TextLink
+                                        href={
+                                            isStudent
+                                                ? studentForgotPassword()
+                                                : request()
+                                        }
+                                        className="justify-self-end py-1 text-sm font-medium text-ustp-navy hover:text-ustp-navy-dark dark:text-white/80 dark:hover:text-white"
+                                    >
+                                        Forgot password?
+                                    </TextLink>
+                                )}
                             </div>
 
                             <div className="flex items-center gap-3 rounded-xl border border-border bg-muted/20 p-4">

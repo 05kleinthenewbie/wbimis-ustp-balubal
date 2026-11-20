@@ -48,6 +48,10 @@ test('admin can view the reports page with inventory status and service life dat
             ->where('inventoryStats.by_status.for_disposal', 1)
             ->where('inventoryStats.past_service_life', 1)
             ->where('inventoryStats.expiring_soon', 0)
+            ->where('userStats.total', 1)
+            ->where('userStats.by_role.ict_admin', 1)
+            ->has('auditStats.total')
+            ->has('auditStats.by_module')
     );
 });
 

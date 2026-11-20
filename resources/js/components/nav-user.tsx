@@ -40,7 +40,7 @@ export function NavUser() {
                 <SidebarMenuButton
                     asChild
                     size="lg"
-                    className="group h-auto rounded-xl border border-slate-200 bg-white px-2.5 py-2 text-slate-600 shadow-none transition-colors group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0! hover:border-slate-300 hover:bg-slate-50"
+                    className="group h-auto rounded-xl border border-white/15 bg-white/10 px-2.5 py-2 text-white shadow-none transition-colors group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0! hover:border-white/25 hover:bg-white/15"
                 >
                     <Link href={edit()} prefetch onClick={cleanup}>
                         <Avatar className="size-9 shrink-0 group-data-[collapsible=icon]:size-8">
@@ -50,15 +50,15 @@ export function NavUser() {
                                     alt={user.name}
                                 />
                             ) : null}
-                            <AvatarFallback className="bg-ustp-navy/10 text-xs font-semibold text-ustp-navy">
+                            <AvatarFallback className="bg-ustp-gold/20 text-xs font-semibold text-ustp-gold">
                                 {getInitials(user.name)}
                             </AvatarFallback>
                         </Avatar>
                         <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                            <span className="truncate font-semibold text-ustp-navy">
+                            <span className="truncate font-semibold text-white">
                                 {user.name}
                             </span>
-                            <span className="mt-0.5 truncate text-xs text-slate-500">
+                            <span className="mt-0.5 truncate text-xs text-white/60">
                                 {roleLabel}
                             </span>
                         </div>
@@ -69,7 +69,7 @@ export function NavUser() {
                 <SidebarMenuButton
                     asChild
                     tooltip="Sign Out"
-                    className="h-9 rounded-lg px-3 text-sm font-medium text-slate-500 group-data-[collapsible=icon]:justify-center hover:bg-red-50 hover:text-red-600"
+                    className="h-9 rounded-lg px-3 text-sm font-medium text-white/70 group-data-[collapsible=icon]:justify-center hover:bg-red-500/15 hover:text-red-300"
                 >
                     <Link
                         href={logout()}

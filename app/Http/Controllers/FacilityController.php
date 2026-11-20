@@ -53,7 +53,7 @@ class FacilityController extends Controller
 
         $validated = $request->validate([
             'facility_name' => ['required', 'string', 'max:150'],
-            'facility_type' => ['required', 'in:computer_lab,av_room'],
+            'facility_type' => ['required', 'in:computer_lab,office,classroom'],
             'capacity' => ['nullable', 'integer', 'min:1'],
             'location' => ['nullable', 'string', 'max:150'],
             'availability_status' => ['required', 'in:available,unavailable,under_maintenance'],
@@ -88,7 +88,7 @@ class FacilityController extends Controller
 
         $validated = $request->validate([
             'facility_name' => ['required', 'string', 'max:150'],
-            'facility_type' => ['required', 'in:computer_lab,av_room'],
+            'facility_type' => ['required', 'in:computer_lab,office,classroom'],
             'capacity' => ['nullable', 'integer', 'min:1'],
             'location' => ['nullable', 'string', 'max:150'],
             'availability_status' => ['required', 'in:available,unavailable,under_maintenance'],

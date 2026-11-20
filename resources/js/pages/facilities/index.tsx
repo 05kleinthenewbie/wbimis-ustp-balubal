@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { BackButton } from '@/components/back-button';
+import { useConfirm } from '@/components/confirm-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
@@ -30,8 +31,6 @@ type FacilityRow = {
 
 type Props = {
     facilities: FacilityRow[];
-    status?: string | null;
-    error?: string | null;
     stats: {
         total: number;
         available: number;
@@ -41,8 +40,9 @@ type Props = {
 };
 
 const facilityTypeLabel: Record<string, string> = {
-    computer_lab: 'Computer Lab',
-    av_room: 'AV Room',
+    computer_lab: 'Computer Laboratory',
+    office: 'Office',
+    classroom: 'Classroom',
 };
 
 const availabilityConfig: Record<
@@ -66,12 +66,8 @@ const availabilityConfig: Record<
     },
 };
 
-export default function FacilitiesIndex({
-    facilities,
-    status,
-    error,
-    stats,
-}: Props) {
+export default function FacilitiesIndex({ facilities, stats }: Props) {
+    const confirm = useConfirm();
     const [search, setSearch] = useState('');
     const [availabilityFilter, setAvailabilityFilter] = useState<
         'all' | 'available' | 'unavailable'
@@ -103,8 +99,15 @@ export default function FacilitiesIndex({
             ].some((value) => value.toLowerCase().includes(query));
         });
 
-    function handleDelete(id: number) {
-        if (confirm('Delete this facility? This cannot be undone.')) {
+    async function handleDelete(id: number) {
+        const confirmed = await confirm({
+            title: 'Delete facility',
+            description: 'Delete this facility? This cannot be undone.',
+            confirmLabel: 'Delete facility',
+            destructive: true,
+        });
+
+        if (confirmed) {
             router.delete(`/facilities/${id}`);
         }
     }
@@ -122,7 +125,7 @@ export default function FacilitiesIndex({
                     <div className="flex justify-end">
                         <Button
                             asChild
-                            className="h-10 bg-ustp-gold px-4 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white"
+                            className="h-11 w-full bg-ustp-gold px-5 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white sm:w-auto"
                         >
                             <Link href="/facilities/create">
                                 <Plus className="size-4" />
@@ -130,18 +133,6 @@ export default function FacilitiesIndex({
                             </Link>
                         </Button>
                     </div>
-
-                    {status && (
-                        <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                            {status}
-                        </div>
-                    )}
-
-                    {error && (
-                        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-                            {error}
-                        </div>
-                    )}
 
                     {/* Stats */}
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
@@ -405,6 +396,7 @@ export default function FacilitiesIndex({
                                                                             >
                                                                                 <Pencil className="size-3.5" />
                                                                                 Edit
+                                                                                facility
                                                                             </Link>
                                                                         </Button>
 

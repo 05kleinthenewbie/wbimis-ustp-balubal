@@ -80,7 +80,11 @@ test('admin dashboard surfaces assignment, sla, and inventory expiry stats', fun
             ->where('stats.unassignedJobOrders', 1)
             ->where('stats.overdueJobOrders', 1)
             ->where('stats.inventoryExpiryAlerts', 2)
-            ->where('stats.pendingRequests', 1));
+            ->where('stats.pendingRequests', 1)
+            ->where('pendingServiceRequestsCount', 1)
+            ->where('unassignedJobOrdersCount', 1)
+            ->where('pendingBookingsCount', 0)
+            ->where('pendingApprovalsCount', 0));
 });
 
 test('admin dashboard overview, pending actions, and alerts are exposed', function () {

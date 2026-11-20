@@ -8,6 +8,7 @@ import {
     FileText,
     Layers,
     Package,
+    TrendingUp,
     Wrench,
 } from 'lucide-react';
 
@@ -416,6 +417,18 @@ export default function Dashboard({
               : 'Good evening';
 
     const activePeriod: Period = period ?? 'month';
+
+    const actionTone = (label: string) => {
+        if (/overdue|unresolved|rejected/i.test(label)) {
+            return { text: 'text-rose-600', bar: 'bg-rose-500' };
+        }
+
+        if (/approval|awaiting|progress|open/i.test(label)) {
+            return { text: 'text-amber-600', bar: 'bg-amber-400' };
+        }
+
+        return { text: 'text-slate-700', bar: 'bg-ustp-navy' };
+    };
     const isStudentUser: boolean =
         (user?.role?.role_name as string | undefined) === 'student';
 
@@ -673,46 +686,69 @@ export default function Dashboard({
             <Head title="Dashboard" />
             <div className="min-h-full flex-1 bg-slate-50 text-slate-800">
                 <div className="relative flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:p-8">
-                    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-                        <div>
-                            {(position || department) && (
-                                <p className="mb-1 flex flex-wrap items-center gap-x-2 text-xs text-slate-400">
-                                    {position && <span>{position}</span>}
-                                    {department && <span>{department}</span>}
-                                </p>
-                            )}
-                            <h2 className="text-xl font-semibold tracking-tight text-slate-800 sm:text-2xl">
-                                {greeting}, {userName}
-                            </h2>
-                            <p className="mt-1 text-xs text-slate-400">
-                                {today}
-                            </p>
-                        </div>
+                    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-ustp-navy via-ustp-navy to-ustp-navy-light px-5 py-5 shadow-md sm:px-6 sm:py-6">
+                        <div className="pointer-events-none absolute -top-16 -right-10 size-40 rounded-full bg-ustp-gold/10 blur-2xl" />
+                        <div className="absolute inset-x-0 bottom-0 h-0.5 bg-ustp-gold" />
 
-                        <div className="flex items-center gap-0.5 rounded-lg border border-slate-200 bg-white p-0.5">
-                            {(['month', 'year'] as const).map((value) => (
-                                <button
-                                    key={value}
-                                    type="button"
-                                    onClick={() =>
-                                        router.get(
-                                            '/dashboard',
-                                            { period: value },
-                                            {
-                                                preserveScroll: true,
-                                                preserveState: true,
-                                            },
-                                        )
-                                    }
-                                    className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
-                                        activePeriod === value
-                                            ? 'bg-ustp-navy text-white'
-                                            : 'text-slate-500 hover:text-slate-800'
-                                    }`}
-                                >
-                                    {value === 'month' ? 'Monthly' : 'Yearly'}
-                                </button>
-                            ))}
+                        <div className="relative flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                            <div>
+                                {(position || department) && (
+                                    <p className="mb-1 flex flex-wrap items-center gap-x-2 text-xs text-white/50">
+                                        {position && <span>{position}</span>}
+                                        {department && (
+                                            <span>{department}</span>
+                                        )}
+                                    </p>
+                                )}
+                                <h2 className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
+                                    {greeting},{' '}
+                                    <span className="text-ustp-gold">
+                                        {userName}
+                                    </span>
+                                </h2>
+                                <p className="mt-1 text-xs text-white/50">
+                                    {today}
+                                </p>
+                                {overview &&
+                                    overview.pendingActions.total > 0 && (
+                                        <p className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-ustp-gold/30 bg-ustp-gold/15 px-2.5 py-0.5 text-[11px] font-semibold text-ustp-gold">
+                                            <span className="size-1.5 rounded-full bg-ustp-gold" />
+                                            {overview.pendingActions.total} item
+                                            {overview.pendingActions.total !== 1
+                                                ? 's'
+                                                : ''}{' '}
+                                            need attention
+                                        </p>
+                                    )}
+                            </div>
+
+                            <div className="flex items-center gap-0.5 rounded-lg border border-white/15 bg-white/10 p-0.5">
+                                {(['month', 'year'] as const).map((value) => (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        onClick={() =>
+                                            router.get(
+                                                '/dashboard',
+                                                { period: value },
+                                                {
+                                                    preserveScroll: true,
+                                                    preserveState: true,
+                                                },
+                                            )
+                                        }
+                                        className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                                            activePeriod === value
+                                                ? 'bg-ustp-gold text-ustp-navy'
+                                                : 'text-white/60 hover:text-white'
+                                        }`}
+                                    >
+                                        {value === 'month'
+                                            ? 'Monthly'
+                                            : 'Yearly'}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
                     {/* ── Quick Actions (Faculty only) ── */}
@@ -728,6 +764,7 @@ export default function Dashboard({
                                         href={action.href}
                                         className={`flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-semibold shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${action.color}`}
                                     >
+                                        <action.icon className="size-4 shrink-0" />
                                         <span className="leading-tight">
                                             {action.label}
                                         </span>
@@ -750,14 +787,31 @@ export default function Dashboard({
                                     <Link
                                         key={card.label}
                                         href={card.href}
-                                        className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md"
+                                        className={`group relative overflow-hidden rounded-2xl border bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-md ${
+                                            card.label === 'Pending Actions' &&
+                                            card.value > 0
+                                                ? 'border-amber-300 ring-1 ring-amber-200'
+                                                : 'border-slate-200'
+                                        }`}
                                     >
+                                        <div className="absolute inset-x-0 top-0 h-0.5 bg-ustp-gold/80" />
                                         <div className="flex items-start justify-between gap-3">
                                             <p className="text-sm font-medium text-slate-500">
                                                 {card.label}
                                             </p>
+                                            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-ustp-navy/5">
+                                                <card.icon className="size-4 text-ustp-navy" />
+                                            </div>
                                         </div>
-                                        <p className="mt-4 text-4xl font-bold tracking-tight text-slate-800">
+                                        <p
+                                            className={`mt-4 text-4xl font-bold tracking-tight ${
+                                                card.label ===
+                                                    'Pending Actions' &&
+                                                card.value > 0
+                                                    ? 'text-amber-600'
+                                                    : 'text-slate-800'
+                                            }`}
+                                        >
                                             {card.value}
                                         </p>
                                         <p className="mt-2 text-xs text-slate-400 group-hover:text-slate-500">
@@ -782,6 +836,9 @@ export default function Dashboard({
                                 <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
                                     <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                                         <div className="flex items-center gap-3">
+                                            <div className="flex size-9 items-center justify-center rounded-lg bg-ustp-light-blue/10">
+                                                <TrendingUp className="size-4 text-ustp-light-blue" />
+                                            </div>
                                             <div>
                                                 <h3 className="text-sm font-semibold text-slate-800">
                                                     Monthly System Activity
@@ -802,6 +859,9 @@ export default function Dashboard({
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                 <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                                     <div className="flex items-center gap-3">
+                                        <div className="flex size-9 items-center justify-center rounded-lg bg-orange-50">
+                                            <Clock className="size-4 text-orange-600" />
+                                        </div>
                                         <div>
                                             <h3 className="text-sm font-semibold text-slate-800">
                                                 Pending Actions
@@ -813,30 +873,51 @@ export default function Dashboard({
                                     </div>
                                 </div>
                                 <div className="space-y-4 p-5">
-                                    {actionRows.map((row) => (
-                                        <Link
-                                            key={row.label}
-                                            href={row.href}
-                                            className="group block"
-                                        >
-                                            <div className="mb-1.5 flex items-center justify-between gap-2">
-                                                <span className="text-xs font-medium text-slate-600 transition-colors group-hover:text-slate-800">
-                                                    {row.label}
-                                                </span>
-                                                <span className="text-xs font-semibold text-slate-800">
-                                                    {row.value}
-                                                </span>
-                                            </div>
-                                            <div className="h-2 overflow-hidden rounded-full bg-slate-100">
-                                                <div
-                                                    className="h-full rounded-full bg-ustp-navy transition-all duration-700"
-                                                    style={{
-                                                        width: `${(row.value / maxActionValue) * 100}%`,
-                                                    }}
-                                                />
-                                            </div>
-                                        </Link>
-                                    ))}
+                                    {actionRows.map((row) => {
+                                        const tone = actionTone(row.label);
+                                        const attention = row.value > 0;
+
+                                        return (
+                                            <Link
+                                                key={row.label}
+                                                href={row.href}
+                                                className="group block"
+                                            >
+                                                <div className="mb-1.5 flex items-center justify-between gap-2">
+                                                    <span
+                                                        className={`text-xs font-medium transition-colors ${
+                                                            attention
+                                                                ? tone.text
+                                                                : 'text-slate-400'
+                                                        } group-hover:underline`}
+                                                    >
+                                                        {row.label}
+                                                    </span>
+                                                    <span
+                                                        className={`text-xs font-bold ${
+                                                            attention
+                                                                ? tone.text
+                                                                : 'text-slate-400'
+                                                        }`}
+                                                    >
+                                                        {row.value}
+                                                    </span>
+                                                </div>
+                                                <div className="h-2 overflow-hidden rounded-full bg-slate-100">
+                                                    <div
+                                                        className={`h-full rounded-full transition-all duration-700 ${
+                                                            attention
+                                                                ? tone.bar
+                                                                : 'bg-slate-300'
+                                                        }`}
+                                                        style={{
+                                                            width: `${(row.value / maxActionValue) * 100}%`,
+                                                        }}
+                                                    />
+                                                </div>
+                                            </Link>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </div>
@@ -847,6 +928,9 @@ export default function Dashboard({
                         <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                             <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                                 <div className="flex items-center gap-3">
+                                    <div className="flex size-9 items-center justify-center rounded-lg bg-rose-50">
+                                        <AlertTriangle className="size-4 text-rose-600" />
+                                    </div>
                                     <div>
                                         <h3 className="text-sm font-semibold text-slate-800">
                                             Inventory Alerts
@@ -881,7 +965,17 @@ export default function Dashboard({
                                                 {row.sub}
                                             </p>
                                         </div>
-                                        <span className="ml-auto text-lg font-semibold text-slate-800">
+                                        <span
+                                            className={`ml-auto text-lg font-semibold ${
+                                                row.value > 0
+                                                    ? /expired|defective/i.test(
+                                                          row.label,
+                                                      )
+                                                        ? 'text-rose-600'
+                                                        : 'text-amber-600'
+                                                    : 'text-slate-400'
+                                            }`}
+                                        >
                                             {row.value}
                                         </span>
                                     </Link>
@@ -894,6 +988,9 @@ export default function Dashboard({
                     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                             <div className="flex items-center gap-3">
+                                <div className="flex size-9 items-center justify-center rounded-lg bg-slate-100">
+                                    <Clock className="size-4 text-slate-500" />
+                                </div>
                                 <div>
                                     <h3 className="text-sm font-semibold text-slate-800">
                                         Recent Activity

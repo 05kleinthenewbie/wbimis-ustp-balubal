@@ -2,7 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\ServiceCategory;
+use App\Models\ServiceType;
 use Illuminate\Database\Seeder;
 
 class ServiceTypeSeeder extends Seeder
@@ -35,20 +36,20 @@ class ServiceTypeSeeder extends Seeder
             ],
             'Information System Services' => [
                 ['service_name' => 'E-mail', 'default_action' => 'Create New'],
-                ['service_name' => 'Office 365', 'default_action' => 'Create New'],
+                ['service_name' => 'Microsoft 365', 'default_action' => 'Create New'],
                 ['service_name' => 'Others', 'default_action' => null],
             ],
         ];
 
         foreach ($serviceTypes as $categoryName => $types) {
-            $category = \App\Models\ServiceCategory::where('category_name', $categoryName)->first();
+            $category = ServiceCategory::where('category_name', $categoryName)->first();
 
             if (! $category) {
                 continue;
             }
 
             foreach ($types as $type) {
-                \App\Models\ServiceType::firstOrCreate(
+                ServiceType::firstOrCreate(
                     [
                         'category_id' => $category->id,
                         'service_name' => $type['service_name'],

@@ -20,6 +20,7 @@ import {
     useState,
 } from 'react';
 import type { KeyboardEvent } from 'react';
+import { PageHeader } from '@/components/page-header';
 import { Input } from '@/components/ui/input';
 import {
     Select,
@@ -488,7 +489,13 @@ export default function AuditLogIndex({
             <Head title="Audit Log" />
 
             <div className="min-h-full flex-1 bg-slate-50 text-slate-800">
-                <div className="relative flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:p-8">
+                <div className="relative flex flex-1 flex-col gap-5 overflow-hidden p-4 md:p-6 lg:p-8">
+                    <PageHeader
+                        title="Audit Log"
+                        description="Review recorded actions and changes across the system."
+                        icon={History}
+                    />
+
                     {/* Stats Cards */}
                     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                         {statCards.map((card) => (

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { BackButton } from '@/components/back-button';
+import { useConfirm } from '@/components/confirm-provider';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -84,12 +85,14 @@ const statusConfig: Record<
 };
 
 const facilityTypeLabel: Record<string, string> = {
-    computer_lab: 'Computer Lab',
-    av_room: 'AV Room',
+    computer_lab: 'Computer Laboratory',
+    office: 'Office',
+    classroom: 'Classroom',
 };
 
 export default function BookingsShow({ booking, isAdmin, isOwner }: Props) {
     const [processing, setProcessing] = useState(false);
+    const confirm = useConfirm();
 
     function updateStatus(status: string) {
         setProcessing(true);
@@ -101,12 +104,17 @@ export default function BookingsShow({ booking, isAdmin, isOwner }: Props) {
         );
     }
 
-    function cancelBooking() {
-        if (
-            confirm(
+    async function cancelBooking() {
+        const confirmed = await confirm({
+            title: 'Cancel booking',
+            description:
                 'Cancel this booking? This cannot be undone. Cancelling is allowed even after the scheduled time if the facility was not used.',
-            )
-        ) {
+            confirmLabel: 'Cancel booking',
+            cancelLabel: 'Keep booking',
+            destructive: true,
+        });
+
+        if (confirmed) {
             updateStatus('cancelled');
         }
     }

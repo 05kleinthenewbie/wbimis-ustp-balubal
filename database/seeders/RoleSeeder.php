@@ -23,7 +23,7 @@ class RoleSeeder extends Seeder
             ],
             [
                 'role_name' => 'student',
-                'role_description' => 'Students who can request email account creation and Office 365 access only.',
+                'role_description' => 'Students who can request email account creation and Microsoft 365 access only.',
             ],
         ];
 

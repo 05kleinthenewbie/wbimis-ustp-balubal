@@ -29,6 +29,7 @@ import {
     StickyNote,
 } from 'lucide-react';
 import { BackButton } from '@/components/back-button';
+import FormErrorSummary from '@/components/form-error-summary';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -323,6 +324,28 @@ export default function InventoryCreate({
                             className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-2"
                         >
                             <div className="flex flex-col gap-7 p-5 md:p-6">
+                                <FormErrorSummary
+                                    errors={errors}
+                                    labels={{
+                                        property_no: 'Property number',
+                                        item_inventory_no:
+                                            'Item inventory number',
+                                        item_name: 'Property name',
+                                        category: 'Category',
+                                        brand: 'Brand',
+                                        model: 'Model',
+                                        serial_no: 'Serial number',
+                                        unit_cost: 'Unit cost',
+                                        purchase_date: 'Purchase date',
+                                        expiration_date: 'Expiration date',
+                                        expiration_type: 'Expiration type',
+                                        condition: 'Condition',
+                                        status: 'Status',
+                                        inspection_date: 'Inspection date',
+                                        end_user: 'End user',
+                                        campus: 'Campus',
+                                    }}
+                                />
                                 {/* Step 1: Property Information */}
                                 <section>
                                     <div className="mb-4 flex items-start gap-3">
@@ -1475,7 +1498,7 @@ export default function InventoryCreate({
                                     <Button
                                         type="submit"
                                         disabled={processing}
-                                        className="bg-ustp-gold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white"
+                                        className="h-11 w-full bg-ustp-gold px-5 text-sm text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white sm:w-auto"
                                     >
                                         {processing && <Spinner />}
                                         Add Equipment

@@ -55,7 +55,8 @@ test('admins can view the booking approvals queue', function () {
             ->has('bookings', 1)
             ->where('bookings.0.id', $pending->id)
             ->where('stats.pending', 1)
-            ->where('stats.approved', 1));
+            ->where('stats.approved', 1)
+            ->where('pendingBookingsCount', 1));
 });
 
 test('faculty and students cannot view the booking approvals queue', function () {

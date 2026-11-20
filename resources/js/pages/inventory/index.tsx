@@ -29,6 +29,8 @@ import {
     User as UserIcon,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useConfirm } from '@/components/confirm-provider';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -287,24 +289,69 @@ function ConditionRingChart({
     const radius = (size - strokeWidth) / 2;
     const circumference = 2 * Math.PI * radius;
 
+    const other = Math.max(0, total - working - defective - underRepair);
+    const safeTotal = Math.max(total, 1);
+    const healthPercentage =
+        total > 0 ? Math.round((working / total) * 100) : 0;
+
+    const health =
+        healthPercentage >= 80
+            ? {
+                  label: 'Healthy',
+                  badge: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+              }
+            : healthPercentage >= 50
+              ? {
+                    label: 'Needs attention',
+                    badge: 'border-amber-200 bg-amber-50 text-amber-700',
+                }
+              : {
+                    label: 'Critical',
+                    badge: 'border-rose-200 bg-rose-50 text-rose-600',
+                };
+
     const segments = [
-        { key: 'working', count: working, color: 'rgba(52,211,153,0.9)' },
-        { key: 'defective', count: defective, color: 'rgba(248,113,113,0.9)' },
+        {
+            key: 'working',
+            label: 'Working',
+            count: working,
+            color: 'rgba(52,211,153,0.9)',
+            dot: 'bg-emerald-400',
+        },
+        {
+            key: 'defective',
+            label: 'Defective',
+            count: defective,
+            color: 'rgba(248,113,113,0.9)',
+            dot: 'bg-red-400',
+        },
         {
             key: 'under_repair',
+            label: 'Under Repair',
             count: underRepair,
             color: 'rgba(251,191,36,0.9)',
+            dot: 'bg-amber-400',
         },
-    ].filter((s) => s.count > 0);
+        {
+            key: 'other',
+            label: 'Other',
+            count: other,
+            color: 'rgba(148,163,184,0.9)',
+            dot: 'bg-slate-300',
+        },
+    ].filter((segment) => segment.count > 0);
 
     let accumulated = 0;
-    const arcs = segments.map((seg) => {
-        const pct = total > 0 ? seg.count / total : 0;
-        const dashLength = circumference * pct - 1;
-        const dashOffset = circumference * (1 - accumulated / total);
-        accumulated += seg.count;
+    const arcs = segments.map((segment) => {
+        const dashLength = (circumference * segment.count) / safeTotal - 1;
+        const dashOffset = circumference * (1 - accumulated / safeTotal);
+        accumulated += segment.count;
 
-        return { ...seg, dashLength: Math.max(0, dashLength), dashOffset };
+        return {
+            ...segment,
+            dashLength: Math.max(0, dashLength),
+            dashOffset,
+        };
     });
 
     return (
@@ -345,34 +392,35 @@ function ConditionRingChart({
                 </div>
             </div>
 
-            <div className="space-y-2">
-                {[
-                    {
-                        label: 'Working',
-                        count: working,
-                        color: 'bg-emerald-400',
-                    },
-                    {
-                        label: 'Defective',
-                        count: defective,
-                        color: 'bg-red-400',
-                    },
-                    {
-                        label: 'Under Repair',
-                        count: underRepair,
-                        color: 'bg-amber-400',
-                    },
-                ].map((item) => (
-                    <div key={item.label} className="flex items-center gap-2">
-                        <span className={`size-2 rounded-full ${item.color}`} />
+            <div className="min-w-0 flex-1 space-y-2">
+                {segments.map((segment) => (
+                    <div key={segment.key} className="flex items-center gap-2">
+                        <span
+                            className={`size-2 shrink-0 rounded-full ${segment.dot}`}
+                        />
                         <span className="text-xs text-slate-500">
-                            {item.label}
+                            {segment.label}
                         </span>
-                        <span className="text-xs font-semibold text-slate-600">
-                            {item.count}
+                        <span className="ml-auto text-xs font-semibold text-slate-600">
+                            {segment.count}
+                        </span>
+                        <span className="w-8 text-right text-[10px] text-slate-400">
+                            {Math.round((segment.count / safeTotal) * 100)}%
                         </span>
                     </div>
                 ))}
+
+                <div className="mt-3 border-t border-slate-100 pt-2.5">
+                    <span
+                        className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${health.badge}`}
+                    >
+                        {health.label} · {healthPercentage}%
+                    </span>
+                    <p className="mt-1.5 text-[10px] leading-4 text-slate-400">
+                        {working} of {total} asset
+                        {total === 1 ? '' : 's'} in working condition
+                    </p>
+                </div>
             </div>
         </div>
     );
@@ -431,6 +479,7 @@ export default function InventoryIndex({
     stats,
     options,
 }: Props) {
+    const confirm = useConfirm();
     const [search, setSearch] = useState(filters.search ?? '');
     const [category, setCategory] = useState(filters.category ?? 'all');
     const [condition, setCondition] = useState(filters.condition ?? 'all');
@@ -474,18 +523,29 @@ export default function InventoryIndex({
         );
     }
 
-    function handleDelete(id: number) {
-        if (confirm('Delete this inventory item? This cannot be undone.')) {
+    async function handleDelete(id: number) {
+        const confirmed = await confirm({
+            title: 'Delete inventory item',
+            description: 'Delete this inventory item? This cannot be undone.',
+            confirmLabel: 'Delete item',
+            destructive: true,
+        });
+
+        if (confirmed) {
             router.delete(`/inventory/${id}`);
         }
     }
 
-    function handleMarkDisposal(id: number) {
-        if (
-            confirm(
-                'Mark this item for disposal? It has reached its service life.',
-            )
-        ) {
+    async function handleMarkDisposal(id: number) {
+        const confirmed = await confirm({
+            title: 'Mark for disposal',
+            description:
+                'Mark this item for disposal? It has reached the end of its shelf life.',
+            confirmLabel: 'Mark for disposal',
+            destructive: true,
+        });
+
+        if (confirmed) {
             router.patch(`/inventory/${id}/mark-disposal`);
         }
     }
@@ -522,13 +582,19 @@ export default function InventoryIndex({
             <Head title="Inventory" />
 
             <div className="relative min-h-full flex-1 overflow-hidden bg-slate-50 px-4 py-6 text-slate-800 sm:px-6 lg:px-8">
-                <div className="relative mx-auto max-w-7xl space-y-6">
+                <div className="relative mx-auto max-w-7xl space-y-5">
+                    <PageHeader
+                        title="Inventory"
+                        description="Manage equipment, condition, shelf life, and disposal in one place."
+                        icon={Box}
+                    />
+
                     <div className="flex justify-end">
                         <div className="flex flex-wrap items-center gap-3">
                             <Button
                                 asChild
                                 variant="outline"
-                                className="h-10 border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:border-ustp-navy/30 hover:bg-slate-50"
+                                className="h-11 w-full border-slate-300 bg-white px-4 text-sm font-semibold text-slate-700 hover:border-ustp-navy/30 hover:bg-slate-50 sm:w-auto"
                             >
                                 <Link href="/inventory/expirations">
                                     <CalendarClock className="size-4" />
@@ -538,7 +604,7 @@ export default function InventoryIndex({
 
                             <Button
                                 asChild
-                                className="h-10 bg-ustp-gold px-4 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white"
+                                className="h-11 w-full bg-ustp-gold px-5 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white sm:w-auto"
                             >
                                 <Link href="/inventory/create">
                                     <Plus className="size-4" />
@@ -695,9 +761,8 @@ export default function InventoryIndex({
                                             </span>
                                         </div>
                                         <p className="text-[11px] text-slate-500">
-                                            Active items past their service life
-                                            — review for disposal or
-                                            replacement.
+                                            Active items past their shelf life —
+                                            review for disposal or replacement.
                                         </p>
                                     </div>
                                 </div>
@@ -721,7 +786,7 @@ export default function InventoryIndex({
                                                     {item.property_no}
                                                 </span>
                                                 <span>
-                                                    · Service life ended{' '}
+                                                    · Shelf life ended{' '}
                                                     {new Date(
                                                         item.expiration_date!,
                                                     ).toLocaleDateString(
@@ -746,7 +811,7 @@ export default function InventoryIndex({
                                                 <Link
                                                     href={`/inventory/${item.id}`}
                                                 >
-                                                    View
+                                                    View item
                                                 </Link>
                                             </Button>
 
@@ -998,7 +1063,10 @@ export default function InventoryIndex({
                                                 End User
                                             </th>
                                             <th className="px-5 py-3.5 text-left text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
-                                                Service Life
+                                                Shelf Life
+                                            </th>
+                                            <th className="px-5 py-3.5 text-left text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
+                                                Shelf Life Status
                                             </th>
                                             <th className="px-5 py-3.5 text-left text-[10px] font-semibold tracking-[0.12em] text-slate-400 uppercase">
                                                 Condition
@@ -1130,43 +1198,53 @@ export default function InventoryIndex({
                                                         )}
                                                     </td>
 
-                                                    {/* Service Life */}
+                                                    {/* Shelf Life */}
                                                     <td className="px-5 py-4">
                                                         {item.expiration_date ? (
-                                                            <div className="flex flex-col items-start gap-1">
-                                                                <span className="text-xs text-slate-500">
-                                                                    {new Date(
-                                                                        item.expiration_date,
-                                                                    ).toLocaleDateString(
-                                                                        'en-US',
-                                                                        {
-                                                                            month: 'short',
-                                                                            day: 'numeric',
-                                                                            year: 'numeric',
-                                                                        },
-                                                                    )}
-                                                                </span>
-                                                                {expiry &&
-                                                                    expiry !==
-                                                                        'valid' && (
-                                                                        <span
-                                                                            className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
-                                                                                expiry ===
-                                                                                'expired'
-                                                                                    ? 'border-red-200 bg-red-50 text-red-600'
-                                                                                    : 'border-amber-200 bg-amber-50 text-amber-700'
-                                                                            }`}
-                                                                        >
-                                                                            {expiry ===
-                                                                            'expired'
-                                                                                ? 'Expired'
-                                                                                : 'Expiring Soon'}
-                                                                        </span>
-                                                                    )}
-                                                            </div>
+                                                            <span className="text-xs text-slate-500">
+                                                                {new Date(
+                                                                    item.expiration_date,
+                                                                ).toLocaleDateString(
+                                                                    'en-US',
+                                                                    {
+                                                                        month: 'short',
+                                                                        day: 'numeric',
+                                                                        year: 'numeric',
+                                                                    },
+                                                                )}
+                                                            </span>
                                                         ) : (
                                                             <span className="text-slate-300">
-                                                                —
+                                                                -
+                                                            </span>
+                                                        )}
+                                                    </td>
+
+                                                    {/* Shelf Life Status */}
+                                                    <td className="px-5 py-4">
+                                                        {expiry ? (
+                                                            <span
+                                                                className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-medium ${
+                                                                    expiry ===
+                                                                    'expired'
+                                                                        ? 'border-red-200 bg-red-50 text-red-600'
+                                                                        : expiry ===
+                                                                            'soon'
+                                                                          ? 'border-amber-200 bg-amber-50 text-amber-700'
+                                                                          : 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                                                                }`}
+                                                            >
+                                                                {expiry ===
+                                                                'expired'
+                                                                    ? 'Expired'
+                                                                    : expiry ===
+                                                                        'soon'
+                                                                      ? 'Expiring Soon'
+                                                                      : 'Valid'}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-slate-300">
+                                                                -
                                                             </span>
                                                         )}
                                                     </td>
@@ -1219,7 +1297,7 @@ export default function InventoryIndex({
                                                                 <Link
                                                                     href={`/inventory/${item.id}/edit`}
                                                                 >
-                                                                    Edit
+                                                                    Edit item
                                                                 </Link>
                                                             </Button>
 

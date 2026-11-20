@@ -67,7 +67,7 @@ function srInformationServices(): ServiceCategory
         ['category_name' => 'Information System Services'],
     );
 
-    foreach ([['E-mail', 'Create New'], ['Office 365', 'Create New'], ['Others', null]] as [$name, $action]) {
+    foreach ([['E-mail', 'Create New'], ['Microsoft 365', 'Create New'], ['Others', null]] as [$name, $action]) {
         ServiceType::firstOrCreate(
             ['category_id' => $category->id, 'service_name' => $name],
             ['default_action' => $action],
@@ -200,7 +200,7 @@ test('admin sees every request on the index', function () {
     );
 });
 
-test('student create form only offers email and office 365', function () {
+test('student create form only offers email and Microsoft 365', function () {
     $student = srStudent();
     srInformationServices();
     $network = ServiceCategory::create(['category_name' => 'Network Services']);
@@ -217,7 +217,7 @@ test('student create form only offers email and office 365', function () {
         ->has('categories.0.service_types', 2)
         ->where(
             'categories.0.service_types',
-            fn ($types) => $types->pluck('service_name')->sort()->values()->all() === ['E-mail', 'Office 365'],
+            fn ($types) => $types->pluck('service_name')->sort()->values()->all() === ['E-mail', 'Microsoft 365'],
         ),
     );
 });
@@ -244,7 +244,7 @@ test('student can submit an email request', function () {
     ]);
 });
 
-test('student cannot submit requests outside email and office 365', function () {
+test('student cannot submit requests outside email and Microsoft 365', function () {
     $student = srStudent();
     $network = ServiceCategory::create(['category_name' => 'Network Services']);
     $type = ServiceType::create(['category_id' => $network->id, 'service_name' => 'Network Connection']);
@@ -456,4 +456,121 @@ test('faculty cannot view another users service request', function () {
     $this->actingAs($faculty)
         ->get(route('requests.show', $serviceRequest))
         ->assertForbidden();
+});
+
+test('requester can see the assigned technician on the request page', function () {
+    $student = srStudent();
+    $admin = srAdmin();
+
+    $technician = User::factory()->create([
+        'role_id' => $admin->role_id,
+        'name' => 'Maria Santos',
+        'expertise' => 'Hardware repair',
+        'contact_no' => '09171234567',
+    ]);
+
+    $serviceRequest = ServiceRequest::create([
+        'user_id' => $student->id,
+        'problem_description' => 'Projector not turning on.',
+        'request_status' => 'approved',
+    ]);
+
+    $serviceRequest->jobOrders()->create([
+        'status' => 'in_progress',
+        'assigned_to' => $technician->id,
+        'date_assigned' => now(),
+    ]);
+
+    $this->actingAs($student)
+        ->get(route('requests.show', $serviceRequest))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('requests/show')
+            ->where('jobOrder.status', 'in_progress')
+            ->where('jobOrder.technician.name', 'Maria Santos')
+            ->where('jobOrder.technician.expertise', 'Hardware repair')
+            ->where('jobOrder.technician.contact_no', '09171234567'),
+        );
+});
+
+test('request page shows a pending assignment state before a technician is assigned', function () {
+    $student = srStudent();
+
+    $serviceRequest = ServiceRequest::create([
+        'user_id' => $student->id,
+        'problem_description' => 'Printer is offline.',
+        'request_status' => 'approved',
+    ]);
+
+    $serviceRequest->jobOrders()->create([
+        'status' => 'open',
+    ]);
+
+    $this->actingAs($student)
+        ->get(route('requests.show', $serviceRequest))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('requests/show')
+            ->where('jobOrder.status', 'open')
+            ->where('jobOrder.technician', null),
+        );
+});
+
+test('requester can view technician responses on the request page', function () {
+    $student = srStudent();
+    $admin = srAdmin();
+
+    $technician = User::factory()->create([
+        'role_id' => $admin->role_id,
+        'name' => 'Maria Santos',
+        'expertise' => 'Hardware repair',
+    ]);
+
+    $serviceRequest = ServiceRequest::create([
+        'user_id' => $student->id,
+        'problem_description' => 'Computer restarts randomly.',
+        'request_status' => 'approved',
+    ]);
+
+    $jobOrder = $serviceRequest->jobOrders()->create([
+        'status' => 'in_progress',
+        'assigned_to' => $technician->id,
+        'date_assigned' => now(),
+    ]);
+
+    $jobOrder->technicianResponses()->create([
+        'technician_id' => $technician->id,
+        'response_report' => 'Replaced the faulty power supply unit.',
+        'response_type' => 'resolution',
+        'date_responded' => now(),
+        'date_resolved' => now(),
+        'time_spent_minutes' => 45,
+    ]);
+
+    $this->actingAs($student)
+        ->get(route('requests.show', $serviceRequest))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('requests/show')
+            ->has('jobOrder.technician_responses', 1)
+            ->where('jobOrder.technician_responses.0.response_report', 'Replaced the faulty power supply unit.')
+            ->where('jobOrder.technician_responses.0.response_type', 'resolution')
+            ->where('jobOrder.technician_responses.0.time_spent_minutes', 45)
+            ->where('jobOrder.technician_responses.0.technician.name', 'Maria Santos'),
+        );
+});
+
+test('status messages are shared for the global toast notification', function () {
+    $admin = srAdmin();
+    $type = srServiceType();
+
+    $this->actingAs($admin)
+        ->post(route('requests.store'), srPayload($admin, $type))
+        ->assertRedirect(route('requests.index'));
+
+    $this->actingAs($admin)
+        ->get(route('requests.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('flash.status', 'Service request submitted successfully.'),
+        );
 });

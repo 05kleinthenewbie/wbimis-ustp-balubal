@@ -1,6 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { CheckCheck, ShieldAlert } from 'lucide-react';
 import { useState } from 'react';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { index, acknowledge } from '@/routes/liabilities';
 
@@ -45,7 +46,13 @@ export default function MyLiabilities({ liabilities, filters }: Props) {
     return (
         <>
             <Head title="My Liabilities" />
-            <div className="flex flex-1 flex-col gap-6 p-4 md:p-8">
+            <div className="flex flex-1 flex-col gap-5 p-4 md:p-6 lg:p-8">
+                <PageHeader
+                    title="My Liabilities"
+                    description="Review assignments for incidents involving ICT equipment."
+                    icon={ShieldAlert}
+                />
+
                 <nav
                     aria-label="Filter liabilities"
                     className="flex flex-wrap gap-2"
@@ -178,6 +185,7 @@ export default function MyLiabilities({ liabilities, filters }: Props) {
                                         onClick={() =>
                                             acknowledgeLiability(liability.id)
                                         }
+                                        className="h-11 px-5"
                                     >
                                         {processing === liability.id
                                             ? 'Acknowledging…'

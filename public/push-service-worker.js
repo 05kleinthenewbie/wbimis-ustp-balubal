@@ -1,6 +1,19 @@
 self.addEventListener('install', () => self.skipWaiting());
+
 self.addEventListener('activate', (event) => {
-    event.waitUntil(self.clients.claim());
+    event.waitUntil(
+        (async () => {
+            const keys = await caches.keys();
+
+            await Promise.all(
+                keys
+                    .filter((key) => key.startsWith('wbimis-shell'))
+                    .map((key) => caches.delete(key)),
+            );
+
+            await self.clients.claim();
+        })(),
+    );
 });
 
 self.addEventListener('push', (event) => {
@@ -20,6 +33,7 @@ self.addEventListener('push', (event) => {
                     payload.body ||
                     'You have a new notification in the ICT portal.',
                 tag: payload.tag || 'ict-portal-update',
+                icon: '/apple-touch-icon.png',
                 data: { url: payload.url || '/notifications' },
             },
         ),

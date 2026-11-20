@@ -7,12 +7,6 @@ const CELL = {
     damping: 34,
     mass: 0.45,
 } as const;
-const CROSSFADE = {
-    type: 'spring',
-    stiffness: 260,
-    damping: 34,
-    mass: 0.8,
-} as const;
 const INSTANT = { duration: 0 } as const;
 
 const COMMON =
@@ -46,14 +40,26 @@ export type PasswordStrengthState = {
 };
 
 export const defaultPasswordRules: readonly PasswordRule[] = [
-    { id: 'length', label: '8 characters or more', test: (v) => v.length >= 8 },
     {
-        id: 'case',
-        label: 'Upper and lower case',
-        test: (v) => /[a-z]/.test(v) && /[A-Z]/.test(v),
+        id: 'length',
+        label: 'At least 8 characters long',
+        test: (v) => v.length >= 8,
     },
-    { id: 'digit', label: 'A number', test: (v) => /\d/.test(v) },
-    { id: 'symbol', label: 'A symbol', test: (v) => SYMBOL.test(v) },
+    {
+        id: 'uppercase',
+        label: 'Has 1 capital letter (A, B, C)',
+        test: (v) => /[A-Z]/.test(v),
+    },
+    {
+        id: 'digit',
+        label: 'Has 1 number (1, 2, 3)',
+        test: (v) => /\d/.test(v),
+    },
+    {
+        id: 'symbol',
+        label: 'Has 1 symbol (@, #, $)',
+        test: (v) => SYMBOL.test(v),
+    },
 ];
 
 const defaultLabels = ['Empty', 'Weak', 'Fair', 'Good', 'Strong'] as const;
@@ -132,6 +138,7 @@ export function usePasswordStrength(
 
 export type PasswordStrengthProps = {
     value: string;
+    confirmation?: string;
     rules?: readonly PasswordRule[];
     labels?: readonly string[];
     announceDelay?: number;
@@ -168,6 +175,7 @@ function toneFor(score: number, max: number) {
 
 export function PasswordStrength({
     value,
+    confirmation,
     rules = defaultPasswordRules,
     labels = defaultLabels,
     announceDelay = 700,
@@ -179,7 +187,6 @@ export function PasswordStrength({
         max,
         label,
         rules: evaluated,
-        guessable,
         announcement,
     } = usePasswordStrength(value, { rules, labels, announceDelay });
     const reduced = useReducedMotion();
@@ -221,80 +228,24 @@ export function PasswordStrength({
                 ))}
             </div>
 
-            <div className="mt-2 flex h-5 items-center justify-between gap-3">
-                <span className="inline-grid text-[12.5px] leading-5 font-medium">
-                    {labels.map((text, i) => (
-                        <motion.span
-                            key={text}
-                            aria-hidden
-                            className={`col-start-1 row-start-1 whitespace-nowrap transition-colors duration-200 ${tone.text}`}
-                            initial={false}
-                            animate={{
-                                opacity:
-                                    i ===
-                                    Math.min(score, labels.length - 1)
-                                        ? 1
-                                        : 0,
-                            }}
-                            transition={reduced ? INSTANT : CROSSFADE}
-                        >
-                            {text}
-                        </motion.span>
-                    ))}
-                </span>
-
-                <motion.span
-                    aria-hidden
-                    className="whitespace-nowrap text-[11.5px] leading-5 text-amber-600 dark:text-amber-400"
-                    initial={false}
-                    animate={{ opacity: guessable ? 1 : 0 }}
-                    transition={reduced ? INSTANT : CROSSFADE}
-                >
-                    Commonly guessed
-                </motion.span>
-            </div>
-
             {showRules && (
-                <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+                <ul className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2">
                     {evaluated.map((rule) => (
                         <li
                             key={rule.id}
-                            className="flex items-center gap-2"
+                            className="flex items-start gap-1.5"
                         >
-                            <span className="relative grid size-3.5 shrink-0 place-items-center rounded-[4px] border border-stone-200 text-white dark:border-white/16 dark:text-stone-900">
-                                <motion.span
-                                    className="absolute inset-0 rounded-[3px] bg-emerald-500"
-                                    initial={false}
-                                    animate={{ opacity: rule.met ? 1 : 0 }}
-                                    transition={
-                                        reduced ? INSTANT : CROSSFADE
-                                    }
-                                />
-                                <motion.svg
-                                    viewBox="0 0 12 12"
-                                    fill="none"
-                                    aria-hidden
-                                    className="relative size-2.25"
-                                    initial={false}
-                                    animate={{
-                                        opacity: rule.met ? 1 : 0,
-                                        scale: rule.met ? 1 : 0.6,
-                                    }}
-                                    transition={reduced ? INSTANT : CELL}
-                                >
-                                    <path
-                                        d="M2 6.2 4.7 8.9 10 3.3"
-                                        stroke="currentColor"
-                                        strokeWidth={1.9}
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                </motion.svg>
-                            </span>
                             <span
-                                className={`text-[12.5px] leading-5 transition-colors duration-200 ${
+                                className={`mt-1.5 size-1.5 shrink-0 rounded-full ${
                                     rule.met
-                                        ? 'text-stone-700 dark:text-stone-200'
+                                        ? 'bg-emerald-500'
+                                        : 'bg-stone-300 dark:bg-white/25'
+                                }`}
+                            />
+                            <span
+                                className={`text-[12px] leading-5 transition-colors duration-200 ${
+                                    rule.met
+                                        ? 'font-medium text-emerald-600 dark:text-emerald-400'
                                         : 'text-stone-500 dark:text-stone-400'
                                 }`}
                             >
@@ -307,6 +258,29 @@ export function PasswordStrength({
                     ))}
                 </ul>
             )}
+
+            {confirmation !== undefined &&
+                value.length > 0 &&
+                confirmation.length > 0 && (
+                    <p
+                        className={`mt-2 flex items-center gap-1.5 text-[12px] font-medium ${
+                            value === confirmation
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-red-600 dark:text-red-400'
+                        }`}
+                    >
+                        <span
+                            className={`size-1.5 shrink-0 rounded-full ${
+                                value === confirmation
+                                    ? 'bg-emerald-500'
+                                    : 'bg-red-500'
+                            }`}
+                        />
+                        {value === confirmation
+                            ? 'Passwords match'
+                            : 'Passwords do not match'}
+                    </p>
+                )}
 
             <p aria-live="polite" className="sr-only">
                 {announcement}

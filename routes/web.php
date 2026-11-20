@@ -11,6 +11,7 @@ use App\Http\Controllers\JobOrderController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\RegisterOtpController;
+use App\Http\Controllers\RegistrationValidationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ServiceRequestController;
 use App\Http\Controllers\StudentApprovalController;
@@ -55,6 +56,9 @@ Route::middleware('guest')->group(function () {
     Route::post('/student/forgot-password', [StudentPasswordResetLinkController::class, 'store'])
         ->middleware('throttle:6,1')
         ->name('student.password.email');
+    Route::post('/register/validate', RegistrationValidationController::class)
+        ->middleware('throttle:20,1')
+        ->name('register.validate');
     Route::get('/register/otp', [RegisterOtpController::class, 'show'])->name('register.otp.show');
     Route::post('/register/otp', [RegisterOtpController::class, 'verify'])->name('register.otp.verify');
     Route::post('/register/otp/resend', [RegisterOtpController::class, 'resend'])->name('register.otp.resend');

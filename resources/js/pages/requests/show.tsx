@@ -1,6 +1,8 @@
-import { Head, router } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 import {
     AlertTriangle,
+    ArrowUpRight,
+    CalendarDays,
     Check,
     CheckCircle2,
     Circle,
@@ -8,7 +10,11 @@ import {
     Clock3,
     Download,
     FileText,
+    Mail,
+    MessageSquare,
+    Phone,
     UserRound,
+    Wrench,
     X,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -57,9 +63,40 @@ type ServiceRequestDetail = {
     attachments: Attachment[];
 };
 
+type JobOrderTechnician = {
+    name: string;
+    department: string | null;
+    position: string | null;
+    expertise: string | null;
+    contact_no: string | null;
+    email: string | null;
+};
+
+type JobOrderResponse = {
+    id: number;
+    response_type: string;
+    response_report: string;
+    time_spent_minutes: number | null;
+    date_responded: string | null;
+    date_resolved: string | null;
+    technician: { name: string };
+};
+
+type JobOrderSummary = {
+    id: number;
+    job_order_number: string | null;
+    status: string;
+    date_assigned: string | null;
+    date_in_progress: string | null;
+    date_completed: string | null;
+    technician: JobOrderTechnician | null;
+    technician_responses: JobOrderResponse[];
+};
+
 type Props = {
     request: ServiceRequestDetail;
     isAdmin: boolean;
+    jobOrder: JobOrderSummary | null;
 };
 
 const statusConfig: Record<
@@ -112,9 +149,47 @@ const priorityConfig: Record<
     urgent: { label: 'Urgent', color: 'text-red-600', bg: 'bg-red-50' },
 };
 
+const jobOrderStatusConfig: Record<
+    string,
+    { label: string; className: string }
+> = {
+    open: {
+        label: 'Awaiting assignment',
+        className: 'border-amber-200 bg-amber-50 text-amber-700',
+    },
+    in_progress: {
+        label: 'In progress',
+        className: 'border-sky-200 bg-sky-50 text-sky-700',
+    },
+    completed: {
+        label: 'For verification',
+        className: 'border-violet-200 bg-violet-50 text-violet-700',
+    },
+    closed: {
+        label: 'Completed',
+        className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    },
+};
+
+const responseTypeConfig: Record<string, { label: string; className: string }> =
+    {
+        progress: {
+            label: 'Progress update',
+            className: 'border-sky-200 bg-sky-50 text-sky-700',
+        },
+        finding: {
+            label: 'Findings',
+            className: 'border-amber-200 bg-amber-50 text-amber-700',
+        },
+        resolution: {
+            label: 'Resolution',
+            className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+        },
+    };
+
 const statusSteps = ['pending', 'approved', 'completed'];
 
-export default function RequestsShow({ request, isAdmin }: Props) {
+export default function RequestsShow({ request, isAdmin, jobOrder }: Props) {
     const [priority, setPriority] = useState(request.priority_level ?? '');
     const [processing, setProcessing] = useState(false);
 
@@ -247,6 +322,249 @@ export default function RequestsShow({ request, isAdmin }: Props) {
                             })}
                         </div>
                     </div>
+
+                    {/* Assigned technician */}
+                    <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                        <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-5 py-4 md:px-6">
+                            <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-ustp-gold/10 text-ustp-gold">
+                                <Wrench className="size-4" />
+                            </div>
+
+                            <div className="min-w-0">
+                                <p className="text-sm font-semibold text-slate-800">
+                                    Assigned technician
+                                </p>
+                                <p className="mt-0.5 text-[11px] text-slate-400">
+                                    {jobOrder?.job_order_number
+                                        ? `Job order #${jobOrder.job_order_number}`
+                                        : 'Personnel handling this request.'}
+                                </p>
+                            </div>
+
+                            {jobOrder && (
+                                <span
+                                    className={`ml-auto inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-medium ${jobOrderStatusConfig[jobOrder.status]?.className ?? 'border-slate-200 bg-slate-50 text-slate-500'}`}
+                                >
+                                    {jobOrderStatusConfig[jobOrder.status]
+                                        ?.label ??
+                                        jobOrder.status.replace('_', ' ')}
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="p-5 md:p-6">
+                            {jobOrder?.technician ? (
+                                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-ustp-navy text-sm font-semibold text-white">
+                                            {jobOrder.technician.name
+                                                .split(' ')
+                                                .filter(Boolean)
+                                                .slice(0, 2)
+                                                .map((part) => part[0])
+                                                .join('')
+                                                .toUpperCase()}
+                                        </div>
+
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-semibold text-slate-800">
+                                                {jobOrder.technician.name}
+                                            </p>
+                                            <p className="text-xs text-slate-500">
+                                                {jobOrder.technician
+                                                    .expertise ??
+                                                    jobOrder.technician
+                                                        .position ??
+                                                    'ICT Technician'}
+                                            </p>
+                                            {jobOrder.technician.department && (
+                                                <p className="mt-0.5 text-[11px] text-slate-400">
+                                                    {
+                                                        jobOrder.technician
+                                                            .department
+                                                    }
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col gap-1.5 text-xs text-slate-500 sm:items-end sm:text-right">
+                                        {jobOrder.technician.contact_no && (
+                                            <a
+                                                href={`tel:${jobOrder.technician.contact_no}`}
+                                                className="inline-flex items-center gap-1.5 transition-colors hover:text-ustp-navy"
+                                            >
+                                                <Phone className="size-3.5 text-slate-400" />
+                                                {jobOrder.technician.contact_no}
+                                            </a>
+                                        )}
+
+                                        {jobOrder.technician.email && (
+                                            <a
+                                                href={`mailto:${jobOrder.technician.email}`}
+                                                className="inline-flex items-center gap-1.5 break-all transition-colors hover:text-ustp-navy"
+                                            >
+                                                <Mail className="size-3.5 text-slate-400" />
+                                                {jobOrder.technician.email}
+                                            </a>
+                                        )}
+
+                                        {jobOrder.date_assigned && (
+                                            <span className="inline-flex items-center gap-1.5">
+                                                <CalendarDays className="size-3.5 text-slate-400" />
+                                                Assigned{' '}
+                                                {new Date(
+                                                    jobOrder.date_assigned,
+                                                ).toLocaleDateString()}
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+                                    <p className="text-sm font-medium text-slate-700">
+                                        {jobOrder
+                                            ? 'No technician assigned yet'
+                                            : 'Awaiting request approval'}
+                                    </p>
+                                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                                        {jobOrder
+                                            ? 'The ICT office will assign a technician to handle this request.'
+                                            : 'A technician will be assigned after the ICT office approves your request.'}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </section>
+
+                    {/* Technician responses */}
+                    {jobOrder && (
+                        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                            <div className="flex flex-wrap items-center gap-3 border-b border-slate-200 px-5 py-4 md:px-6">
+                                <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-ustp-gold/10 text-ustp-gold">
+                                    <MessageSquare className="size-4" />
+                                </div>
+
+                                <div className="min-w-0">
+                                    <p className="text-sm font-semibold text-slate-800">
+                                        Technician updates
+                                    </p>
+                                    <p className="mt-0.5 text-[11px] text-slate-400">
+                                        Findings, progress, and feedback from
+                                        the technician handling your request.
+                                    </p>
+                                </div>
+
+                                <span className="ml-auto rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-medium text-slate-500">
+                                    {jobOrder.technician_responses.length}{' '}
+                                    {jobOrder.technician_responses.length === 1
+                                        ? 'update'
+                                        : 'updates'}
+                                </span>
+                            </div>
+
+                            <div className="p-5 md:p-6">
+                                {jobOrder.technician_responses.length > 0 ? (
+                                    <ol className="relative flex flex-col gap-4 border-l border-slate-200 pl-5">
+                                        {jobOrder.technician_responses.map(
+                                            (response) => {
+                                                const typeConfig =
+                                                    responseTypeConfig[
+                                                        response.response_type
+                                                    ];
+
+                                                return (
+                                                    <li
+                                                        key={response.id}
+                                                        className="relative rounded-xl border border-slate-200 bg-slate-50/70 p-4"
+                                                    >
+                                                        <span className="absolute top-5 -left-[27px] size-2.5 rounded-full border-2 border-white bg-ustp-gold" />
+
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <span
+                                                                className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${typeConfig?.className ?? 'border-slate-200 bg-white text-slate-500'}`}
+                                                            >
+                                                                {typeConfig?.label ??
+                                                                    response.response_type.replace(
+                                                                        '_',
+                                                                        ' ',
+                                                                    )}
+                                                            </span>
+
+                                                            <span className="text-[11px] font-medium text-slate-600">
+                                                                {
+                                                                    response
+                                                                        .technician
+                                                                        .name
+                                                                }
+                                                            </span>
+
+                                                            {response.date_responded && (
+                                                                <span className="text-[10px] text-slate-400">
+                                                                    {new Date(
+                                                                        response.date_responded,
+                                                                    ).toLocaleString()}
+                                                                </span>
+                                                            )}
+                                                        </div>
+
+                                                        <p className="mt-2 text-sm leading-6 whitespace-pre-wrap text-slate-600">
+                                                            {
+                                                                response.response_report
+                                                            }
+                                                        </p>
+
+                                                        <div className="mt-2 flex flex-wrap items-center gap-3 text-[10px] text-slate-400">
+                                                            {response.time_spent_minutes !==
+                                                                null && (
+                                                                <span>
+                                                                    Time spent:{' '}
+                                                                    {
+                                                                        response.time_spent_minutes
+                                                                    }{' '}
+                                                                    min
+                                                                </span>
+                                                            )}
+
+                                                            {response.date_resolved && (
+                                                                <span>
+                                                                    Resolved{' '}
+                                                                    {new Date(
+                                                                        response.date_resolved,
+                                                                    ).toLocaleDateString()}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </li>
+                                                );
+                                            },
+                                        )}
+                                    </ol>
+                                ) : (
+                                    <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4">
+                                        <p className="text-sm font-medium text-slate-700">
+                                            No technician updates yet
+                                        </p>
+                                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                                            Progress notes, findings, and
+                                            feedback will appear here once the
+                                            technician posts an update.
+                                        </p>
+                                    </div>
+                                )}
+
+                                <div className="mt-4 flex justify-end">
+                                    <Link
+                                        href={`/job-orders/${jobOrder.id}`}
+                                        className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-ustp-navy"
+                                    >
+                                        Open full job order
+                                        <ArrowUpRight className="size-3.5" />
+                                    </Link>
+                                </div>
+                            </div>
+                        </section>
+                    )}
 
                     {/* Request metadata */}
                     <div className="grid gap-4 md:grid-cols-3">

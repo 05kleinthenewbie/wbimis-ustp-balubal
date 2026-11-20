@@ -22,12 +22,12 @@ class ServiceRequestSeeder extends Seeder
             ],
             [
                 'user_id' => 4,
-                'problem_description' => 'Need to install Microsoft Office 365 on the new faculty laptop. The laptop is a Lenovo ThinkPad E14 running Windows 11. Please also install any required device drivers.',
+                'problem_description' => 'Need to install Microsoft 365 on the new faculty laptop. The laptop is a Lenovo ThinkPad E14 running Windows 11. Please also install any required device drivers.',
                 'priority_level' => 'medium',
                 'request_status' => 'pending',
                 'date_requested' => '2026-08-28 14:30:00',
                 'services' => [
-                    ['service_type_id' => 11, 'specification' => 'Microsoft Office 365 (Word, Excel, PowerPoint, Outlook)', 'quantity' => 1, 'action_type' => 'Installation'],
+                    ['service_type_id' => 11, 'specification' => 'Microsoft 365 (Word, Excel, PowerPoint, Outlook)', 'quantity' => 1, 'action_type' => 'Installation'],
                     ['service_type_id' => 13, 'specification' => 'Lenovo ThinkPad E14 drivers for Windows 11', 'quantity' => 1, 'action_type' => 'Installation'],
                 ],
             ],

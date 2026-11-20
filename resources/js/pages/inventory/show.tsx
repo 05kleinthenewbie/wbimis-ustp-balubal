@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { BackButton } from '@/components/back-button';
+import { useConfirm } from '@/components/confirm-provider';
 import { Button } from '@/components/ui/button';
 
 /* ---------- Types ---------- */
@@ -432,6 +433,7 @@ function formatCurrency(value: string | null): string {
 /* ---------- Component ---------- */
 
 export default function InventoryShow({ item }: Props) {
+    const confirm = useConfirm();
     const storedCategory = item.category ?? getCategoryFromName(item.item_name);
     const category = legacyCategoryAliases[storedCategory] ?? storedCategory;
     const CatIcon = categoryIcons[category] ?? Box;
@@ -465,8 +467,15 @@ export default function InventoryShow({ item }: Props) {
         .filter(Boolean)
         .join(' · ');
 
-    function handleDelete() {
-        if (confirm('Delete this inventory item? This cannot be undone.')) {
+    async function handleDelete() {
+        const confirmed = await confirm({
+            title: 'Delete inventory item',
+            description: 'Delete this inventory item? This cannot be undone.',
+            confirmLabel: 'Delete item',
+            destructive: true,
+        });
+
+        if (confirmed) {
             router.delete(`/inventory/${item.id}`);
         }
     }
@@ -596,7 +605,7 @@ export default function InventoryShow({ item }: Props) {
                             >
                                 <Link href={`/inventory/${item.id}/edit`}>
                                     <Pencil className="size-4" />
-                                    Edit
+                                    Edit item
                                 </Link>
                             </Button>
 
@@ -1062,6 +1071,7 @@ export default function InventoryShow({ item }: Props) {
                                                                         >
                                                                             <ArrowUpRight className="size-3" />
                                                                             View
+                                                                            request
                                                                         </Link>
                                                                     </div>
                                                                     <p className="mt-1 text-sm text-slate-800">
@@ -1150,7 +1160,7 @@ export default function InventoryShow({ item }: Props) {
                                                                 className="flex items-center gap-1 text-xs text-ustp-gold/90 transition-colors hover:text-ustp-gold"
                                                             >
                                                                 <ArrowUpRight className="size-3" />
-                                                                View
+                                                                View job order
                                                             </Link>
                                                         </div>
                                                         {jo.priority_level && (
@@ -1420,7 +1430,7 @@ export default function InventoryShow({ item }: Props) {
                                                                 className="flex items-center gap-1 text-ustp-gold/90 transition-colors hover:text-ustp-gold"
                                                             >
                                                                 <ArrowUpRight className="size-3" />
-                                                                View
+                                                                View incident
                                                             </Link>
                                                         </div>
                                                     </div>

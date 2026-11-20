@@ -35,13 +35,11 @@ type ExpirationRow = {
     condition: string;
     purchase_date: string | null;
     expiration_date: string;
-    expiration_type: string | null;
 };
 
 type Props = {
     items: ExpirationRow[];
     categoryGroups: Record<string, string[]>;
-    expirationTypes: string[];
 };
 
 type TabKey = 'soon' | 'expired' | 'all';
@@ -153,15 +151,10 @@ const inputClass =
 const selectClass =
     'h-10 w-full border-slate-300 bg-white text-slate-800 focus:ring-1 focus:ring-ustp-gold/30';
 
-export default function InventoryExpirations({
-    items,
-    categoryGroups,
-    expirationTypes,
-}: Props) {
+export default function InventoryExpirations({ items, categoryGroups }: Props) {
     const [tab, setTab] = useState<TabKey>('expired');
     const [search, setSearch] = useState('');
     const [category, setCategory] = useState('all');
-    const [expirationType, setExpirationType] = useState('all');
 
     const counts = useMemo(() => {
         let soon = 0;
@@ -198,13 +191,6 @@ export default function InventoryExpirations({
                 return false;
             }
 
-            if (
-                expirationType !== 'all' &&
-                (item.expiration_type ?? '') !== expirationType
-            ) {
-                return false;
-            }
-
             if (!term) {
                 return true;
             }
@@ -217,11 +203,11 @@ export default function InventoryExpirations({
                 (item.end_user ?? '').toLowerCase().includes(term)
             );
         });
-    }, [items, tab, search, category, expirationType]);
+    }, [items, tab, search, category]);
 
     return (
         <>
-            <Head title="Monitor Expiration" />
+            <Head title="Monitor Shelf Life" />
 
             <div className="relative min-h-full flex-1 overflow-hidden bg-slate-50 px-4 py-6 text-slate-800 sm:px-6 lg:px-8">
                 <div className="relative mx-auto max-w-7xl space-y-6">
@@ -232,7 +218,7 @@ export default function InventoryExpirations({
 
                         <Button
                             asChild
-                            className="h-10 bg-ustp-gold px-4 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white"
+                            className="h-11 w-full bg-ustp-gold px-5 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white sm:w-auto"
                         >
                             <Link href="/inventory/create">
                                 <Box className="size-4" />
@@ -286,7 +272,7 @@ export default function InventoryExpirations({
                     </div>
 
                     {/* Filters */}
-                    <div className="grid gap-3 md:grid-cols-3">
+                    <div className="grid gap-3 md:grid-cols-2">
                         <div className="relative">
                             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
                             <Input
@@ -324,25 +310,6 @@ export default function InventoryExpirations({
                                 )}
                             </SelectContent>
                         </Select>
-
-                        <Select
-                            value={expirationType}
-                            onValueChange={(value) => setExpirationType(value)}
-                        >
-                            <SelectTrigger className={selectClass}>
-                                <SelectValue placeholder="All expiration types" />
-                            </SelectTrigger>
-                            <SelectContent className="border-slate-200 bg-white text-slate-800">
-                                <SelectItem value="all">
-                                    All expiration types
-                                </SelectItem>
-                                {expirationTypes.map((t) => (
-                                    <SelectItem key={t} value={t}>
-                                        {t}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
                     </div>
 
                     {/* Desktop table */}
@@ -352,9 +319,6 @@ export default function InventoryExpirations({
                                 <tr>
                                     <th className="px-4 py-3">Item</th>
                                     <th className="px-4 py-3">Category</th>
-                                    <th className="px-4 py-3">
-                                        Expiration Type
-                                    </th>
                                     <th className="px-4 py-3">
                                         Shelf Life / Expires
                                     </th>
@@ -379,18 +343,14 @@ export default function InventoryExpirations({
                                                 <p className="font-medium text-slate-800">
                                                     {item.item_name}
                                                 </p>
-                                                <p className="text-xs text-slate-400">
-                                                    {item.property_no}
-                                                    {item.brand
-                                                        ? ` · ${item.brand}`
-                                                        : ''}
-                                                </p>
+                                                {item.brand && (
+                                                    <p className="text-xs text-slate-400">
+                                                        {item.brand}
+                                                    </p>
+                                                )}
                                             </td>
                                             <td className="px-4 py-3 text-slate-600">
                                                 {resolveCategory(item) ?? '—'}
-                                            </td>
-                                            <td className="px-4 py-3 text-slate-600">
-                                                {item.expiration_type ?? '—'}
                                             </td>
                                             <td className="px-4 py-3">
                                                 <p className="text-slate-700">
@@ -432,7 +392,7 @@ export default function InventoryExpirations({
                                                     href={`/inventory/${item.id}`}
                                                     className="inline-flex items-center gap-1 text-xs font-medium text-ustp-navy hover:underline"
                                                 >
-                                                    View
+                                                    View item
                                                     <ArrowUpRight className="size-3.5" />
                                                 </Link>
                                             </td>
@@ -473,9 +433,6 @@ export default function InventoryExpirations({
                                             <p className="font-medium text-slate-800">
                                                 {item.item_name}
                                             </p>
-                                            <p className="text-xs text-slate-400">
-                                                {item.property_no}
-                                            </p>
                                         </div>
                                         <span
                                             className={`inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[11px] font-medium ${stateBadge[state].badge}`}
@@ -495,14 +452,7 @@ export default function InventoryExpirations({
                                                 )}
                                             </p>
                                         </div>
-                                        <div>
-                                            <p className="text-slate-400">
-                                                Type
-                                            </p>
-                                            <p className="font-medium text-slate-700">
-                                                {item.expiration_type ?? '—'}
-                                            </p>
-                                        </div>
+
                                         <div>
                                             <p className="text-slate-400">
                                                 Category

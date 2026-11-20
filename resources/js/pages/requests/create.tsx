@@ -2,6 +2,7 @@ import { Head, useForm } from '@inertiajs/react';
 import { AlertCircle, Check, Send, Paperclip, X } from 'lucide-react';
 import { useState } from 'react';
 import { BackButton } from '@/components/back-button';
+import FormErrorSummary from '@/components/form-error-summary';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
@@ -123,6 +124,16 @@ export default function RequestsCreate({ categories, isStudent }: Props) {
                         onSubmit={handleSubmit}
                         className="flex flex-col gap-6"
                     >
+                        <FormErrorSummary
+                            errors={errors}
+                            labels={{
+                                services: 'Services',
+                                problem_description: 'Description',
+                                location: 'Location',
+                                contact_details: 'Contact details',
+                                attachments: 'Attachments',
+                            }}
+                        />
                         {/* Services card */}
                         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                             <div className="flex flex-col gap-3 border-b border-slate-200 bg-slate-50 px-5 py-4 sm:flex-row sm:items-center sm:justify-between md:px-6">
@@ -584,7 +595,7 @@ export default function RequestsCreate({ categories, isStudent }: Props) {
                             <Button
                                 type="submit"
                                 disabled={processing || !hasSelection}
-                                className="h-10 bg-ustp-gold px-5 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
+                                className="h-11 w-full bg-ustp-gold px-5 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
                             >
                                 {processing ? (
                                     <Spinner />

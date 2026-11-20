@@ -84,7 +84,7 @@ export default function IncidentsIndex({ incidents }: Props) {
                     <div className="flex justify-end">
                         <Button
                             asChild
-                            className="h-10 bg-ustp-gold px-4 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white"
+                            className="h-11 w-full bg-ustp-gold px-5 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white sm:w-auto"
                         >
                             <Link href="/incidents/create">
                                 Report Laboratory Incident
@@ -367,7 +367,7 @@ export default function IncidentsIndex({ incidents }: Props) {
                                                             href={`/incidents/${incident.id}`}
                                                             className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 transition-colors hover:text-ustp-gold"
                                                         >
-                                                            View
+                                                            View incident
                                                             <ArrowUpRight className="size-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                                                         </Link>
                                                     </td>

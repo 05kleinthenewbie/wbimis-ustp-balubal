@@ -25,4 +25,5 @@ export type AuthLayoutProps = {
     backHref?: string;
     backLabel?: string;
     backTestId?: string;
+    hideBack?: boolean;
 };

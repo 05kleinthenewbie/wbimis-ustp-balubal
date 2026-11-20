@@ -1,11 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import {
-    ArrowUpRight,
-    Calendar,
-    Plus,
-    Search,
-    XCircle,
-} from 'lucide-react';
+import { ArrowUpRight, Calendar, Plus, Search, XCircle } from 'lucide-react';
 import { useState } from 'react';
 import { BookingCalendar } from '@/components/booking-calendar';
 import type { CalendarBooking } from '@/components/booking-calendar';
@@ -52,8 +46,9 @@ const statusBadge: Record<string, string> = {
 };
 
 const facilityTypeLabel: Record<string, string> = {
-    computer_lab: 'Computer Lab',
-    av_room: 'AV Room',
+    computer_lab: 'Computer Laboratory',
+    office: 'Office',
+    classroom: 'Classroom',
 };
 
 export default function BookingsIndex({
@@ -104,7 +99,7 @@ export default function BookingsIndex({
                     <div className="flex justify-end">
                         <Button
                             asChild
-                            className="h-10 bg-ustp-gold px-4 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white"
+                            className="h-11 w-full bg-ustp-gold px-5 text-sm font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white sm:w-auto"
                         >
                             <Link href="/bookings/create">
                                 <Plus className="mr-2 size-4" />
@@ -355,7 +350,7 @@ export default function BookingsIndex({
                                                         href={`/bookings/${booking.id}`}
                                                         className="inline-flex items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-ustp-gold"
                                                     >
-                                                        View
+                                                        View booking
                                                         <ArrowUpRight className="size-3.5" />
                                                     </Link>
                                                 </td>

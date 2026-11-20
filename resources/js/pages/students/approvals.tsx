@@ -30,14 +30,9 @@ type Props = {
         next_page_url: string | null;
     };
     filters: { status: string };
-    status?: string;
 };
 
-export default function StudentApprovals({
-    applications,
-    filters,
-    status,
-}: Props) {
+export default function StudentApprovals({ applications, filters }: Props) {
     const [selected, setSelected] = useState<number[]>([]);
     const isPending = filters.status === 'pending';
 
@@ -53,11 +48,6 @@ export default function StudentApprovals({
         <div className="grid gap-6 p-6">
             <Head title="Student approvals" />
             <h1 className="text-2xl font-semibold">Student approvals</h1>
-            {status && (
-                <p role="status" className="rounded-lg border p-4">
-                    {status}
-                </p>
-            )}
             <div className="flex flex-wrap gap-3">
                 {['pending', 'approved', 'rejected'].map((value) => (
                     <Link

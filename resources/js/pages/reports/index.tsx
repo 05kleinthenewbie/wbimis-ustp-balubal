@@ -1,13 +1,17 @@
 import { Head } from '@inertiajs/react';
 import {
+    BarChart3,
     Box,
     Building2,
     CheckCircle2,
     ClipboardList,
     Download,
     FileText,
+    History,
     Star,
+    UserRound,
 } from 'lucide-react';
+import { PageHeader } from '@/components/page-header';
 
 type StatusCounts = Record<string, number>;
 
@@ -66,11 +70,24 @@ type Props = {
         liabilities_assigned: number;
         liabilities_settled: number;
     };
+    userStats: {
+        total: number;
+        by_role: StatusCounts;
+        active: number;
+        inactive: number;
+        pending_approvals: number;
+    };
+    auditStats: {
+        total: number;
+        by_module: StatusCounts;
+        last_seven_days: number;
+    };
 };
 
 const facilityTypeLabel: Record<string, string> = {
-    computer_lab: 'Computer Lab',
-    av_room: 'AV Room',
+    computer_lab: 'Computer Laboratory',
+    office: 'Office',
+    classroom: 'Classroom',
 };
 
 const monthlySeries = [
@@ -229,6 +246,8 @@ export default function ReportsIndex({
     bookingStats,
     facilityUtilization,
     incidentStats,
+    userStats,
+    auditStats,
 }: Props) {
     return (
         <>
@@ -236,24 +255,20 @@ export default function ReportsIndex({
 
             <div className="min-h-full flex-1 bg-slate-50 text-slate-800">
                 <div className="relative flex flex-1 flex-col gap-6 overflow-hidden p-4 md:p-6 lg:p-8">
-                    {/* Header */}
-                    <div className="relative flex items-start justify-between gap-4">
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
-                                    Live Data
-                                </span>
-                            </div>
-                        </div>
-
-                        <a
-                            href="/reports/export"
-                            className="flex h-9 shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:border-ustp-gold/30 hover:bg-ustp-gold/10 hover:text-ustp-gold"
-                        >
-                            <Download className="size-4" />
-                            Export CSV
-                        </a>
-                    </div>
+                    <PageHeader
+                        title="Reports"
+                        description="Monitor ICT operations across requests, job orders, inventory, bookings, and incidents."
+                        icon={BarChart3}
+                        actions={
+                            <a
+                                href="/reports/export"
+                                className="flex h-10 shrink-0 items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 text-xs font-medium text-slate-600 shadow-sm transition-colors hover:border-ustp-gold/30 hover:bg-ustp-gold/10 hover:text-ustp-gold"
+                            >
+                                <Download className="size-4" />
+                                Export CSV
+                            </a>
+                        }
+                    />
 
                     {/* Overview */}
                     <div className="relative grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -531,6 +546,64 @@ export default function ReportsIndex({
                                 <span className="font-medium text-slate-600">
                                     {incidentStats.liabilities_settled}
                                 </span>
+                            </div>
+                        </div>
+
+                        {/* User Accounts */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                            <div className="mb-3 flex items-center justify-between">
+                                <p className="text-sm font-medium text-slate-600">
+                                    User Accounts
+                                </p>
+                                <div className="flex size-8 items-center justify-center rounded-lg bg-ustp-navy/10 text-ustp-navy">
+                                    <UserRound className="size-4" />
+                                </div>
+                            </div>
+                            <BreakdownList data={userStats.by_role} />
+                            <div className="mt-3 space-y-1 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                                <p>
+                                    <span className="font-medium text-slate-700">
+                                        {userStats.active}
+                                    </span>{' '}
+                                    active ·{' '}
+                                    <span className="font-medium text-slate-700">
+                                        {userStats.inactive}
+                                    </span>{' '}
+                                    inactive
+                                </p>
+                                <p>
+                                    <span className="font-medium text-slate-700">
+                                        {userStats.pending_approvals}
+                                    </span>{' '}
+                                    pending approval
+                                </p>
+                            </div>
+                        </div>
+
+                        {/* Audit Activity */}
+                        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                            <div className="mb-3 flex items-center justify-between">
+                                <p className="text-sm font-medium text-slate-600">
+                                    Audit Activity
+                                </p>
+                                <div className="flex size-8 items-center justify-center rounded-lg bg-ustp-gold/10 text-ustp-gold">
+                                    <History className="size-4" />
+                                </div>
+                            </div>
+                            <BreakdownList data={auditStats.by_module} />
+                            <div className="mt-3 space-y-1 border-t border-slate-100 pt-3 text-xs text-slate-500">
+                                <p>
+                                    <span className="font-medium text-slate-700">
+                                        {auditStats.total}
+                                    </span>{' '}
+                                    total actions logged
+                                </p>
+                                <p>
+                                    <span className="font-medium text-slate-700">
+                                        {auditStats.last_seven_days}
+                                    </span>{' '}
+                                    in the last 7 days
+                                </p>
                             </div>
                         </div>
                     </div>

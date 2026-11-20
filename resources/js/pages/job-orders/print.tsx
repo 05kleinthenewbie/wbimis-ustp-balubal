@@ -108,7 +108,7 @@ const CATEGORY_CONFIG: {
         title: 'Information System Services',
         actions: ['Create New', 'Troubleshoot', 'Update'],
         rows: ['E-mail', 'Others'],
-        rowAliases: { Others: ['Office 365'] },
+        rowAliases: { Others: ['Microsoft 365'] },
     },
 ];
 

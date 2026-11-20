@@ -36,7 +36,9 @@ test('students log in with their email and password and land on the dashboard', 
     $this->post(route('student.authenticate'), [
         'email' => 'student@8.ustp.edu.ph',
         'password' => 'password',
-    ])->assertRedirect(route('dashboard'));
+    ])
+        ->assertRedirect(route('dashboard'))
+        ->assertSessionHas('status', 'Welcome back, '.$user->name.'!');
 
     $this->assertAuthenticatedAs($user);
 

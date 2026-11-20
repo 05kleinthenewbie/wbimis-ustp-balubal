@@ -168,7 +168,7 @@ export default function DataPrivacy() {
                     </p>
                     <p>
                         University of Science and Technology of Southern
-                        Philippines — Balubal Campus
+                        Philippines, Balubal Campus
                     </p>
                     <p>Balubal, Cagayan de Oro City, Misamis Oriental, 9000</p>
                     <p>

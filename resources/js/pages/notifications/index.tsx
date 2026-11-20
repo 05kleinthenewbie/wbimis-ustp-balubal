@@ -1,5 +1,6 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Bell, Check, CheckCheck, ExternalLink, Trash2 } from 'lucide-react';
+import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { index, read, readAll, destroy } from '@/routes/notifications';
@@ -52,21 +53,26 @@ export default function Notifications({
     return (
         <>
             <Head title="Notifications" />
-            <div className="flex flex-1 flex-col gap-6 p-4 md:p-8">
-                <div className="flex justify-end">
-                    <Button
-                        disabled={counts.unread === 0}
-                        onClick={() =>
-                            router.post(
-                                readAll().url,
-                                {},
-                                { preserveScroll: true },
-                            )
-                        }
-                    >
-                        <CheckCheck className="size-4" /> Mark all as read
-                    </Button>
-                </div>
+            <div className="flex flex-1 flex-col gap-5 p-4 md:p-6 lg:p-8">
+                <PageHeader
+                    title="Notifications"
+                    description="Updates on requests, job orders, incidents, liabilities, and bookings."
+                    icon={Bell}
+                    actions={
+                        <Button
+                            disabled={counts.unread === 0}
+                            onClick={() =>
+                                router.post(
+                                    readAll().url,
+                                    {},
+                                    { preserveScroll: true },
+                                )
+                            }
+                        >
+                            <CheckCheck className="size-4" /> Mark all as read
+                        </Button>
+                    }
+                />
 
                 <nav
                     aria-label="Filter notifications"

@@ -28,7 +28,7 @@ test('admins can view the service request approvals queue', function () {
 
     ServiceRequest::create([
         'user_id' => $requester->id,
-        'problem_description' => 'Office 365 license.',
+        'problem_description' => 'Microsoft 365 license.',
         'request_status' => 'approved',
     ]);
 

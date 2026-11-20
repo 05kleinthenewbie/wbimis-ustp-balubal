@@ -9,6 +9,7 @@ import {
 import { BackButton } from '@/components/back-button';
 import { BookingCalendar } from '@/components/booking-calendar';
 import type { CalendarBooking } from '@/components/booking-calendar';
+import FormErrorSummary from '@/components/form-error-summary';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -38,8 +39,9 @@ type Props = {
 };
 
 const facilityTypeLabel: Record<string, string> = {
-    computer_lab: 'Computer Lab',
-    av_room: 'AV Room',
+    computer_lab: 'Computer Laboratory',
+    office: 'Office',
+    classroom: 'Classroom',
 };
 
 function toTime(value: string): string {
@@ -116,6 +118,17 @@ export default function BookingsCreate({
                         </div>
 
                         <form onSubmit={handleSubmit}>
+                            <FormErrorSummary
+                                errors={errors}
+                                labels={{
+                                    facility_id: 'Facility',
+                                    booking_date: 'Reservation date',
+                                    start_time: 'Start time',
+                                    end_time: 'End time',
+                                    purpose: 'Purpose',
+                                }}
+                                className="mb-4"
+                            />
                             <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                                 {/* Form header */}
                                 <div className="border-b border-slate-200 bg-slate-50 px-6 py-5">
@@ -436,7 +449,7 @@ export default function BookingsCreate({
                                         disabled={
                                             processing || selectedDayIsSunday
                                         }
-                                        className="bg-ustp-gold px-5 font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white"
+                                        className="h-11 w-full bg-ustp-gold px-5 font-semibold text-ustp-navy shadow-lg shadow-ustp-gold/10 transition-all hover:bg-ustp-gold-dark hover:text-white sm:w-auto"
                                     >
                                         {processing && <Spinner />}
                                         Request booking

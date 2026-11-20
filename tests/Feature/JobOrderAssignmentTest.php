@@ -326,3 +326,48 @@ test('faculty and students cannot add technicians', function () {
         ->post(route('technicians.store'), ['name' => 'Blocked Tech'])
         ->assertForbidden();
 });
+
+test('job order list exposes workflow stats and filters by status', function () {
+    $admin = assignTechUser('ict_admin');
+
+    $open = makeAssignableJobOrder();
+    makeAssignableJobOrder()->update([
+        'status' => 'in_progress',
+        'assigned_to' => $admin->id,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('job-orders.index'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('job-orders/index')
+            ->where('stats.total', 2)
+            ->where('stats.open', 1)
+            ->where('stats.in_progress', 1)
+            ->where('stats.unassigned', 1)
+            ->has('jobOrders.data', 2),
+        );
+
+    $this->actingAs($admin)
+        ->get(route('job-orders.index', ['status' => 'in_progress']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('jobOrders.data', 1)
+            ->where('jobOrders.data.0.status', 'in_progress')
+            ->where('stats.total', 2),
+        );
+});
+
+test('only admins can print the official job order form', function () {
+    $jobOrder = makeAssignableJobOrder();
+    $requester = $jobOrder->serviceRequest->user;
+    $admin = assignTechUser('ict_admin');
+
+    $this->actingAs($requester)
+        ->get(route('job-orders.print', $jobOrder))
+        ->assertForbidden();
+
+    $this->actingAs($admin)
+        ->get(route('job-orders.print', $jobOrder))
+        ->assertOk();
+});

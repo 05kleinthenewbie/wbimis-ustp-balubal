@@ -211,6 +211,7 @@ export default function IncidentsShow({
         incident.resolution_notes ?? '',
     );
     const [liabilityUserId, setLiabilityUserId] = useState('');
+    const [liabilityUserSearch, setLiabilityUserSearch] = useState('');
     const [liabilityDescription, setLiabilityDescription] = useState('');
     const [liabilityAmount, setLiabilityAmount] = useState('');
     const [processing, setProcessing] = useState(false);
@@ -220,6 +221,11 @@ export default function IncidentsShow({
     const displayStatus = status;
     const statusCfg = statusConfig[displayStatus] ?? statusConfig.open;
     const statusChanged = status !== incident.status;
+    const filteredLiabilityUsers = users.filter((user) =>
+        user.name
+            .toLowerCase()
+            .includes(liabilityUserSearch.trim().toLowerCase()),
+    );
     const dirty =
         statusChanged ||
         resolutionNotes !== (incident.resolution_notes ?? '') ||
@@ -259,6 +265,7 @@ export default function IncidentsShow({
                 onSuccess: () => {
                     toast.success('Laboratory incident updated successfully.');
                     setLiabilityUserId('');
+                    setLiabilityUserSearch('');
                     setLiabilityDescription('');
                     setLiabilityAmount('');
                 },
@@ -278,6 +285,7 @@ export default function IncidentsShow({
         setStatus(incident.status);
         setResolutionNotes(incident.resolution_notes ?? '');
         setLiabilityUserId('');
+        setLiabilityUserSearch('');
         setLiabilityDescription('');
         setLiabilityAmount('');
     }
@@ -696,35 +704,87 @@ export default function IncidentsShow({
                                                 (optional)
                                             </span>
                                         </Label>
-                                        <Select
-                                            value={
-                                                liabilityUserId || NONE_VALUE
-                                            }
-                                            onValueChange={(value) =>
-                                                setLiabilityUserId(
-                                                    value === NONE_VALUE
-                                                        ? ''
-                                                        : value,
+                                        <Input
+                                            value={liabilityUserSearch}
+                                            onChange={(event) =>
+                                                setLiabilityUserSearch(
+                                                    event.target.value,
                                                 )
                                             }
-                                        >
-                                            <SelectTrigger className="h-10 w-full border-slate-300 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-ustp-gold/40 focus-visible:ring-1 focus-visible:ring-ustp-gold/20">
-                                                <SelectValue placeholder="Select a user" />
-                                            </SelectTrigger>
-                                            <SelectContent className="max-h-64 border-slate-200 bg-white text-slate-800">
-                                                <SelectItem value={NONE_VALUE}>
-                                                    None
-                                                </SelectItem>
-                                                {users.map((user) => (
-                                                    <SelectItem
-                                                        key={user.id}
-                                                        value={String(user.id)}
-                                                    >
-                                                        {user.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
+                                            placeholder="Type a name to search..."
+                                            className="h-10 border-slate-300 bg-white text-sm text-slate-800 placeholder:text-slate-400 focus-visible:border-ustp-gold/40 focus-visible:ring-1 focus-visible:ring-ustp-gold/20"
+                                        />
+
+                                        <div className="max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white">
+                                            {liabilityUserId && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setLiabilityUserId('');
+                                                        setLiabilityUserSearch(
+                                                            '',
+                                                        );
+                                                    }}
+                                                    className="flex w-full items-center justify-between border-b border-slate-100 px-3 py-2 text-left text-xs text-slate-500 transition-colors hover:bg-slate-50"
+                                                >
+                                                    Clear selection
+                                                    <span className="text-[10px] text-slate-400">
+                                                        {
+                                                            users.find(
+                                                                (user) =>
+                                                                    String(
+                                                                        user.id,
+                                                                    ) ===
+                                                                    liabilityUserId,
+                                                            )?.name
+                                                        }
+                                                    </span>
+                                                </button>
+                                            )}
+
+                                            {filteredLiabilityUsers.length ===
+                                            0 ? (
+                                                <p className="px-3 py-3 text-xs text-slate-400">
+                                                    No users match “
+                                                    {liabilityUserSearch}”.
+                                                </p>
+                                            ) : (
+                                                filteredLiabilityUsers.map(
+                                                    (user) => {
+                                                        const selected =
+                                                            liabilityUserId ===
+                                                            String(user.id);
+
+                                                        return (
+                                                            <button
+                                                                key={user.id}
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setLiabilityUserId(
+                                                                        String(
+                                                                            user.id,
+                                                                        ),
+                                                                    );
+                                                                    setLiabilityUserSearch(
+                                                                        user.name,
+                                                                    );
+                                                                }}
+                                                                className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors ${
+                                                                    selected
+                                                                        ? 'bg-ustp-gold/10 font-medium text-ustp-navy'
+                                                                        : 'text-slate-600 hover:bg-slate-50'
+                                                                }`}
+                                                            >
+                                                                {user.name}
+                                                                {selected && (
+                                                                    <CheckCircle2 className="size-3.5 text-ustp-gold" />
+                                                                )}
+                                                            </button>
+                                                        );
+                                                    },
+                                                )
+                                            )}
+                                        </div>
 
                                         {users.length === 0 && (
                                             <p className="text-[11px] text-slate-400">

@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Booking;
 use App\Models\Facility;
 use App\Models\IncidentReport;
 use App\Models\InventoryItem;
 use App\Models\JobOrder;
+use App\Models\Role;
 use App\Models\ServiceRequest;
+use App\Models\User;
 use App\Models\UserLiability;
 use App\Services\SlaService;
 use Illuminate\Support\Carbon;
@@ -75,6 +78,20 @@ class ReportController extends Controller
                     ->pluck('total', 'incident_type'),
                 'liabilities_assigned' => UserLiability::count(),
                 'liabilities_settled' => UserLiability::where('liability_status', 'settled')->count(),
+            ],
+            'userStats' => [
+                'total' => User::count(),
+                'by_role' => Role::withCount('users')->get()->pluck('users_count', 'role_name'),
+                'active' => User::where('status', 'active')->count(),
+                'inactive' => User::where('status', 'inactive')->count(),
+                'pending_approvals' => User::where('approval_status', 'pending')->count(),
+            ],
+            'auditStats' => [
+                'total' => AuditLog::count(),
+                'by_module' => AuditLog::selectRaw('module_name, count(*) as total')
+                    ->groupBy('module_name')
+                    ->pluck('total', 'module_name'),
+                'last_seven_days' => AuditLog::where('action_date', '>=', now()->subDays(7))->count(),
             ],
         ]);
     }
@@ -144,6 +161,18 @@ class ReportController extends Controller
         $rows[] = ['Liabilities', 'Settled', (string) UserLiability::where('liability_status', 'settled')->count()];
         $rows[] = ['Liabilities', 'Waived', (string) UserLiability::where('liability_status', 'waived')->count()];
         $rows[] = ['Liabilities', 'Pending', (string) UserLiability::where('liability_status', 'pending')->count()];
+
+        $appendBreakdown('User Accounts', 'By role', Role::withCount('users')->get()->pluck('users_count', 'role_name'));
+        $rows[] = ['User Accounts', 'Total', (string) User::count()];
+        $rows[] = ['User Accounts', 'Active', (string) User::where('status', 'active')->count()];
+        $rows[] = ['User Accounts', 'Inactive', (string) User::where('status', 'inactive')->count()];
+        $rows[] = ['User Accounts', 'Pending approvals', (string) User::where('approval_status', 'pending')->count()];
+
+        $appendBreakdown('Audit Log', 'By module', AuditLog::selectRaw('module_name, count(*) as total')
+            ->groupBy('module_name')
+            ->pluck('total', 'module_name'));
+        $rows[] = ['Audit Log', 'Total actions', (string) AuditLog::count()];
+        $rows[] = ['Audit Log', 'Last 7 days', (string) AuditLog::where('action_date', '>=', now()->subDays(7))->count()];
 
         return response()->streamDownload(function () use ($rows) {
             $handle = fopen('php://output', 'w');

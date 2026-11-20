@@ -1,5 +1,5 @@
-import { Link, router } from '@inertiajs/react';
-import { ArrowLeft, Home } from 'lucide-react';
+import { Link } from '@inertiajs/react';
+import { ArrowLeft } from 'lucide-react';
 import ustpLogo from '@/assets/ustp-logo.png';
 import { Button } from '@/components/ui/button';
 import { home } from '@/routes';
@@ -10,12 +10,9 @@ export default function AuthSimpleLayout({
     title,
     description,
     wide = false,
-    backHref,
-    backLabel = 'Go back',
     backTestId,
+    hideBack = false,
 }: AuthLayoutProps) {
-    const resolvedBackHref = backHref ?? home().url;
-
     return (
         <div
             className="relative flex min-h-svh items-start justify-center px-2 py-3 sm:items-center sm:px-6 sm:py-12"
@@ -63,38 +60,24 @@ export default function AuthSimpleLayout({
                 <div className="h-1 bg-ustp-gold" />
 
                 <div className="bg-background px-4 py-5 sm:px-8 sm:py-8 [@media(max-width:639px)]:[&_input:not([type=checkbox]):not([type=hidden]):not([type=file])]:text-base [@media(max-width:639px)]:[&_input[type=date]]:min-w-0">
-                    <div className="mb-2 flex items-center justify-between sm:mb-4">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="-ml-2 size-9 px-0 text-muted-foreground hover:text-ustp-navy dark:hover:text-white"
-                            data-test={backTestId}
-                            aria-label={backLabel}
-                            title={backLabel}
-                            onClick={() => {
-                                if (window.history.length > 1) {
-                                    window.history.back();
-                                } else {
-                                    router.visit(resolvedBackHref);
-                                }
-                            }}
-                        >
-                            <ArrowLeft className="size-4" />
-                        </Button>
-
-                        <Button
-                            asChild
-                            variant="ghost"
-                            size="sm"
-                            className="-mr-2 h-8 gap-1.5 px-2.5 text-xs font-medium text-muted-foreground hover:text-ustp-navy dark:hover:text-white"
-                        >
-                            <Link href={home()} data-test="auth-home-button">
-                                <Home className="size-3.5" />
-                                Home
-                            </Link>
-                        </Button>
-                    </div>
+                    {!hideBack && (
+                        <div className="mb-2 flex sm:mb-4">
+                            <Button
+                                asChild
+                                variant="ghost"
+                                size="sm"
+                                className="-ml-2 h-10 gap-2 px-3 text-sm font-medium text-muted-foreground hover:text-ustp-navy dark:hover:text-white"
+                            >
+                                <Link
+                                    href={home()}
+                                    data-test={backTestId ?? 'auth-back-home'}
+                                >
+                                    <ArrowLeft className="size-5" />
+                                    Back to Home
+                                </Link>
+                            </Button>
+                        </div>
+                    )}
 
                     <div className="mb-6 space-y-2 text-center sm:mb-8">
                         <h2 className="text-2xl leading-tight font-semibold tracking-tight text-balance text-foreground sm:text-[28px]">

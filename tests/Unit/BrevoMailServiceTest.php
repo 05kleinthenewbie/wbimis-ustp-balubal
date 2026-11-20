@@ -76,6 +76,59 @@ test('welcome email uses pending wording when account is not approved', function
             && str_contains((string) $request['htmlContent'], 'pending approval');
     });
 });
+test('registration OTP email uses the branded WBIMIS template', function () {
+    config()->set('services.brevo.key', 'test-key');
+    config()->set('services.brevo.sender_email', 'noreply@example.com');
+    config()->set('services.brevo.sender_name', 'Test App');
+
+    Http::fake([
+        'api.brevo.com/*' => Http::response(['messageId' => 'otp-id'], 201),
+    ]);
+
+    app(BrevoMailService::class)->sendRegistrationOtpEmail(
+        'user@gmail.com',
+        'Test User',
+        '123456',
+        10,
+    );
+
+    Http::assertSent(function ($request) {
+        $html = (string) $request['htmlContent'];
+
+        return str_contains($html, '123456')
+            && str_contains($html, 'Verify your email address')
+            && str_contains($html, '#1a1851')
+            && str_contains($html, '#fcb315')
+            && str_contains($html, 'ustp-logo-email.png');
+    });
+});
+
+test('student decision email uses the branded template and shows the reason', function () {
+    config()->set('services.brevo.key', 'test-key');
+    config()->set('services.brevo.sender_email', 'noreply@example.com');
+    config()->set('services.brevo.sender_name', 'Test App');
+
+    Http::fake([
+        'api.brevo.com/*' => Http::response(['messageId' => 'decision-id'], 201),
+    ]);
+
+    app(BrevoMailService::class)->sendStudentRegistrationDecisionEmail(
+        'student@gmail.com',
+        'Student User',
+        'rejected',
+        'Upload a clearer copy of your Certificate of Registration.',
+    );
+
+    Http::assertSent(function ($request) {
+        $html = (string) $request['htmlContent'];
+
+        return str_contains($html, 'Action needed on your registration')
+            && str_contains($html, 'Upload a clearer copy of your Certificate of Registration.')
+            && str_contains($html, '#1a1851')
+            && str_contains($html, 'ustp-logo-email.png');
+    });
+});
+
 test('sends account-approved email through Brevo API', function () {
     config()->set('services.brevo.key', 'test-key');
     config()->set('services.brevo.sender_email', 'noreply@example.com');

@@ -90,28 +90,28 @@ const statusConfig: Record<
     }
 > = {
     open: {
-        label: 'Open',
-        color: 'text-slate-600',
-        bg: 'bg-slate-50',
-        border: 'border-slate-200',
-        icon: <Clock className="size-5" />,
-    },
-    in_progress: {
-        label: 'In Progress',
+        label: 'Awaiting technician',
         color: 'text-amber-700',
         bg: 'bg-amber-50',
         border: 'border-amber-200',
+        icon: <Clock className="size-5" />,
+    },
+    in_progress: {
+        label: 'In progress',
+        color: 'text-sky-700',
+        bg: 'bg-sky-50',
+        border: 'border-sky-200',
         icon: <PlayCircle className="size-5" />,
     },
     completed: {
-        label: 'Completed',
-        color: 'text-ustp-light-blue',
-        bg: 'bg-ustp-light-blue/10',
-        border: 'border-ustp-light-blue/20',
+        label: 'Awaiting verification',
+        color: 'text-violet-700',
+        bg: 'bg-violet-50',
+        border: 'border-violet-200',
         icon: <CheckCircle2 className="size-5" />,
     },
     closed: {
-        label: 'Closed',
+        label: 'Completed',
         color: 'text-emerald-700',
         bg: 'bg-emerald-50',
         border: 'border-emerald-200',
@@ -241,15 +241,19 @@ export default function JobOrdersShow({
             <div className="relative min-h-full flex-1 overflow-hidden bg-slate-50 px-4 py-6 text-slate-800 sm:px-6 lg:px-8">
                 <div className="relative mx-auto max-w-4xl space-y-6">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        <a
-                            href={`/job-orders/${jobOrder.id}/print`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 rounded-lg bg-ustp-light-blue px-3.5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-ustp-navy"
-                        >
-                            <Printer className="size-4" />
-                            Print Official Form
-                        </a>
+                        {isAdmin ? (
+                            <a
+                                href={`/job-orders/${jobOrder.id}/print`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 rounded-lg bg-ustp-light-blue px-3.5 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-ustp-navy"
+                            >
+                                <Printer className="size-4" />
+                                Print Official Form
+                            </a>
+                        ) : (
+                            <span />
+                        )}
                         <BackButton href="/job-orders" />
                     </div>
 
